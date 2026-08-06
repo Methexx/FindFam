@@ -7,11 +7,12 @@ import {
 } from './auth.schema';
 import * as authService from './auth.service';
 import { AuthError } from './auth.service';
+import { rateLimitConfig } from '../../lib/rate-limit-config';
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/auth/register',
-    { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } },
+    { config: rateLimitConfig(5, '1 minute') },
     async (request, reply) => {
       const body = registerBodySchema.parse(request.body);
       try {
@@ -28,7 +29,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post(
     '/auth/login',
-    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    { config: rateLimitConfig(10, '1 minute') },
     async (request, reply) => {
       const body = loginBodySchema.parse(request.body);
       try {

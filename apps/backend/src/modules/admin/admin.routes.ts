@@ -2,11 +2,12 @@ import type { FastifyPluginAsync } from 'fastify';
 import { adminLoginBodySchema } from './admin.schema';
 import * as adminService from './admin.service';
 import { AdminAuthError } from './admin.service';
+import { rateLimitConfig } from '../../lib/rate-limit-config';
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     '/admin/auth/login',
-    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    { config: rateLimitConfig(10, '1 minute') },
     async (request, reply) => {
       const body = adminLoginBodySchema.parse(request.body);
       try {
