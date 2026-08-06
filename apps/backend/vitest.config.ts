@@ -2,6 +2,10 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    // Integration tests share one Postgres instance and truncate tables in
+    // beforeEach — running files in parallel races truncation against
+    // in-flight inserts from other files, so force sequential execution.
+    fileParallelism: false,
     env: {
       DATABASE_URL: 'postgres://famshare:famshare@localhost:5432/famshare',
       REDIS_URL: 'redis://localhost:6379',
