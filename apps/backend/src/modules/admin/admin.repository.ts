@@ -1,2 +1,5 @@
-// TODO: Sprint 5 — DB queries for admin moderation + analytics
-export {};
+import { db } from '../../config/db';
+
+export function findAdminByEmail(email: string) {
+  return db.selectFrom('admins').selectAll().where('email', '=', email).executeTakeFirst();
+}

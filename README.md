@@ -81,6 +81,18 @@ flutter pub get
 flutter run
 ```
 
+## Seeding an admin
+
+There is no public admin registration endpoint — admin accounts are created directly via a seed script, run from `apps/backend`:
+
+```bash
+cd apps/backend
+npm run migrate -- up
+npm run seed:admin -- --email=admin@example.com --password=changeme
+```
+
+Credentials can also be supplied via `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` environment variables instead of flags. The script is idempotent — running it again with the same email makes no changes.
+
 ## Root Scripts
 
 The root package uses Turbo to run workspace tasks:
