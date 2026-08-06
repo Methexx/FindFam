@@ -37,3 +37,14 @@ export async function login(body: AdminLoginBody) {
     tokens: { accessToken },
   };
 }
+
+export async function listCircles() {
+  const rows = await adminRepository.listAllCircles();
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    ownerId: row.owner_id,
+    memberCount: Number(row.member_count),
+    createdAt: row.created_at.toISOString(),
+  }));
+}

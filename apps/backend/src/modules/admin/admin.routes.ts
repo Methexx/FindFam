@@ -28,6 +28,15 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send({ data: request.admin, error: null });
     },
   );
+
+  fastify.get(
+    '/admin/circles',
+    { preHandler: fastify.authenticateAdmin },
+    async (_request, reply) => {
+      const result = await adminService.listCircles();
+      return reply.send({ data: result, error: null });
+    },
+  );
 };
 
 export default adminRoutes;
