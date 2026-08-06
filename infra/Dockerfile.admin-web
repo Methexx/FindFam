@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+
+FROM node:20-alpine AS base
+WORKDIR /repo
+
+FROM base AS deps
+COPY package.json package-lock.json* ./
+COPY apps/admin-web/package.json apps/admin-web/package.json
+COPY packages/shared-types/package.json packages/shared-types/package.json
+COPY packages/config/package.json packages/config/package.json
+RUN npm install --workspace=@famshare/admin-web --include-workspace-root
+
+FROM base AS build
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/apps/admin-web/node_modules ./apps/admin-web/node_modules
+COPY . .
+RUN npm run build --workspace=@famshare/admin-web
+
+FROM node:20-alpine AS runtime
+WORKDIR /repo/apps/admin-web
+ENV NODE_ENV=production
+COPY --from=build /repo/apps/admin-web/.next ./.next
+COPY --from=build /repo/apps/admin-web/public ./public
+COPY --from=build /repo/apps/admin-web/package.json ./package.json
+COPY --from=deps /repo/node_modules ./node_modules
+COPY --from=deps /repo/apps/admin-web/node_modules ./node_modules
+
+EXPOSE 3000
+CMD ["npm", "run", "start"]
