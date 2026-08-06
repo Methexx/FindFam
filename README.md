@@ -1,26 +1,104 @@
 # FamShare
 
-FamShare is a live location sharing app for families: a Flutter mobile app, a Fastify + TypeScript backend (REST + WebSocket + BullMQ), and a Next.js admin dashboard, sharing one PostgreSQL+PostGIS database.
+FamShare is a privacy-first family safety app for people who want to share live location with trusted circles, chat in context, and send an SOS when something feels wrong. The product is designed to feel closer to a consent-based alternative to Life360 or Zenly than to a surveillance app: everyone in a circle chooses to share, everyone can see the same live map, and SOS alerts go to the circle and emergency contacts.
 
-See [docs/famshare-feature-list.md](docs/famshare-feature-list.md) for the full feature list and project overview, and the rest of [docs/](docs/) for architecture, database schema, API endpoints, and the sprint timeline.
+This repository is a Turborepo monorepo with three apps that share a single backend and database:
 
-## Monorepo layout
+| App | Stack | Purpose |
+|---|---|---|
+| `apps/mobile` | Flutter | Main user app for live location, chat, contacts, and SOS |
+| `apps/backend` | Fastify + TypeScript | REST API, realtime gateway, background jobs |
+| `apps/admin-web` | Next.js + Tailwind | Internal moderation dashboard and live SOS monitoring |
+
+## What The Project Does
+
+At a high level, FamShare lets people create private circles, share their live location on a map, exchange messages, and trigger an SOS that is broadcast immediately and delivered through push notification plus SMS fallback. The admin dashboard is there for moderation and safety monitoring, not for public users.
+
+The architecture, data model, API surface, and mobile structure are documented in the docs folder:
+- [00-master-project-reference](docs/00-master-project-reference.md)
+- [01-system-architecture](docs/01-system-architecture.md)
+- [02-database-schema](docs/02-database-schema.md)
+- [03-api-endpoints](docs/03-api-endpoints.md)
+- [04-backend-structure](docs/04-backend-structure.md)
+- [05-realtime-channels](docs/05-realtime-channels.md)
+- [06-auth-flow](docs/06-auth-flow.md)
+- [07-data-flow](docs/07-data-flow.md)
+- [08-flutter-app-structure](docs/08-flutter-app-structure.md)
+- [09-sprint-timeline](docs/09-sprint-timeline.md)
+- [10-production-readiness](docs/10-production-readiness.md)
+
+If you want the feature roadmap, see [famshare-feature-list](docs/famshare-feature-list.md).
+
+## Current Status
+
+FamShare is still in active development. The repo is set up, the main app shells are in place, and the project is being built out in phases according to [09-sprint-timeline](docs/09-sprint-timeline.md).
+
+## Repository Layout
 
 ```
 apps/
-  mobile/       # Flutter app
-  backend/      # Fastify + TypeScript API, WebSocket gateway, BullMQ workers
-  admin-web/    # Next.js admin dashboard
+  mobile/       Flutter app
+  backend/      Fastify API, realtime gateway, queue workers
+  admin-web/    Next.js admin dashboard
 packages/
-  shared-types/ # TypeScript types shared between backend and admin-web
-  config/       # Shared tsconfig + ESLint config
-infra/          # Docker Compose + Dockerfiles for local dev and builds
+  shared-types/ Shared TypeScript types
+  config/       Shared ESLint and TypeScript config
+infra/          Dockerfiles and local development infrastructure
+docs/           Product, architecture, API, and delivery reference
 ```
 
-## Local development
+## Local Development
 
-```
+Install dependencies at the repo root, start the supporting services, and then run the workspace dev servers:
+
+```bash
 npm install
-docker-compose -f infra/docker-compose.yml up -d
+docker compose -f infra/docker-compose.yml up -d
 npm run dev
 ```
+
+### App-specific commands
+
+Backend:
+
+```bash
+cd apps/backend
+npm run dev
+```
+
+Admin web:
+
+```bash
+cd apps/admin-web
+npm run dev
+```
+
+Mobile:
+
+```bash
+cd apps/mobile
+flutter pub get
+flutter run
+```
+
+## Root Scripts
+
+The root package uses Turbo to run workspace tasks:
+
+- `npm run dev` - run the Node/Next workspace dev servers
+- `npm run build` - build all workspaces
+- `npm run lint` - lint all workspaces
+- `npm run test` - run all workspace tests
+
+Launch the Flutter app separately with `flutter run` from `apps/mobile`.
+
+## Tech Stack Summary
+
+- Mobile: Flutter, Riverpod, MVVM
+- Backend: Fastify, TypeScript, WebSockets, BullMQ, Redis
+- Admin: Next.js, Tailwind CSS
+- Database: PostgreSQL with PostGIS
+
+## Why This Exists
+
+The goal is to give families and close groups a safer, more transparent way to stay connected without turning location sharing into a one-way surveillance product. The docs explain the product decisions, the technical tradeoffs, and the rollout plan in more detail.
