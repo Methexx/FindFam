@@ -11,6 +11,10 @@ type ChannelHandler = (message: string) => void;
  *
  * ioredis requires a connection used for SUBSCRIBE to not issue other
  * commands, so publishing and subscribing use separate connections.
+ *
+ * TLS is picked up automatically from a rediss:// URL (Upstash's TCP
+ * endpoint) — ioredis parses the scheme itself, no explicit tls option
+ * needed here.
  */
 class RedisPubSub {
   private readonly publisher = new Redis(env.REDIS_URL);
@@ -18,6 +22,17 @@ class RedisPubSub {
   private readonly handlers = new Map<string, Set<ChannelHandler>>();
 
   constructor() {
+    // Without these, a connection error (bad credentials, network drop)
+    // throws an unhandled 'error' event and crashes the process — ioredis
+    // itself already retries internally, but the app still needs to know
+    // when it's happening rather than fail silently.
+    this.publisher.on('error', (err) => {
+      console.error('[redis-pubsub] publisher connection error:', err.message);
+    });
+    this.subscriber.on('error', (err) => {
+      console.error('[redis-pubsub] subscriber connection error:', err.message);
+    });
+
     this.subscriber.on('message', (channel: string, message: string) => {
       const channelHandlers = this.handlers.get(channel);
       if (!channelHandlers) return;
@@ -27,6 +42,15 @@ class RedisPubSub {
 
   publish(channel: string, message: string): Promise<number> {
     return this.publisher.publish(channel, message);
+  }
+
+  async ping(): Promise<boolean> {
+    try {
+      await this.publisher.ping();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async subscribe(channel: string, handler: ChannelHandler): Promise<void> {

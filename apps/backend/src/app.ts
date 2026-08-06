@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
+import { sql } from 'kysely';
 import { ZodError } from 'zod';
 import authPlugin from './plugins/auth';
 import adminAuthPlugin from './plugins/admin-auth';
@@ -10,6 +11,8 @@ import followsRoutes from './modules/follows/follows.routes';
 import circlesRoutes from './modules/circles/circles.routes';
 import locationsRoutes from './modules/locations/locations.routes';
 import wsGateway from './realtime/ws-gateway';
+import { db } from './config/db';
+import { redisPubSub } from './realtime/redis-pubsub';
 
 // TODO: Sprint 4+ — register remaining plugins (sentry) and module routes
 // (geofences, messages, emergency-contacts, sos) as they're implemented.
@@ -37,8 +40,23 @@ export function buildApp(): FastifyInstance {
   app.register(locationsRoutes, { prefix: '/api/v1' });
   app.register(wsGateway);
 
-  app.get('/health', async () => {
-    return { status: 'ok' };
+  app.get('/health', async (_request, reply) => {
+    const [dbReachable, redisReachable] = await Promise.all([
+      sql`SELECT 1`
+        .execute(db)
+        .then(() => true)
+        .catch(() => false),
+      redisPubSub.ping(),
+    ]);
+
+    const healthy = dbReachable && redisReachable;
+    return reply.code(healthy ? 200 : 503).send({
+      status: healthy ? 'ok' : 'degraded',
+      dependencies: {
+        database: dbReachable ? 'reachable' : 'unreachable',
+        redis: redisReachable ? 'reachable' : 'unreachable',
+      },
+    });
   });
 
   return app;
