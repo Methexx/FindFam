@@ -1,13 +1,13 @@
 # 10 — Production Readiness
 
 ## Purpose
-Final checklist before FamShare is considered launch-ready. Organized by category; run through this at the end of Sprint 6 (per 09-sprint-timeline).
+Final checklist before FindFam is considered launch-ready. Organized by category; run through this at the end of Sprint 6 (per 09-sprint-timeline).
 
 ---
 
 ## Security
 
-- [ ] All secrets (`JWT_SECRET`, `ADMIN_JWT_SECRET`, `FCM_SERVICE_ACCOUNT_JSON`, `DATABASE_URL`, `REDIS_URL`) stored in platform secret managers (Render/Vercel env vars), never committed to the repo
+- [ ] All secrets (`JWT_SECRET`, `JWT_REFRESH_SECRET`, `ADMIN_JWT_SECRET`, `FCM_SERVICE_ACCOUNT_JSON`, `DATABASE_URL`, `DATABASE_MIGRATIONS_URL`, `REDIS_URL`, `SENTRY_DSN`) stored in platform secret managers (Render/Vercel env vars), never committed to the repo
 - [ ] `.env.example` files present and up to date; real `.env` files gitignored
 - [ ] User and admin JWT secrets are different values (per 06-auth-flow)
 - [ ] Passwords hashed with argon2id or bcrypt (sufficient cost factor), never logged
@@ -21,7 +21,7 @@ Final checklist before FamShare is considered launch-ready. Organized by categor
 ## Privacy & Legal
 
 - [ ] Privacy policy published and linked in-app (mobile) and on admin/marketing site
-- [ ] Explicit statement: FamShare does not sell user location data (this is a core differentiator per your feature research — make sure it's actually true in practice, not just stated)
+- [ ] Explicit statement: FindFam does not sell user location data (this is a core differentiator per your feature research — make sure it's actually true in practice, not just stated)
 - [ ] In-app disclaimer on the SOS feature: **"This is not a substitute for calling emergency services"** — shown at first use of the SOS button, not buried in settings
 - [ ] Consent-first onboarding confirmed: no way to enable location sharing on someone else's behalf without their own login
 - [ ] Data retention policy decided for `locations` table (see 02-database-schema retention notes) and documented
@@ -36,7 +36,7 @@ Final checklist before FamShare is considered launch-ready. Organized by categor
 - [ ] Separate FCM test/prod setup if possible (avoids test SOS triggers pushing to real devices unexpectedly)
 - [ ] Health-check endpoint (`/health`) returns meaningful status (DB reachable, Redis reachable)
 - [ ] Uptime monitoring configured (external ping service) with alerts to email/Slack/Discord
-- [ ] Scheduled GitHub Actions workflow pings `/health` at least every 5–6 days to prevent Supabase's free-tier 7-day inactivity pause
+- [ ] Scheduled GitHub Actions workflow pings `/health` every 3 days to prevent Supabase's free-tier 7-day inactivity pause (see `.github/workflows/keep-alive.yml`)
 - [ ] Render free-tier cold-start behavior (30–60s after 15 min idle) tested and accepted as a known limitation for the closed-testing group
 - [ ] Sentry configured on backend, admin-web, and mobile — with alert rules, not just passive logging
 
@@ -79,4 +79,4 @@ Final checklist before FamShare is considered launch-ready. Organized by categor
 ---
 
 ## Launch Gate
-Do not consider FamShare production-ready until every item in **Security**, **Privacy & Legal**, and **Realtime & Safety-Critical Paths** is checked — these three sections cover the categories where a gap isn't just a bug, it's a trust or safety failure, which is the opposite of FamShare's entire positioning against Life360.
+Do not consider FindFam production-ready until every item in **Security**, **Privacy & Legal**, and **Realtime & Safety-Critical Paths** is checked — these three sections cover the categories where a gap isn't just a bug, it's a trust or safety failure, which is the opposite of FindFam's entire positioning against Life360.

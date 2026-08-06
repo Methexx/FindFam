@@ -8,7 +8,7 @@ Defines how location updates, chat messages, and SOS events flow in real time be
 - **Redis Pub/Sub** as the fan-out backplane. Even at single-instance scale in MVP, every publish goes through Redis rather than being broadcast directly in-process — this means scaling to multiple backend instances later requires zero changes to the broadcast logic.
 
 ## Connection Lifecycle
-1. Client opens WS connection to `wss://api.famshare.app/ws`
+1. Client opens WS connection to `wss://api.findfam.app/ws` (illustrative — actual production domain not yet provisioned; Render's default `*.onrender.com` hostname is what's actually deployed for now)
 2. Client sends an initial `auth` message containing the JWT access token
 3. Server verifies the token, resolves the user's circle memberships, and subscribes the connection to Redis channels: `circle:{circleId}:location`, `circle:{circleId}:chat`, `circle:{circleId}:sos` for each circle
 4. Server also subscribes admin connections to `admin:sos` (global SOS feed) after admin-token verification

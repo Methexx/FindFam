@@ -4,11 +4,11 @@ Copy everything below into Claude Code as your next instruction. Run this before
 
 ---
 
-I'm continuing work on **FamShare**. Sprints 0–3 are complete and verified against local Docker services (Postgres+PostGIS, Redis). I've updated the docs (`docs/00-master-project-reference.md`, `01-system-architecture.md`, `02-database-schema.md`, `03-api-endpoints.md`, `04-backend-structure.md`, `07-data-flow.md`, `09-sprint-timeline.md`, `10-production-readiness.md`) to reflect a locked decision: **the production stack runs entirely on free tiers, with zero recurring paid services.** Re-read all of these before starting — several implementation details change as a result.
+I'm continuing work on **FindFam**. Sprints 0–3 are complete and verified against local Docker services (Postgres+PostGIS, Redis). I've updated the docs (`docs/00-master-project-reference.md`, `01-system-architecture.md`, `02-database-schema.md`, `03-api-endpoints.md`, `04-backend-structure.md`, `07-data-flow.md`, `09-sprint-timeline.md`, `10-production-readiness.md`) to reflect a locked decision: **the production stack runs entirely on free tiers, with zero recurring paid services.** Re-read all of these before starting — several implementation details change as a result.
 
 Two concrete decisions to internalize before touching code:
 1. **Database → Supabase** (free tier, PostGIS confirmed enabled). **Redis → Upstash** (free tier). **Backend hosting → Render** (free tier). **Admin web → Vercel** (unchanged from original plan).
-2. **Twilio/SMS is removed entirely.** Emergency contacts must now be existing FamShare users (`contact_user_id` is `NOT NULL`), and SOS delivery goes through FCM push only. This is a real schema and API change, not just a config swap — read `docs/02-database-schema.md`'s updated `emergency_contacts` table and `docs/03-api-endpoints.md`'s updated Emergency Contacts section before touching that module.
+2. **Twilio/SMS is removed entirely.** Emergency contacts must now be existing FindFam users (`contact_user_id` is `NOT NULL`), and SOS delivery goes through FCM push only. This is a real schema and API change, not just a config swap — read `docs/02-database-schema.md`'s updated `emergency_contacts` table and `docs/03-api-endpoints.md`'s updated Emergency Contacts section before touching that module.
 
 ## Task 1: Database migration to Supabase
 

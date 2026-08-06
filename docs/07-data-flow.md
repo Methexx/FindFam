@@ -50,7 +50,7 @@ Backend (whichever path lands first is processed; second is deduplicated)
   → SEPARATELY enqueues a BullMQ job: { sosEventId, userId }
     ↓
 BullMQ Worker (async, does not block the above)
-  → fetches user's emergency_contacts, ordered by priority (all are FamShare users — see 00-master-project-reference.md cost/scope decision, free-tier MVP has no SMS path for non-app contacts)
+  → fetches user's emergency_contacts, ordered by priority (all are FindFam users — see 00-master-project-reference.md cost/scope decision, free-tier MVP has no SMS path for non-app contacts)
   → sends FCM push to each contact (with live map link)
   → retries with backoff on delivery failure
   → [optional] re-sends at an interval if the SOS remains unresolved after N minutes

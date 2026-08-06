@@ -10,7 +10,7 @@
 
 **File/repo structure:**
 ```
-famshare/
+findfam/
 ├── apps/mobile/ (flutter create)
 ├── apps/backend/ (fastify skeleton per 04-backend-structure)
 ├── apps/admin-web/ (next.js skeleton)
@@ -84,7 +84,7 @@ famshare/
 - FCM service account credentials added to Render's environment variables
 - Load-test the SOS path specifically (this is your safety-critical path — worth deliberate testing time, not just happy-path checks)
 
-**Checkpoint:** full MVP feature set works end-to-end, including a real SOS trigger delivering push + SMS.
+**Checkpoint:** full MVP feature set works end-to-end, including a real SOS trigger delivering an FCM push notification.
 
 ---
 

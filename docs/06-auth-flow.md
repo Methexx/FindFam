@@ -1,7 +1,7 @@
 # 06 — Auth Flow
 
 ## Two Separate Auth Systems
-FamShare deliberately runs **two isolated auth systems** rather than one with roles:
+FindFam deliberately runs **two isolated auth systems** rather than one with roles:
 1. **User auth** — regular app users (mobile), stored in `users` table
 2. **Admin auth** — admin dashboard only, stored in a separate `admins` table
 

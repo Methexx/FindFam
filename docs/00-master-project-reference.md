@@ -1,7 +1,7 @@
 # 00 — Master Project Reference
 
 ## Project Name
-**FamShare** (working name) — a live location sharing app for families/relatives with safety features.
+**FindFam** — a live location sharing app for families/relatives with safety features.
 
 ## One-Line Description
 A privacy-first, consent-based live location sharing app that lets circles of relatives see each other on a live map, chat, and trigger an SOS alert that shares live location with emergency contacts — built solo, mobile + backend + admin web.
@@ -38,14 +38,14 @@ Existing family location-sharing apps (Life360) dominate the market but are wide
 - **DevOps:** Docker + Docker Compose (local dev only), GitHub Actions (CI/CD), Sentry (error tracking)
 
 ## Cost & Scope Decision (locked — August 2026)
-FamShare's MVP runs entirely on free tiers with **zero recurring paid services**. The only real cost is Google Play's one-time $25 developer registration fee (already covered), which is a one-time store fee, not a recurring service. This drove one scope change:
-- **Emergency contacts must be existing FamShare users.** Twilio SMS (for non-app contacts) is dropped from the free-tier MVP — SOS delivery goes through FCM push only. External phone-only contacts with SMS delivery are a possible future paid-tier feature, not part of this build.
+FindFam's MVP runs entirely on free tiers with **zero recurring paid services**. The only real cost is Google Play's one-time $25 developer registration fee (already covered), which is a one-time store fee, not a recurring service. This drove one scope change:
+- **Emergency contacts must be existing FindFam users.** Twilio SMS (for non-app contacts) is dropped from the free-tier MVP — SOS delivery goes through FCM push only. External phone-only contacts with SMS delivery are a possible future paid-tier feature, not part of this build.
 - Supabase free-tier projects pause after 7 days of zero API activity — mitigated with a scheduled GitHub Actions health-check ping (see 10-production-readiness.md).
 - Render's free backend tier spins down after 15 minutes idle (30–60s cold start on the next request) — a known, accepted limitation for a limited-user closed test, not something to engineer around on the free tier.
 
 ## Monorepo Structure (reference — full detail in 08-flutter-app-structure and 04-backend-structure)
 ```
-famshare/
+findfam/
 ├── apps/
 │   ├── mobile/              # Flutter app
 │   ├── backend/             # Fastify (TypeScript)

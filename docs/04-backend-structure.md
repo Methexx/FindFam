@@ -103,8 +103,9 @@ Each module follows the same four-file pattern for consistency and testability:
 
 ## Environment Variables (`.env` — validated via zod at boot)
 ```
-DATABASE_URL=          # Supabase connection string (local dev: Dockerized Postgres)
-REDIS_URL=              # Upstash connection string (local dev: Dockerized Redis)
+DATABASE_URL=              # Supabase pooled connection string — used by the running app
+DATABASE_MIGRATIONS_URL=   # Supabase direct connection string — used only by node-pg-migrate
+REDIS_URL=                 # Upstash Redis TCP connection string (rediss://...)
 JWT_SECRET=
 JWT_REFRESH_SECRET=
 ADMIN_JWT_SECRET=
@@ -113,9 +114,13 @@ SENTRY_DSN=
 NODE_ENV=
 PORT=
 ```
+`DATABASE_URL` and `DATABASE_MIGRATIONS_URL` are deliberately separate — migrations need Supabase's direct connection (pooled/PgBouncer connections can break node-pg-migrate's DDL/prepared-statement handling), while runtime API traffic uses the pooled connection for connection-limit headroom on the free tier. The `migrate` script in `package.json` reads `DATABASE_MIGRATIONS_URL` via node-pg-migrate's `-d` flag; `migrate:test` doesn't need the split since the local test database (see below) has no pooler and reads `DATABASE_URL` from `.env.test` directly.
+
 No Twilio/SMS credentials — free-tier MVP delivers SOS alerts via FCM only (see 00-master-project-reference.md cost/scope decision).
+
+Local dev connects directly to Supabase/Upstash (not Dockerized services) — Docker Compose is only used for the isolated local test database/Redis, see Testing Approach below.
 
 ## Testing Approach
 - Unit tests for services (mock repositories)
-- Integration tests for routes against a test Postgres instance (Docker Compose test profile)
+- Integration tests for routes run against local Postgres + Redis (`infra/docker-compose.yml`), never against the live Supabase/Upstash services — a dedicated `findfam_test` database on the local Postgres container, isolated via `.env.test`. `npm run migrate:test -- up` applies schema before `npm test` runs. This must never be able to touch real dev or production data.
 - Prioritize test coverage on: auth flow, SOS trigger path, geofence containment queries — the three highest-consequence code paths

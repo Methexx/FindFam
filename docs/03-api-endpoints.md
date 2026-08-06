@@ -72,7 +72,7 @@
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/emergency-contacts` | Add contact — `contactUsername` required, must resolve to an existing FamShare user (see 00-master-project-reference.md cost/scope decision — free-tier MVP has no SMS path for non-app contacts) |
+| POST | `/emergency-contacts` | Add contact — `contactUsername` required, must resolve to an existing FindFam user (see 00-master-project-reference.md cost/scope decision — free-tier MVP has no SMS path for non-app contacts) |
 | GET | `/emergency-contacts` | List own contacts |
 | PATCH | `/emergency-contacts/:id` | Update (priority only — the contact identity itself isn't editable, remove and re-add instead) |
 | DELETE | `/emergency-contacts/:id` | Remove |
