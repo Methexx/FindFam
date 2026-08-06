@@ -26,6 +26,18 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<!-- Sprint 3 — background location sharing. "Always" is requested only
+	     after the user opts in via location_permission_screen.dart, per
+	     docs/08-flutter-app-structure.md — never cold on first launch. -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>FamShare shows your location to the circles you choose to share with.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>FamShare shares your location with your circles in the background so members can see where you are, even when the app isn't open.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

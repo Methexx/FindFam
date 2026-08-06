@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/viewmodel/auth_notifier.dart';
+import '../../map/ui/circle_map_screen.dart';
 import '../domain/circle.dart';
 import '../viewmodel/circle_detail_notifier.dart';
 
@@ -91,6 +92,18 @@ class _CircleDetailScreenState extends ConsumerState<CircleDetailScreen> {
         Padding(
           padding: const EdgeInsets.all(16),
           child: Text(circle.name, style: Theme.of(context).textTheme.headlineSmall),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.map),
+            label: const Text('View live map'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => CircleMapScreen(circleId: circle.id, circleName: circle.name),
+              ),
+            ),
+          ),
         ),
         if (actionError != null)
           Padding(
