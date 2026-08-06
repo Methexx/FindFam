@@ -3,14 +3,16 @@ import rateLimit from '@fastify/rate-limit';
 import { ZodError } from 'zod';
 import authPlugin from './plugins/auth';
 import adminAuthPlugin from './plugins/admin-auth';
+import websocketPlugin from './plugins/websocket';
 import authRoutes from './modules/auth/auth.routes';
 import adminRoutes from './modules/admin/admin.routes';
 import followsRoutes from './modules/follows/follows.routes';
 import circlesRoutes from './modules/circles/circles.routes';
+import locationsRoutes from './modules/locations/locations.routes';
+import wsGateway from './realtime/ws-gateway';
 
-// TODO: Sprint 3+ — register remaining plugins (websocket, sentry) and module
-// routes (locations, geofences, messages, emergency-contacts, sos) as they're
-// implemented.
+// TODO: Sprint 4+ — register remaining plugins (sentry) and module routes
+// (geofences, messages, emergency-contacts, sos) as they're implemented.
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: true });
@@ -26,11 +28,14 @@ export function buildApp(): FastifyInstance {
   app.register(rateLimit, { global: false });
   app.register(authPlugin);
   app.register(adminAuthPlugin);
+  app.register(websocketPlugin);
 
   app.register(authRoutes, { prefix: '/api/v1' });
   app.register(adminRoutes, { prefix: '/api/v1' });
   app.register(followsRoutes, { prefix: '/api/v1' });
   app.register(circlesRoutes, { prefix: '/api/v1' });
+  app.register(locationsRoutes, { prefix: '/api/v1' });
+  app.register(wsGateway);
 
   app.get('/health', async () => {
     return { status: 'ok' };

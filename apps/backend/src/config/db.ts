@@ -52,6 +52,17 @@ export interface CircleMembersTable {
   joined_at: Generated<Date>;
 }
 
+export interface LocationsTable {
+  id: Generated<string>;
+  user_id: string;
+  // geography(Point, 4326) — no native Kysely type; written/read via raw SQL
+  // (ST_MakePoint on insert, ST_X/ST_Y on select) rather than modeled here.
+  geom: string;
+  speed: number | null;
+  battery_level: number | null;
+  recorded_at: Date;
+}
+
 export interface Database {
   users: UsersTable;
   admins: AdminsTable;
@@ -59,6 +70,7 @@ export interface Database {
   follows: FollowsTable;
   circles: CirclesTable;
   circle_members: CircleMembersTable;
+  locations: LocationsTable;
 }
 
 const pool = new Pool({ connectionString: env.DATABASE_URL });

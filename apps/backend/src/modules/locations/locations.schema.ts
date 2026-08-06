@@ -1,2 +1,10 @@
-// TODO: Sprint 3 — zod schemas for locations routes
-export {};
+import { z } from 'zod';
+
+export const postLocationBodySchema = z.object({
+  lat: z.number().min(-90).max(90),
+  lng: z.number().min(-180).max(180),
+  speed: z.number().nullable().optional(),
+  batteryLevel: z.number().int().min(0).max(100).nullable().optional(),
+  recordedAt: z.string().datetime().optional(),
+});
+export type PostLocationBody = z.infer<typeof postLocationBodySchema>;
