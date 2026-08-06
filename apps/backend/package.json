@@ -10,6 +10,7 @@
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
     "migrate": "node --env-file=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js",
+    "migrate:test": "node --env-file=.env.test ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js",
     "seed:admin": "node --env-file=.env ../../node_modules/tsx/dist/cli.mjs scripts/seed-admin.ts"
   },
   "dependencies": {
