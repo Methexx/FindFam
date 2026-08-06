@@ -7,7 +7,7 @@ Final checklist before FamShare is considered launch-ready. Organized by categor
 
 ## Security
 
-- [ ] All secrets (`JWT_SECRET`, `ADMIN_JWT_SECRET`, `TWILIO_AUTH_TOKEN`, `FCM_SERVICE_ACCOUNT_JSON`, `DATABASE_URL`) stored in platform secret managers (Railway/Fly/Vercel env vars), never committed to the repo
+- [ ] All secrets (`JWT_SECRET`, `ADMIN_JWT_SECRET`, `FCM_SERVICE_ACCOUNT_JSON`, `DATABASE_URL`, `REDIS_URL`) stored in platform secret managers (Render/Vercel env vars), never committed to the repo
 - [ ] `.env.example` files present and up to date; real `.env` files gitignored
 - [ ] User and admin JWT secrets are different values (per 06-auth-flow)
 - [ ] Passwords hashed with argon2id or bcrypt (sufficient cost factor), never logged
@@ -33,15 +33,17 @@ Final checklist before FamShare is considered launch-ready. Organized by categor
 - [ ] CD auto-deploys staging on merge to a `develop`/staging branch, production on merge to `main` (or manual promote — either is fine, but the process is defined and documented)
 - [ ] Docker images build reproducibly (`docker-compose up` works from a clean clone)
 - [ ] Database migrations run automatically as part of deploy, not manually
-- [ ] Staging and production use separate databases, separate FCM/Twilio credentials if possible (avoids test SOS triggers hitting real phone numbers)
+- [ ] Separate FCM test/prod setup if possible (avoids test SOS triggers pushing to real devices unexpectedly)
 - [ ] Health-check endpoint (`/health`) returns meaningful status (DB reachable, Redis reachable)
 - [ ] Uptime monitoring configured (external ping service) with alerts to email/Slack/Discord
+- [ ] Scheduled GitHub Actions workflow pings `/health` at least every 5–6 days to prevent Supabase's free-tier 7-day inactivity pause
+- [ ] Render free-tier cold-start behavior (30–60s after 15 min idle) tested and accepted as a known limitation for the closed-testing group
 - [ ] Sentry configured on backend, admin-web, and mobile — with alert rules, not just passive logging
 
 ## Realtime & Safety-Critical Paths
 
 - [ ] SOS trigger tested with WS connection deliberately killed — REST fallback confirmed working (per 07-data-flow)
-- [ ] SOS delivery (FCM push + Twilio SMS) tested against real devices/numbers, not just staging mocks
+- [ ] SOS delivery (FCM push to emergency contacts) tested against real devices, not just mocks
 - [ ] Duplicate SOS triggers within a short window are deduplicated, not creating multiple events/notifications
 - [ ] WebSocket reconnection tested under real conditions: airplane mode toggle, app backgrounding, network switch (WiFi ↔ cellular)
 - [ ] Location updates degrade gracefully with no GPS signal (indoors, tunnels) — app doesn't crash or spam invalid coordinates

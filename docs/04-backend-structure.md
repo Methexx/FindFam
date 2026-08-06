@@ -69,10 +69,9 @@ apps/backend/
 │   │   └── redis-pubsub.ts        # Pub/Sub fan-out for multi-instance scaling
 │   ├── queue/
 │   │   ├── sos.queue.ts           # BullMQ queue definition
-│   │   └── sos.worker.ts          # Worker: FCM push → Twilio SMS fallback
+│   │   └── sos.worker.ts          # Worker: FCM push to each emergency contact, retried with backoff
 │   ├── lib/
 │   │   ├── fcm.ts                 # Firebase Admin SDK wrapper
-│   │   ├── twilio.ts              # Twilio client wrapper
 │   │   ├── jwt.ts                 # sign/verify helpers
 │   │   └── password.ts            # hash/verify helpers
 │   └── types/
@@ -104,21 +103,19 @@ Each module follows the same four-file pattern for consistency and testability:
 
 ## Environment Variables (`.env` — validated via zod at boot)
 ```
-DATABASE_URL=
-REDIS_URL=
+DATABASE_URL=          # Supabase connection string (local dev: Dockerized Postgres)
+REDIS_URL=              # Upstash connection string (local dev: Dockerized Redis)
 JWT_SECRET=
 JWT_REFRESH_SECRET=
 ADMIN_JWT_SECRET=
 FCM_SERVICE_ACCOUNT_JSON=
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_FROM_NUMBER=
 SENTRY_DSN=
 NODE_ENV=
 PORT=
 ```
+No Twilio/SMS credentials — free-tier MVP delivers SOS alerts via FCM only (see 00-master-project-reference.md cost/scope decision).
 
 ## Testing Approach
 - Unit tests for services (mock repositories)
-- Integration tests for routes against a dedicated `famshare_test` database on the same local Postgres instance as dev (not a separate Docker Compose profile/service — one Postgres container hosts both `famshare` and `famshare_test`, the latter created via `infra/postgres-init/01-create-test-db.sql` on first container init). Backend `vitest.config.ts` points `DATABASE_URL` at `famshare_test`; migrations are applied to it via `npm run migrate:test` (reads `.env.test`), kept separate from `npm run migrate` (reads `.env`, applies to dev). This keeps `npm test` from truncating dev data.
+- Integration tests for routes against a test Postgres instance (Docker Compose test profile)
 - Prioritize test coverage on: auth flow, SOS trigger path, geofence containment queries — the three highest-consequence code paths

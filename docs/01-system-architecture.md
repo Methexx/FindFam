@@ -25,7 +25,6 @@ flowchart TB
 
     subgraph External["External Services"]
         FCM["Firebase Cloud Messaging"]
-        Twilio["Twilio SMS"]
         Sentry["Sentry"]
     end
 
@@ -40,7 +39,6 @@ flowchart TB
     API --> Queue
     Queue --> Redis
     Queue --> FCM
-    Queue --> Twilio
 
     API -.errors.-> Sentry
     WS -.errors.-> Sentry
@@ -73,8 +71,9 @@ flowchart TB
 - Uses Redis Pub/Sub as the fan-out layer so this can scale horizontally later (single instance is fine for MVP, but the pattern is in place from day one)
 
 ### Backend — Queue worker (BullMQ + Redis)
-- Consumes SOS-trigger jobs and handles delivery with retries: FCM push → SMS fallback via Twilio if push fails or isn't acknowledged within a threshold
+- Consumes SOS-trigger jobs and handles delivery with retries: FCM push to each emergency contact, retried with backoff if delivery isn't confirmed
 - Decouples "SOS was triggered" (must be instant, must never be lost) from "notification was delivered" (may need retries)
+- Free-tier MVP delivers via FCM only — emergency contacts must be FamShare users (see 00-master-project-reference.md cost/scope decision); SMS fallback for non-app contacts is a future paid-tier addition, not implemented here
 
 ### Data layer
 - **PostgreSQL + PostGIS**: source of truth for users, circles, locations, messages, emergency contacts, SOS events. PostGIS enables geofence containment queries for Tier 1 place alerts.
@@ -97,12 +96,13 @@ flowchart TB
 - **PostGIS**: purpose-built for geofence/proximity queries (`ST_DWithin`, `ST_Contains`), avoids hand-rolling distance math in application code
 
 ## Environments
-| Environment | Backend | Admin Web | Database |
-|---|---|---|---|
-| Local dev | Docker Compose (Fastify container) | `next dev` | Dockerized Postgres+PostGIS + Redis |
-| Staging | Railway/Fly.io (staging service) | Vercel preview deployment | Managed Postgres (staging instance) |
-| Production | Railway/Fly.io (prod service) | Vercel production | Managed Postgres (prod instance, PostGIS enabled) |
+| Environment | Backend | Admin Web | Database | Redis |
+|---|---|---|---|---|
+| Local dev | Docker Compose (Fastify container) | `next dev` | Dockerized Postgres+PostGIS | Dockerized Redis |
+| Staging/Production | Render (free tier, single service — no separate staging environment on the free tier; see note below) | Vercel (preview deployments per PR + production) | Supabase (free tier, PostGIS enabled) | Upstash (free tier) |
 
-## Open Questions to Resolve Before Building
-- Managed Postgres provider for PostGIS support (Supabase, Railway, Neon — confirm PostGIS extension availability on chosen tier)
-- Whether WebSocket gateway and REST API run as one Fastify process or two separate services (MVP recommendation: one process, split later only if scaling requires it)
+**Note:** the free-tier stack does not support a fully separate staging environment for the backend without a second paid Render service. For now, Render's PR preview / manual promotion workflow substitutes for staging — treat `main` deploys carefully and rely on the CI test suite (run against the isolated test DB, per Sprint 2) as the primary safety net before merge.
+
+## Resolved Decisions
+- **Managed Postgres provider:** Supabase (free tier, PostGIS confirmed available) — resolved August 2026, see 00-master-project-reference.md
+- **WebSocket gateway and REST API:** run as one Fastify process (MVP decision, split later only if scaling requires it — no change from original plan)

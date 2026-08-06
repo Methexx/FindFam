@@ -29,7 +29,7 @@ Defines how location updates, chat messages, and SOS events flow in real time be
 
 ### SOS channel — `circle:{circleId}:sos` + `admin:sos`
 - **Publish trigger:** client sends `sos:trigger` → server immediately writes an `sos_events` row (`status: active`) → publishes `sos:broadcast` to both the circle channel and the global `admin:sos` channel **synchronously**, before anything else happens
-- **Separately, enqueues a BullMQ job** for guaranteed-delivery notification (FCM push to emergency contacts, SMS fallback via Twilio) — this is decoupled from the WS broadcast specifically so that a queue/worker failure never delays or blocks the real-time alert to the circle and admin dashboard
+- **Separately, enqueues a BullMQ job** for guaranteed-delivery notification (FCM push to emergency contacts — free-tier MVP has no SMS path, see 00-master-project-reference.md) — this is decoupled from the WS broadcast specifically so that a queue/worker failure never delays or blocks the real-time alert to the circle and admin dashboard
 - **Resolution:** `sos:resolved` broadcast when the triggering user or an admin marks the event resolved
 
 ## Why WS broadcast and queue delivery are split

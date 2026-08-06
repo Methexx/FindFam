@@ -28,15 +28,20 @@ Existing family location-sharing apps (Life360) dominate the market but are wide
 - **Mobile:** Flutter (iOS + Android)
 - **Backend:** Node.js + Fastify (TypeScript)
 - **Admin Web:** Next.js + shadcn/ui + Tailwind
-- **Database:** PostgreSQL + PostGIS (geospatial queries)
+- **Database:** PostgreSQL + PostGIS via **Supabase** (free tier — 500MB, PostGIS enabled)
 - **Realtime:** WebSocket (location broadcast + chat), Redis Pub/Sub (fan-out if scaled)
-- **Queue:** Redis + BullMQ (SOS delivery retries)
-- **Push:** Firebase Cloud Messaging (FCM)
-- **SMS fallback:** Twilio (SOS alerts to non-app emergency contacts)
-- **Auth:** JWT (7-day refresh pattern), bcrypt/argon2 password hashing
+- **Queue:** Redis + BullMQ (SOS delivery retries) via **Upstash** (free tier)
+- **Push:** Firebase Cloud Messaging (FCM) — sole SOS delivery channel (see scope decision below)
+- **Auth:** JWT (7-day refresh pattern), argon2id password hashing
 - **Repo structure:** Monorepo (Turborepo)
-- **Deploy:** Backend + Admin web → Railway/Fly.io + Vercel; Mobile → CI-built APK/IPA
-- **DevOps:** Docker + Docker Compose (local), GitHub Actions (CI/CD), Sentry (error tracking)
+- **Deploy:** Backend → **Render** (free tier); Admin web → **Vercel** (free tier); Mobile → CI-built APK/IPA, distributed via Google Play **Closed Testing** track
+- **DevOps:** Docker + Docker Compose (local dev only), GitHub Actions (CI/CD), Sentry (error tracking)
+
+## Cost & Scope Decision (locked — August 2026)
+FamShare's MVP runs entirely on free tiers with **zero recurring paid services**. The only real cost is Google Play's one-time $25 developer registration fee (already covered), which is a one-time store fee, not a recurring service. This drove one scope change:
+- **Emergency contacts must be existing FamShare users.** Twilio SMS (for non-app contacts) is dropped from the free-tier MVP — SOS delivery goes through FCM push only. External phone-only contacts with SMS delivery are a possible future paid-tier feature, not part of this build.
+- Supabase free-tier projects pause after 7 days of zero API activity — mitigated with a scheduled GitHub Actions health-check ping (see 10-production-readiness.md).
+- Render's free backend tier spins down after 15 minutes idle (30–60s cold start on the next request) — a known, accepted limitation for a limited-user closed test, not something to engineer around on the free tier.
 
 ## Monorepo Structure (reference — full detail in 08-flutter-app-structure and 04-backend-structure)
 ```

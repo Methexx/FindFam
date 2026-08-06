@@ -103,10 +103,11 @@ Index on `(circle_id, sent_at DESC)` for chat history pagination.
 |---|---|---|
 | id | uuid, PK | |
 | user_id | uuid, FK → users.id | the account setting the contact |
-| contact_user_id | uuid, FK → users.id, nullable | set if the contact is a FamShare user |
-| name | text, not null | display name if not an app user |
-| phone | text, not null | required — SMS fallback depends on this |
+| contact_user_id | uuid, FK → users.id, **not null** | must be an existing FamShare user — free-tier MVP requires SOS contacts to be app users, see 00-master-project-reference.md cost/scope decision |
+| phone | text, nullable | informational display only in the free tier — no SMS delivery is sent to it |
 | priority | smallint, default 1 | order to notify in |
+
+**Note:** the original design allowed a non-app contact identified only by name + phone, with SMS delivery via Twilio. That path is dropped for the free-tier MVP (no paid SMS service) — emergency contacts must be FamShare users so SOS delivery can go entirely through free FCM push. Re-introducing external phone-only contacts with SMS is a candidate future paid-tier feature.
 
 ### `sos_events`
 | Column | Type | Notes |
