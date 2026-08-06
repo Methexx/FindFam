@@ -98,7 +98,7 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
       children: [
         TileLayer(
           urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'app.famshare.mobile',
+          userAgentPackageName: 'app.findfam.mobile',
         ),
         MarkerLayer(
           markers: points

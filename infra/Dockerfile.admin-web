@@ -8,13 +8,13 @@ COPY package.json package-lock.json* ./
 COPY apps/admin-web/package.json apps/admin-web/package.json
 COPY packages/shared-types/package.json packages/shared-types/package.json
 COPY packages/config/package.json packages/config/package.json
-RUN npm install --workspace=@famshare/admin-web --include-workspace-root
+RUN npm install --workspace=@findfam/admin-web --include-workspace-root
 
 FROM base AS build
 COPY --from=deps /repo/node_modules ./node_modules
 COPY --from=deps /repo/apps/admin-web/node_modules ./apps/admin-web/node_modules
 COPY . .
-RUN npm run build --workspace=@famshare/admin-web
+RUN npm run build --workspace=@findfam/admin-web
 
 FROM node:20-alpine AS runtime
 WORKDIR /repo/apps/admin-web

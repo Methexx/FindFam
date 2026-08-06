@@ -15,6 +15,6 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npm run lint --workspace=@famshare/backend
+      - run: npm run lint --workspace=@findfam/backend
       # TODO: Sprint 1 — add test and build steps
       # TODO: later sprint — add deploy step (Railway/Fly.io)

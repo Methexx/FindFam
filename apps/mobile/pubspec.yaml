@@ -35,7 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  # FamShare feature dependencies (declared in Sprint 0, wired up in later sprints)
+  # FindFam feature dependencies (declared in Sprint 0, wired up in later sprints)
   flutter_riverpod: ^2.5.0
   dio: ^5.4.0
   web_socket_channel: ^2.4.0

@@ -4,14 +4,14 @@ import 'features/auth/ui/home_placeholder_screen.dart';
 import 'features/auth/ui/login_screen.dart';
 import 'features/auth/viewmodel/auth_notifier.dart';
 
-class FamShareApp extends ConsumerStatefulWidget {
-  const FamShareApp({super.key});
+class FindFamApp extends ConsumerStatefulWidget {
+  const FindFamApp({super.key});
 
   @override
-  ConsumerState<FamShareApp> createState() => _FamShareAppState();
+  ConsumerState<FindFamApp> createState() => _FindFamAppState();
 }
 
-class _FamShareAppState extends ConsumerState<FamShareApp> {
+class _FindFamAppState extends ConsumerState<FindFamApp> {
   @override
   void initState() {
     super.initState();
@@ -31,7 +31,7 @@ class _FamShareAppState extends ConsumerState<FamShareApp> {
     };
 
     return MaterialApp(
-      title: 'FamShare',
+      title: 'FindFam',
       home: home,
     );
   }

@@ -1,5 +1,5 @@
 import { cookies } from 'next/headers';
-import type { AdminCircleSummary } from '@famshare/shared-types';
+import type { AdminCircleSummary } from '@findfam/shared-types';
 
 async function fetchCircles(): Promise<AdminCircleSummary[]> {
   const token = cookies().get('admin_token')?.value;

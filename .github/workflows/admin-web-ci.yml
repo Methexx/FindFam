@@ -15,5 +15,5 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npm run lint --workspace=@famshare/admin-web
+      - run: npm run lint --workspace=@findfam/admin-web
       # TODO: Sprint 2 — add build step, Vercel preview deployment

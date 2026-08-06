@@ -1,5 +1,5 @@
 {
-  "name": "@famshare/backend",
+  "name": "@findfam/backend",
   "version": "0.0.0",
   "private": true,
   "main": "dist/server.js",
@@ -9,12 +9,12 @@
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
-    "migrate": "node --env-file=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js",
+    "migrate": "node --env-file=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js -d DATABASE_MIGRATIONS_URL",
     "migrate:test": "node --env-file=.env.test ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js",
     "seed:admin": "node --env-file=.env ../../node_modules/tsx/dist/cli.mjs scripts/seed-admin.ts"
   },
   "dependencies": {
-    "@famshare/shared-types": "*",
+    "@findfam/shared-types": "*",
     "@fastify/rate-limit": "^9.1.0",
     "@fastify/websocket": "^10.0.0",
     "argon2": "^0.41.0",
@@ -28,7 +28,7 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@famshare/config": "*",
+    "@findfam/config": "*",
     "@types/node": "^20.14.0",
     "@types/pg": "^8.11.0",
     "@types/ws": "^8.18.1",
