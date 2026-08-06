@@ -17,6 +17,14 @@ export interface Follow {
   createdAt: string;
 }
 
+export interface SendFollowRequest {
+  followeeUsername: string;
+}
+
+export interface RespondFollowRequest {
+  action: 'accept' | 'reject';
+}
+
 export interface Admin {
   id: string;
   email: string;
