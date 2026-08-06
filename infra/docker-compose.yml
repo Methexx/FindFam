@@ -3,16 +3,16 @@ services:
     image: postgis/postgis:16-3.4
     restart: unless-stopped
     environment:
-      POSTGRES_USER: famshare
-      POSTGRES_PASSWORD: famshare
-      POSTGRES_DB: famshare
+      POSTGRES_USER: findfam
+      POSTGRES_PASSWORD: findfam
+      POSTGRES_DB: findfam
     ports:
       - '5432:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./postgres-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U famshare -d famshare']
+      test: ['CMD-SHELL', 'pg_isready -U findfam -d findfam']
       interval: 5s
       timeout: 5s
       retries: 10
