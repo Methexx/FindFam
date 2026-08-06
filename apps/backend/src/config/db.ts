@@ -29,10 +29,36 @@ export interface RefreshTokensTable {
   created_at: Generated<Date>;
 }
 
+export interface FollowsTable {
+  id: Generated<string>;
+  follower_id: string;
+  followee_id: string;
+  status: 'pending' | 'accepted' | 'blocked';
+  created_at: Generated<Date>;
+}
+
+export interface CirclesTable {
+  id: Generated<string>;
+  name: string;
+  owner_id: string;
+  created_at: Generated<Date>;
+  deleted_at: Date | null;
+}
+
+export interface CircleMembersTable {
+  circle_id: string;
+  user_id: string;
+  role: 'owner' | 'member';
+  joined_at: Generated<Date>;
+}
+
 export interface Database {
   users: UsersTable;
   admins: AdminsTable;
   refresh_tokens: RefreshTokensTable;
+  follows: FollowsTable;
+  circles: CirclesTable;
+  circle_members: CircleMembersTable;
 }
 
 const pool = new Pool({ connectionString: env.DATABASE_URL });

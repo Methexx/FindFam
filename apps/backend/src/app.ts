@@ -5,10 +5,12 @@ import authPlugin from './plugins/auth';
 import adminAuthPlugin from './plugins/admin-auth';
 import authRoutes from './modules/auth/auth.routes';
 import adminRoutes from './modules/admin/admin.routes';
+import followsRoutes from './modules/follows/follows.routes';
+import circlesRoutes from './modules/circles/circles.routes';
 
-// TODO: Sprint 2+ — register remaining plugins (websocket, sentry) and module
-// routes (follows, circles, locations, geofences, messages, emergency-contacts, sos)
-// as they're implemented.
+// TODO: Sprint 3+ — register remaining plugins (websocket, sentry) and module
+// routes (locations, geofences, messages, emergency-contacts, sos) as they're
+// implemented.
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: true });
@@ -27,6 +29,8 @@ export function buildApp(): FastifyInstance {
 
   app.register(authRoutes, { prefix: '/api/v1' });
   app.register(adminRoutes, { prefix: '/api/v1' });
+  app.register(followsRoutes, { prefix: '/api/v1' });
+  app.register(circlesRoutes, { prefix: '/api/v1' });
 
   app.get('/health', async () => {
     return { status: 'ok' };

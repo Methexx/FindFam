@@ -17,6 +17,14 @@ export function findUserById(id: string) {
   return db.selectFrom('users').selectAll().where('id', '=', id).executeTakeFirst();
 }
 
+export function findUserByUsername(username: string) {
+  return db
+    .selectFrom('users')
+    .selectAll()
+    .where((eb) => eb(eb.fn('lower', ['username']), '=', username.toLowerCase()))
+    .executeTakeFirst();
+}
+
 export function createUser(input: {
   username: string;
   email: string;

@@ -9,8 +9,10 @@ yarn-error.log*
 
 # Env
 .env
+.env.test
 .env.local
 .env.*.local
+!.env.test.example
 
 # Flutter / Dart
 apps/mobile/.dart_tool/

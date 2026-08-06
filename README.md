@@ -93,6 +93,17 @@ npm run seed:admin -- --email=admin@example.com --password=changeme
 
 Credentials can also be supplied via `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` environment variables instead of flags. The script is idempotent — running it again with the same email makes no changes.
 
+## Running backend tests
+
+The backend integration test suite runs against a separate `famshare_test` database (same Postgres container as dev, different database name), so `npm test` never touches your dev data. Copy `apps/backend/.env.test.example` to `apps/backend/.env.test` and fill in the secrets, then apply migrations to both databases:
+
+```bash
+cd apps/backend
+npm run migrate -- up        # dev database (famshare)
+npm run migrate:test -- up   # test database (famshare_test)
+npm run test
+```
+
 ## Root Scripts
 
 The root package uses Turbo to run workspace tasks:
