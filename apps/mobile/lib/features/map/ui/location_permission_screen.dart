@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../viewmodel/location_sharing_notifier.dart';
 
 /// Shown before the system location-permission prompt fires. Explaining
-/// why FamShare needs background location first — rather than firing the
+/// why FindFam needs background location first — rather than firing the
 /// system dialog cold — measurably improves grant rates and matches App
 /// Store review expectations for apps requesting background location
 /// (see docs/08-flutter-app-structure.md).
@@ -45,7 +45,7 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
             const Icon(Icons.people_outline, size: 64),
             const SizedBox(height: 24),
             const Text(
-              'FamShare shows your location to the circles you choose to join — '
+              'FindFam shows your location to the circles you choose to join — '
               'and only while you\'re sharing.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16),

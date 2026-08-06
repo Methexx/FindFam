@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Mobile</string>
+	<string>FindFam</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -15,7 +15,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>mobile</string>
+	<string>FindFam</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -30,9 +30,9 @@
 	     after the user opts in via location_permission_screen.dart, per
 	     docs/08-flutter-app-structure.md — never cold on first launch. -->
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>FamShare shows your location to the circles you choose to share with.</string>
+	<string>FindFam shows your location to the circles you choose to share with.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>FamShare shares your location with your circles in the background so members can see where you are, even when the app isn't open.</string>
+	<string>FindFam shares your location with your circles in the background so members can see where you are, even when the app isn't open.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

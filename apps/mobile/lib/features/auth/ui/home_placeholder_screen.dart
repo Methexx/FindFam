@@ -12,7 +12,7 @@ class HomePlaceholderScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('FamShare')),
+      appBar: AppBar(title: const Text('FindFam')),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

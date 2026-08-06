@@ -72,7 +72,7 @@ class LocationService {
             distanceFilter: 20,
             intervalDuration: const Duration(seconds: 10),
             foregroundNotificationConfig: const ForegroundNotificationConfig(
-              notificationTitle: 'FamShare is sharing your location',
+              notificationTitle: 'FindFam is sharing your location',
               notificationText: 'Tap to open the app',
               enableWakeLock: true,
             ),
