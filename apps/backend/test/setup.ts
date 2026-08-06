@@ -1,2 +1,7 @@
-// TODO: Sprint 1 — test DB setup/teardown against Docker Compose test profile
-export {};
+import { db } from '../src/config/db';
+
+export async function truncateAll() {
+  await db.deleteFrom('refresh_tokens').execute();
+  await db.deleteFrom('users').execute();
+  await db.deleteFrom('admins').execute();
+}
