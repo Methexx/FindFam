@@ -1,6 +1,7 @@
 import { db } from '../src/config/db';
 
 export async function truncateAll() {
+  await db.deleteFrom('locations').execute();
   await db.deleteFrom('circle_members').execute();
   await db.deleteFrom('circles').execute();
   await db.deleteFrom('follows').execute();

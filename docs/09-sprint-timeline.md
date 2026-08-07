@@ -10,7 +10,7 @@
 
 **File/repo structure:**
 ```
-famshare/
+findfam/
 ├── apps/mobile/ (flutter create)
 ├── apps/backend/ (fastify skeleton per 04-backend-structure)
 ├── apps/admin-web/ (next.js skeleton)
@@ -39,7 +39,7 @@ famshare/
 
 **DevOps:**
 - First CI workflow: `backend-ci.yml` (lint → test → build on PR)
-- Deploy backend to a staging environment (Railway/Fly.io) for the first time
+- Deploy backend to Render (free tier) for the first time; database on Supabase (free tier, PostGIS enabled)
 - Sentry wired into backend
 
 **End-of-sprint checkpoint:** a user can register and log in from the mobile app; an admin can log into the admin web separately.
@@ -68,7 +68,7 @@ famshare/
 
 **DevOps:**
 - `mobile-ci.yml` (lint, test, build APK)
-- Redis added to staging environment
+- Redis (Upstash, free tier) provisioned and connected
 
 **Checkpoint:** two test accounts in the same circle can see each other move live on the map.
 
@@ -76,15 +76,15 @@ famshare/
 
 ## Sprint 4 (Weeks 7–8) — Chat + Emergency Contacts + SOS
 **Feature work:**
-- Backend: `realtime/channels/chat.channel.ts`, `modules/messages/`; `modules/emergency-contacts/`; `modules/sos/` + `queue/` (BullMQ setup, FCM + Twilio integration) per 07-data-flow Journey 2
+- Backend: `realtime/channels/chat.channel.ts`, `modules/messages/`; `modules/emergency-contacts/`; `modules/sos/` + `queue/` (BullMQ setup, FCM integration) per 07-data-flow Journey 2
 - Mobile: `features/chat/`, `features/emergency_contacts/`, `features/sos/` (SOS button, active-SOS banner)
 - Admin web: `features/sos` live feed page (subscribes to `admin:sos` WS channel) — this is the dashboard's centerpiece feature
 
 **DevOps:**
-- FCM service account + Twilio credentials added to staging/prod secrets
+- FCM service account credentials added to Render's environment variables
 - Load-test the SOS path specifically (this is your safety-critical path — worth deliberate testing time, not just happy-path checks)
 
-**Checkpoint:** full MVP feature set works end-to-end, including a real SOS trigger delivering push + SMS.
+**Checkpoint:** full MVP feature set works end-to-end, including a real SOS trigger delivering an FCM push notification.
 
 ---
 
@@ -96,8 +96,8 @@ famshare/
 - Mobile: profile screen sharing toggle, geofence-based place alerts
 
 **DevOps:**
-- Staging → production environment split finalized
-- Uptime monitoring (health-check endpoint + external ping service)
+- Uptime monitoring (health-check endpoint + external ping service) — this also doubles as the Supabase keep-alive ping per 00-master-project-reference.md
+- Confirm Render free-tier cold-start behavior is acceptable for the closed-testing group, or evaluate whether it's worth the (paid) always-on upgrade before wider rollout
 
 **Checkpoint:** admin dashboard is a usable moderation tool; app has its first real trust/delight differentiators live.
 

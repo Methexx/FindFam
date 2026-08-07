@@ -17,4 +17,7 @@ jobs:
         working-directory: apps/mobile
       - run: flutter analyze
         working-directory: apps/mobile
-      # TODO: Sprint 3 — add test step, build APK
+      - run: flutter test
+        working-directory: apps/mobile
+      - run: flutter build apk --debug
+        working-directory: apps/mobile

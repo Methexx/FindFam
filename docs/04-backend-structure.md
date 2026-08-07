@@ -69,10 +69,9 @@ apps/backend/
 │   │   └── redis-pubsub.ts        # Pub/Sub fan-out for multi-instance scaling
 │   ├── queue/
 │   │   ├── sos.queue.ts           # BullMQ queue definition
-│   │   └── sos.worker.ts          # Worker: FCM push → Twilio SMS fallback
+│   │   └── sos.worker.ts          # Worker: FCM push to each emergency contact, retried with backoff
 │   ├── lib/
 │   │   ├── fcm.ts                 # Firebase Admin SDK wrapper
-│   │   ├── twilio.ts              # Twilio client wrapper
 │   │   ├── jwt.ts                 # sign/verify helpers
 │   │   └── password.ts            # hash/verify helpers
 │   └── types/
@@ -104,21 +103,28 @@ Each module follows the same four-file pattern for consistency and testability:
 
 ## Environment Variables (`.env` — validated via zod at boot)
 ```
-DATABASE_URL=
-REDIS_URL=
+DATABASE_URL=              # local: Docker Postgres. deployed: Supabase pooled connection
+DATABASE_MIGRATIONS_URL=   # Supabase direct connection string — used only by node-pg-migrate, not set locally
+REDIS_URL=                 # local: Docker Redis. deployed: Upstash Redis TCP connection (rediss://...)
 JWT_SECRET=
 JWT_REFRESH_SECRET=
 ADMIN_JWT_SECRET=
 FCM_SERVICE_ACCOUNT_JSON=
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
-TWILIO_FROM_NUMBER=
 SENTRY_DSN=
 NODE_ENV=
 PORT=
 ```
+`DATABASE_URL` means different things in different environments: locally it's Docker Postgres (`npm run dev` never touches Supabase), and on Render it's Supabase's pooled connection. `DATABASE_MIGRATIONS_URL` is Supabase's direct connection, used only when running `npm run migrate:up`/`migrate:down` against the deployed database — pooled/PgBouncer connections can break node-pg-migrate's DDL/prepared-statement handling, and it's a manual step, not something Render runs automatically. `migrate:dev:up`/`migrate:dev:down` migrate the local Docker database via plain `DATABASE_URL`; `migrate:test:up`/`migrate:test:down` do the same for the isolated local test database (see below).
+
+`migrate:up`/`migrate:down` also pass `-s public -s extensions` — Supabase installs PostGIS into a dedicated `extensions` schema rather than `public` (for security isolation), and node-pg-migrate overrides `search_path` to only its configured schema(s), which defaults to `public` alone. Without this, any migration referencing a PostGIS type (`geography`, etc.) fails with `type "geography" does not exist` even though the extension is installed and enabled. Local Docker Postgres installs PostGIS straight into `public`, so `migrate:test:up`/`migrate:test:down` don't need this flag.
+
+The scripts run `up`/`down` as the first argument, before any other flags — node-pg-migrate's CLI parser only recognizes the command in that position; passing it after `-s`/`-d` flags (e.g. via `npm run migrate -- up`) silently falls through to printing help instead of running.
+
+No Twilio/SMS credentials — free-tier MVP delivers SOS alerts via FCM only (see 00-master-project-reference.md cost/scope decision).
+
+Local dev runs entirely against Docker Compose's Postgres+Redis — Supabase/Upstash are only used by the deployed backend at runtime and by manual `migrate:up` runs against Supabase. `docker-compose.yml` provisions both the day-to-day dev database and the isolated test database on the same local Postgres container, see Testing Approach below.
 
 ## Testing Approach
 - Unit tests for services (mock repositories)
-- Integration tests for routes against a dedicated `famshare_test` database on the same local Postgres instance as dev (not a separate Docker Compose profile/service — one Postgres container hosts both `famshare` and `famshare_test`, the latter created via `infra/postgres-init/01-create-test-db.sql` on first container init). Backend `vitest.config.ts` points `DATABASE_URL` at `famshare_test`; migrations are applied to it via `npm run migrate:test` (reads `.env.test`), kept separate from `npm run migrate` (reads `.env`, applies to dev). This keeps `npm test` from truncating dev data.
+- Integration tests for routes run against local Postgres + Redis (`infra/docker-compose.yml`), never against the live Supabase/Upstash services — a dedicated `findfam_test` database on the local Postgres container, isolated via `.env.test`. `npm run migrate:test:up` applies schema before `npm test` runs. This must never be able to touch real dev or production data.
 - Prioritize test coverage on: auth flow, SOS trigger path, geofence containment queries — the three highest-consequence code paths

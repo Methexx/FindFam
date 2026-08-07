@@ -15,6 +15,7 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npm run lint --workspace=@famshare/backend
+      - run: npm run lint --workspace=@findfam/backend
       # TODO: Sprint 1 — add test and build steps
-      # TODO: later sprint — add deploy step (Railway/Fly.io)
+      # No CI deploy step needed — Render deploys are triggered by its own
+      # git-push integration, not a GitHub Actions step (see render.yaml).

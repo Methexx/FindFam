@@ -1,5 +1,5 @@
 {
-  "name": "@famshare/shared-types",
+  "name": "@findfam/shared-types",
   "version": "0.0.0",
   "private": true,
   "main": "./src/index.ts",

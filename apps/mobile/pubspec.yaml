@@ -35,7 +35,7 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
-  # FamShare feature dependencies (declared in Sprint 0, wired up in later sprints)
+  # FindFam feature dependencies (declared in Sprint 0, wired up in later sprints)
   flutter_riverpod: ^2.5.0
   dio: ^5.4.0
   web_socket_channel: ^2.4.0
@@ -44,9 +44,17 @@ dependencies:
   battery_plus: ^6.0.0
   go_router: ^14.0.0
 
+  # Sprint 3 — live location + map
+  geolocator: ^13.0.0
+  flutter_map: ^7.0.0
+  latlong2: ^0.9.1
+  permission_handler: ^11.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  fake_async: ^1.3.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

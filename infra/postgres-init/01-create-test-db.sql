@@ -1,1 +1,1 @@
-CREATE DATABASE famshare_test;
+CREATE DATABASE findfam_test;

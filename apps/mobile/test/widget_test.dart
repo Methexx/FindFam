@@ -8,7 +8,7 @@ import 'package:mobile/features/auth/data/auth_repository.dart';
 import 'package:mobile/features/auth/viewmodel/auth_notifier.dart';
 
 void main() {
-  testWidgets('FamShareApp shows the login screen when unauthenticated', (tester) async {
+  testWidgets('FindFamApp shows the login screen when unauthenticated', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -16,7 +16,7 @@ void main() {
           // init - seed state as unauthenticated directly instead.
           authNotifierProvider.overrideWith((ref) => _NoRestoreAuthNotifier()),
         ],
-        child: const FamShareApp(),
+        child: const FindFamApp(),
       ),
     );
     await tester.pump();

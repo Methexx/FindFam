@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: findfam-backend
+    runtime: docker
+    dockerfilePath: ./infra/Dockerfile.backend
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      # Values are entered directly in Render's dashboard, not here — this
+      # file only declares which keys the service expects.
+      - key: DATABASE_URL
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: ADMIN_JWT_SECRET
+        sync: false
+      - key: FCM_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      # SENTRY_DSN intentionally omitted — deferred to doc 10 production
+      # readiness, not needed for this deploy.
+      # DATABASE_MIGRATIONS_URL intentionally omitted — migrations are run
+      # manually (npm run migrate) against Supabase's direct connection,
+      # not as part of the deploy, so the deployed service never needs it.

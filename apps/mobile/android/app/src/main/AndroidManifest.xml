@@ -1,6 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Sprint 3 — background location sharing. Coarse+fine are the normal
+         foreground grant; background is requested as a second, separate
+         prompt only after the user opts into sharing (see
+         location_permission_screen.dart). Foreground-service permissions
+         back the persistent "you are sharing" notification required by
+         both Android 10+ background-location policy and the product's
+         privacy-first positioning. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <application
-        android:label="mobile"
+        android:label="FindFam"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -52,6 +52,17 @@ export interface CircleMembersTable {
   joined_at: Generated<Date>;
 }
 
+export interface LocationsTable {
+  id: Generated<string>;
+  user_id: string;
+  // geography(Point, 4326) — no native Kysely type; written/read via raw SQL
+  // (ST_MakePoint on insert, ST_X/ST_Y on select) rather than modeled here.
+  geom: string;
+  speed: number | null;
+  battery_level: number | null;
+  recorded_at: Date;
+}
+
 export interface Database {
   users: UsersTable;
   admins: AdminsTable;
@@ -59,9 +70,24 @@ export interface Database {
   follows: FollowsTable;
   circles: CirclesTable;
   circle_members: CircleMembersTable;
+  locations: LocationsTable;
 }
 
-const pool = new Pool({ connectionString: env.DATABASE_URL });
+// Supabase requires SSL on both its pooled and direct connections; local
+// Docker Postgres doesn't use SSL at all. Rather than a dedicated env var,
+// key off the host — anything not on localhost is assumed to need it.
+// rejectUnauthorized: false because Supabase's certs aren't in Node's
+// default trust store by default; the connection is still encrypted, just
+// not verified against a CA — acceptable here since the connection string
+// itself is the real secret being protected.
+const isLocalDatabase = ['localhost', '127.0.0.1'].includes(
+  new URL(env.DATABASE_URL).hostname,
+);
+
+const pool = new Pool({
+  connectionString: env.DATABASE_URL,
+  ssl: isLocalDatabase ? false : { rejectUnauthorized: false },
+});
 
 export const db = new Kysely<Database>({
   dialect: new PostgresDialect({ pool }),

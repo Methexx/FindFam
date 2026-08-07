@@ -1,6 +1,6 @@
-# FamShare
+# FindFam
 
-FamShare is a privacy-first family safety app for people who want to share live location with trusted circles, chat in context, and send an SOS when something feels wrong. The product is designed to feel closer to a consent-based alternative to Life360 or Zenly than to a surveillance app: everyone in a circle chooses to share, everyone can see the same live map, and SOS alerts go to the circle and emergency contacts.
+FindFam is a privacy-first family safety app for people who want to share live location with trusted circles, chat in context, and send an SOS when something feels wrong. The product is designed to feel closer to a consent-based alternative to Life360 or Zenly than to a surveillance app: everyone in a circle chooses to share, everyone can see the same live map, and SOS alerts go to the circle and emergency contacts.
 
 This repository is a Turborepo monorepo with three apps that share a single backend and database:
 
@@ -12,7 +12,7 @@ This repository is a Turborepo monorepo with three apps that share a single back
 
 ## What The Project Does
 
-At a high level, FamShare lets people create private circles, share their live location on a map, exchange messages, and trigger an SOS that is broadcast immediately and delivered through push notification plus SMS fallback. The admin dashboard is there for moderation and safety monitoring, not for public users.
+At a high level, FindFam lets people create private circles, share their live location on a map, exchange messages, and trigger an SOS that is broadcast immediately and delivered through push notification. The admin dashboard is there for moderation and safety monitoring, not for public users.
 
 The architecture, data model, API surface, and mobile structure are documented in the docs folder:
 - [00-master-project-reference](docs/00-master-project-reference.md)
@@ -27,11 +27,9 @@ The architecture, data model, API surface, and mobile structure are documented i
 - [09-sprint-timeline](docs/09-sprint-timeline.md)
 - [10-production-readiness](docs/10-production-readiness.md)
 
-If you want the feature roadmap, see [famshare-feature-list](docs/famshare-feature-list.md).
-
 ## Current Status
 
-FamShare is still in active development. The repo is set up, the main app shells are in place, and the project is being built out in phases according to [09-sprint-timeline](docs/09-sprint-timeline.md).
+FindFam is still in active development. The repo is set up, the main app shells are in place, and the project is being built out in phases according to [09-sprint-timeline](docs/09-sprint-timeline.md).
 
 ## Repository Layout
 
@@ -49,11 +47,12 @@ docs/           Product, architecture, API, and delivery reference
 
 ## Local Development
 
-Install dependencies at the repo root, start the supporting services, and then run the workspace dev servers:
+Day-to-day dev runs entirely against local Docker Postgres + Redis — Supabase and Upstash (both free tier) are only used by the deployed backend at runtime and by occasional migration runs against Supabase directly (see "Deploying" below). Install dependencies at the repo root, start the local services, copy `apps/backend/.env.example` to `apps/backend/.env` (the local connection strings are already filled in), migrate the local dev database, then run the workspace dev servers:
 
 ```bash
 npm install
 docker compose -f infra/docker-compose.yml up -d
+cd apps/backend && npm run migrate:dev:up && cd ../..
 npm run dev
 ```
 
@@ -87,7 +86,7 @@ There is no public admin registration endpoint — admin accounts are created di
 
 ```bash
 cd apps/backend
-npm run migrate -- up
+npm run migrate:dev:up       # local Docker Postgres — this is what npm run dev talks to
 npm run seed:admin -- --email=admin@example.com --password=changeme
 ```
 
@@ -95,14 +94,25 @@ Credentials can also be supplied via `ADMIN_SEED_EMAIL` / `ADMIN_SEED_PASSWORD` 
 
 ## Running backend tests
 
-The backend integration test suite runs against a separate `famshare_test` database (same Postgres container as dev, different database name), so `npm test` never touches your dev data. Copy `apps/backend/.env.test.example` to `apps/backend/.env.test` and fill in the secrets, then apply migrations to both databases:
+The backend integration test suite runs entirely against local Docker Postgres + Redis (`infra/docker-compose.yml`), never against the live Supabase/Upstash services — this is deliberate, so `npm test` can never touch real dev data. Start the local services, copy `apps/backend/.env.test.example` to `apps/backend/.env.test` and fill in the secrets, then apply migrations to the local test database:
+
+```bash
+docker compose -f infra/docker-compose.yml up -d
+cd apps/backend
+npm run migrate:test:up      # local test database (findfam_test)
+npm run test
+```
+
+## Deploying
+
+The backend deploys to Render, database on Supabase, cache/pub-sub on Upstash — all free tier. Migrations against Supabase are run manually, not as part of the deploy:
 
 ```bash
 cd apps/backend
-npm run migrate -- up        # dev database (famshare)
-npm run migrate:test -- up   # test database (famshare_test)
-npm run test
+npm run migrate:up   # against Supabase, via DATABASE_MIGRATIONS_URL (direct connection, port 5432)
 ```
+
+`DATABASE_URL` in Render's environment is Supabase's **pooled** connection (port 6543, Transaction pooler) — the deployed app never needs the direct connection, so `DATABASE_MIGRATIONS_URL` isn't set on Render at all. See `render.yaml` for the full list of environment variables Render expects (values are entered in Render's dashboard, not committed here).
 
 ## Root Scripts
 
