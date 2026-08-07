@@ -29,8 +29,8 @@ class LocationsRepository {
         data: {
           'lat': lat,
           'lng': lng,
-          if (speed != null) 'speed': speed,
-          if (batteryLevel != null) 'batteryLevel': batteryLevel,
+          'speed': ?speed,
+          'batteryLevel': ?batteryLevel,
         },
       );
     } on DioException catch (e) {

@@ -17,7 +17,7 @@ class ChatRepository {
     try {
       final response = await _apiClient.dio.get(
         '/circles/$circleId/messages',
-        queryParameters: {if (cursor != null) 'cursor': cursor},
+        queryParameters: {'cursor': ?cursor},
       );
       final data = response.data['data'] as Map<String, dynamic>;
       final messages = (data['messages'] as List<dynamic>)

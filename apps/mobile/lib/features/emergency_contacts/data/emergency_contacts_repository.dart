@@ -23,7 +23,7 @@ class EmergencyContactsRepository {
     try {
       final response = await _apiClient.dio.post(
         '/emergency-contacts',
-        data: {'username': username, if (phone != null) 'phone': phone},
+        data: {'username': username, 'phone': ?phone},
       );
       return EmergencyContact.fromJson(response.data['data'] as Map<String, dynamic>);
     } on DioException catch (e) {

@@ -9,10 +9,21 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "prepare": "husky"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.3.0",
     "turbo": "^2.0.0"
   },
-  "packageManager": "npm@10.0.0"
+  "packageManager": "npm@10.0.0",
+  "lint-staged": {
+    "apps/backend/src/**/*.ts": [
+      "eslint --config apps/backend/.eslintrc.json --resolve-plugins-relative-to apps/backend"
+    ],
+    "apps/admin-web/**/*.{ts,tsx}": [
+      "eslint --config apps/admin-web/.eslintrc.json --resolve-plugins-relative-to apps/admin-web"
+    ]
+  }
 }

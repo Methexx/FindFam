@@ -111,8 +111,8 @@ class WsClient {
         'payload': {
           'lat': lat,
           'lng': lng,
-          if (speed != null) 'speed': speed,
-          if (batteryLevel != null) 'batteryLevel': batteryLevel,
+          'speed': ?speed,
+          'batteryLevel': ?batteryLevel,
         },
       }),
     );
