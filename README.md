@@ -47,10 +47,12 @@ docs/           Product, architecture, API, and delivery reference
 
 ## Local Development
 
-The backend's dev database and Redis are hosted (Supabase + Upstash, both free tier) — Docker Compose is only used locally to run the isolated test database/Redis (see "Running backend tests" below), not for day-to-day dev. Install dependencies at the repo root, copy `apps/backend/.env.example` to `apps/backend/.env` and fill in your Supabase/Upstash connection strings, then run the workspace dev servers:
+Day-to-day dev runs entirely against local Docker Postgres + Redis — Supabase and Upstash (both free tier) are only used by the deployed backend at runtime and by occasional migration runs against Supabase directly (see "Deploying" below). Install dependencies at the repo root, start the local services, copy `apps/backend/.env.example` to `apps/backend/.env` (the local connection strings are already filled in), migrate the local dev database, then run the workspace dev servers:
 
 ```bash
 npm install
+docker compose -f infra/docker-compose.yml up -d
+cd apps/backend && npm run migrate:dev:up && cd ../..
 npm run dev
 ```
 
@@ -84,7 +86,7 @@ There is no public admin registration endpoint — admin accounts are created di
 
 ```bash
 cd apps/backend
-npm run migrate -- up        # runs against Supabase via DATABASE_MIGRATIONS_URL (direct connection)
+npm run migrate:dev:up       # local Docker Postgres — this is what npm run dev talks to
 npm run seed:admin -- --email=admin@example.com --password=changeme
 ```
 
@@ -97,9 +99,20 @@ The backend integration test suite runs entirely against local Docker Postgres +
 ```bash
 docker compose -f infra/docker-compose.yml up -d
 cd apps/backend
-npm run migrate:test -- up   # local test database (findfam_test)
+npm run migrate:test:up      # local test database (findfam_test)
 npm run test
 ```
+
+## Deploying
+
+The backend deploys to Render, database on Supabase, cache/pub-sub on Upstash — all free tier. Migrations against Supabase are run manually, not as part of the deploy:
+
+```bash
+cd apps/backend
+npm run migrate:up   # against Supabase, via DATABASE_MIGRATIONS_URL (direct connection, port 5432)
+```
+
+`DATABASE_URL` in Render's environment is Supabase's **pooled** connection (port 6543, Transaction pooler) — the deployed app never needs the direct connection, so `DATABASE_MIGRATIONS_URL` isn't set on Render at all. See `render.yaml` for the full list of environment variables Render expects (values are entered in Render's dashboard, not committed here).
 
 ## Root Scripts
 

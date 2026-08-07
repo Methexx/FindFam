@@ -9,8 +9,12 @@
     "start": "node dist/server.js",
     "lint": "eslint src --ext .ts",
     "test": "vitest run",
-    "migrate": "node --env-file=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js -d DATABASE_MIGRATIONS_URL",
-    "migrate:test": "node --env-file=.env.test ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js",
+    "migrate:dev:up": "node --env-file=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js up",
+    "migrate:dev:down": "node --env-file=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js down",
+    "migrate:up": "node --env-file=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js up -d DATABASE_MIGRATIONS_URL -s public -s extensions",
+    "migrate:down": "node --env-file=.env ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js down -d DATABASE_MIGRATIONS_URL -s public -s extensions",
+    "migrate:test:up": "node --env-file=.env.test ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js up",
+    "migrate:test:down": "node --env-file=.env.test ../../node_modules/node-pg-migrate/bin/node-pg-migrate.js down",
     "seed:admin": "node --env-file=.env ../../node_modules/tsx/dist/cli.mjs scripts/seed-admin.ts"
   },
   "dependencies": {
