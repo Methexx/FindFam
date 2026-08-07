@@ -10,6 +10,7 @@ export interface UsersTable {
   password_hash: string;
   avatar_url: string | null;
   is_sharing: Generated<boolean>;
+  fcm_token: string | null;
   created_at: Generated<Date>;
   updated_at: Date | null;
 }
@@ -63,6 +64,33 @@ export interface LocationsTable {
   recorded_at: Date;
 }
 
+export interface MessagesTable {
+  id: Generated<string>;
+  circle_id: string;
+  sender_id: string;
+  content: string;
+  sent_at: Date;
+}
+
+export interface EmergencyContactsTable {
+  id: Generated<string>;
+  user_id: string;
+  contact_user_id: string;
+  phone: string | null;
+  priority: Generated<number>;
+}
+
+export interface SosEventsTable {
+  id: Generated<string>;
+  user_id: string;
+  // geography(Point, 4326) — no native Kysely type; written/read via raw SQL
+  // (ST_MakePoint on insert, ST_X/ST_Y on select) rather than modeled here.
+  origin: string;
+  status: 'active' | 'resolved' | 'cancelled';
+  triggered_at: Date;
+  resolved_at: Date | null;
+}
+
 export interface Database {
   users: UsersTable;
   admins: AdminsTable;
@@ -71,6 +99,9 @@ export interface Database {
   circles: CirclesTable;
   circle_members: CircleMembersTable;
   locations: LocationsTable;
+  messages: MessagesTable;
+  emergency_contacts: EmergencyContactsTable;
+  sos_events: SosEventsTable;
 }
 
 // Supabase requires SSL on both its pooled and direct connections; local

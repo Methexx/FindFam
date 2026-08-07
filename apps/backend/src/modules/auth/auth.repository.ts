@@ -17,6 +17,15 @@ export function findUserById(id: string) {
   return db.selectFrom('users').selectAll().where('id', '=', id).executeTakeFirst();
 }
 
+export async function findFcmTokenForUser(userId: string) {
+  const row = await db
+    .selectFrom('users')
+    .select('fcm_token')
+    .where('id', '=', userId)
+    .executeTakeFirst();
+  return row?.fcm_token ?? null;
+}
+
 export function findUserByUsername(username: string) {
   return db
     .selectFrom('users')

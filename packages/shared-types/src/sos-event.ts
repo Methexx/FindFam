@@ -8,3 +8,7 @@ export interface SosEvent {
   triggeredAt: string;
   resolvedAt: string | null;
 }
+
+export interface AdminSosEvent extends SosEvent {
+  username: string;
+}

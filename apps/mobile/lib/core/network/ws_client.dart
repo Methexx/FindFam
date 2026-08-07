@@ -111,9 +111,29 @@ class WsClient {
         'payload': {
           'lat': lat,
           'lng': lng,
-          if (speed != null) 'speed': speed,
-          if (batteryLevel != null) 'batteryLevel': batteryLevel,
+          'speed': ?speed,
+          'batteryLevel': ?batteryLevel,
         },
+      }),
+    );
+  }
+
+  void sendMessage({required String circleId, required String content}) {
+    if (_status != WsConnectionStatus.connected) return;
+    _channel?.sink.add(
+      jsonEncode({
+        'type': 'message:send',
+        'payload': {'circleId': circleId, 'content': content},
+      }),
+    );
+  }
+
+  void triggerSos({required double lat, required double lng}) {
+    if (_status != WsConnectionStatus.connected) return;
+    _channel?.sink.add(
+      jsonEncode({
+        'type': 'sos:trigger',
+        'payload': {'lat': lat, 'lng': lng},
       }),
     );
   }

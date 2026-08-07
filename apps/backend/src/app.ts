@@ -10,12 +10,15 @@ import adminRoutes from './modules/admin/admin.routes';
 import followsRoutes from './modules/follows/follows.routes';
 import circlesRoutes from './modules/circles/circles.routes';
 import locationsRoutes from './modules/locations/locations.routes';
+import messagesRoutes from './modules/messages/messages.routes';
+import emergencyContactsRoutes from './modules/emergency-contacts/emergency-contacts.routes';
+import sosRoutes from './modules/sos/sos.routes';
 import wsGateway from './realtime/ws-gateway';
 import { db } from './config/db';
 import { redisPubSub } from './realtime/redis-pubsub';
 
-// TODO: Sprint 4+ — register remaining plugins (sentry) and module routes
-// (geofences, messages, emergency-contacts, sos) as they're implemented.
+// TODO: Sprint 5+ — register remaining plugins (sentry) and module routes
+// (geofences, admin moderation) as they're implemented.
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: true });
@@ -38,6 +41,9 @@ export function buildApp(): FastifyInstance {
   app.register(followsRoutes, { prefix: '/api/v1' });
   app.register(circlesRoutes, { prefix: '/api/v1' });
   app.register(locationsRoutes, { prefix: '/api/v1' });
+  app.register(messagesRoutes, { prefix: '/api/v1' });
+  app.register(emergencyContactsRoutes, { prefix: '/api/v1' });
+  app.register(sosRoutes, { prefix: '/api/v1' });
   app.register(wsGateway);
 
   app.get('/health', async (_request, reply) => {

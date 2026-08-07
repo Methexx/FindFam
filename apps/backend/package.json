@@ -18,13 +18,14 @@
     "seed:admin": "node --env-file=.env ../../node_modules/tsx/dist/cli.mjs scripts/seed-admin.ts"
   },
   "dependencies": {
-    "@findfam/shared-types": "*",
     "@fastify/rate-limit": "^9.1.0",
     "@fastify/websocket": "^10.0.0",
+    "@findfam/shared-types": "*",
     "argon2": "^0.41.0",
     "bullmq": "^5.10.0",
     "fastify": "^4.28.0",
     "fastify-plugin": "^4.5.0",
+    "firebase-admin": "^12.7.0",
     "ioredis": "^5.4.0",
     "jose": "^5.6.0",
     "kysely": "^0.27.0",

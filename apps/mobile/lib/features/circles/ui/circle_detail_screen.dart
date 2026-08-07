@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/viewmodel/auth_notifier.dart';
+import '../../chat/ui/chat_screen.dart';
 import '../../map/ui/circle_map_screen.dart';
 import '../domain/circle.dart';
 import '../viewmodel/circle_detail_notifier.dart';
@@ -101,6 +102,18 @@ class _CircleDetailScreenState extends ConsumerState<CircleDetailScreen> {
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) => CircleMapScreen(circleId: circle.id, circleName: circle.name),
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.chat_bubble_outline),
+            label: const Text('Chat'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => ChatScreen(circleId: circle.id, circleName: circle.name),
               ),
             ),
           ),

@@ -11,5 +11,10 @@ module.exports = {
     node: true,
     es2022: true,
   },
-  rules: {},
+  rules: {
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+    ],
+  },
 };

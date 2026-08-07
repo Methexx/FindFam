@@ -15,6 +15,15 @@ export class AdminAuthError extends Error {
   }
 }
 
+export class AdminError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+  ) {
+    super(message);
+  }
+}
+
 export async function login(body: AdminLoginBody) {
   const admin = await adminRepository.findAdminByEmail(body.email);
   if (!admin) {
@@ -47,4 +56,38 @@ export async function listCircles() {
     memberCount: Number(row.member_count),
     createdAt: row.created_at.toISOString(),
   }));
+}
+
+function toPublicSosEvent(row: {
+  id: string;
+  user_id: string;
+  username: string;
+  lat: number;
+  lng: number;
+  status: string;
+  triggered_at: Date;
+  resolved_at: Date | null;
+}) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    username: row.username,
+    origin: { lat: row.lat, lng: row.lng },
+    status: row.status,
+    triggeredAt: row.triggered_at.toISOString(),
+    resolvedAt: row.resolved_at ? row.resolved_at.toISOString() : null,
+  };
+}
+
+export async function listActiveSos() {
+  const rows = await adminRepository.listActiveSosEvents();
+  return rows.map(toPublicSosEvent);
+}
+
+export async function getSosEvent(id: string) {
+  const row = await adminRepository.findSosEventById(id);
+  if (!row) {
+    throw new AdminError('SOS event not found', 404);
+  }
+  return toPublicSosEvent(row);
 }
