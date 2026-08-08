@@ -49,6 +49,7 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+      - run: cp apps/backend/.env.test.example apps/backend/.env.test
       - run: psql -h localhost -U findfam -d findfam -c "CREATE DATABASE findfam_test;"
         env:
           PGPASSWORD: findfam
