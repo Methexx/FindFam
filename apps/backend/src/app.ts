@@ -4,6 +4,7 @@ import cors from '@fastify/cors';
 import { sql } from 'kysely';
 import { ZodError } from 'zod';
 import { env } from './config/env';
+import { initSentry, captureException } from './plugins/sentry';
 import authPlugin from './plugins/auth';
 import adminAuthPlugin from './plugins/admin-auth';
 import websocketPlugin from './plugins/websocket';
@@ -20,15 +21,15 @@ import wsGateway from './realtime/ws-gateway';
 import { db } from './config/db';
 import { redisPubSub } from './realtime/redis-pubsub';
 
-// TODO: Sprint 6+ — register remaining plugins (sentry) as it's implemented.
-
 export function buildApp(): FastifyInstance {
+  initSentry();
   const app = Fastify({ logger: true });
 
   app.setErrorHandler((err, _request, reply) => {
     if (err instanceof ZodError) {
       return reply.code(400).send({ data: null, error: err.issues[0]?.message ?? 'Invalid request' });
     }
+    captureException(err);
     app.log.error(err);
     return reply.code(500).send({ data: null, error: 'Internal server error' });
   });
