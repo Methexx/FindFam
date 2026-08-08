@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../circles/ui/circles_list_screen.dart';
 import '../../circles/ui/follows_screen.dart';
 import '../../emergency_contacts/ui/emergency_contacts_screen.dart';
+import '../../profile/ui/profile_screen.dart';
+import '../../profile/ui/sharing_indicator.dart';
 import '../../sos/ui/active_sos_banner.dart';
 import '../../sos/ui/circle_sos_alert.dart';
 import '../../sos/ui/sos_button.dart';
@@ -42,6 +44,7 @@ class _HomePlaceholderScreenState extends ConsumerState<HomePlaceholderScreen> {
       body: Column(
         children: [
           const ActiveSosBanner(),
+          const SharingIndicator(),
           Expanded(
             child: Center(
               child: Column(
@@ -70,6 +73,13 @@ class _HomePlaceholderScreenState extends ConsumerState<HomePlaceholderScreen> {
                       MaterialPageRoute(builder: (_) => const EmergencyContactsScreen()),
                     ),
                     child: const Text('Emergency Contacts'),
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                    ),
+                    child: const Text('Profile'),
                   ),
                   const SizedBox(height: 16),
                   OutlinedButton(

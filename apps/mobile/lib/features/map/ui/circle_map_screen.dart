@@ -24,6 +24,7 @@ class CircleMapScreen extends ConsumerStatefulWidget {
 
 class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
   final _mapController = MapController();
+  bool _showMemberList = false;
 
   @override
   void initState() {
@@ -60,6 +61,13 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.circleName),
+        actions: [
+          IconButton(
+            icon: Icon(_showMemberList ? Icons.map : Icons.list),
+            tooltip: _showMemberList ? 'Show map' : 'Show member details',
+            onPressed: () => setState(() => _showMemberList = !_showMemberList),
+          ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(24),
           child: _ConnectionBanner(status: connectionStatus.value),
@@ -83,7 +91,37 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
                   ),
                 ),
               )
-            : _buildMap(locations, currentUserId),
+            : _showMemberList
+                ? _buildMemberList(locations, currentUserId)
+                : _buildMap(locations, currentUserId),
+      },
+    );
+  }
+
+  Widget _buildMemberList(Map<String, MemberLocation> locations, String? currentUserId) {
+    final points = locations.values.toList();
+    return ListView.builder(
+      itemCount: points.length,
+      itemBuilder: (context, index) {
+        final location = points[index];
+        final isSelf = location.userId == currentUserId;
+        final speedText = location.speed != null
+            ? '${(location.speed! * 3.6).toStringAsFixed(0)} km/h'
+            : 'Speed unknown';
+        final batteryText =
+            location.batteryLevel != null ? '${location.batteryLevel}% battery' : 'Battery unknown';
+        return ListTile(
+          leading: Icon(
+            Icons.location_on,
+            color: isSelf ? Colors.blue : Colors.red,
+          ),
+          title: Text(isSelf ? 'You' : location.userId),
+          subtitle: Text('$speedText · $batteryText'),
+          trailing: Text(
+            TimeOfDay.fromDateTime(DateTime.parse(location.recordedAt).toLocal()).format(context),
+            style: const TextStyle(fontSize: 12),
+          ),
+        );
       },
     );
   }
