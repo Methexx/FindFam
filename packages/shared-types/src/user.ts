@@ -30,3 +30,20 @@ export interface Admin {
   email: string;
   createdAt: string;
 }
+
+export interface AdminUser {
+  id: string;
+  username: string;
+  email: string;
+  suspended: boolean;
+  suspendedAt: string | null;
+  createdAt: string;
+}
+
+export interface AdminAuditLogEntry {
+  id: string;
+  adminId: string;
+  action: string;
+  targetUserId: string;
+  createdAt: string;
+}
