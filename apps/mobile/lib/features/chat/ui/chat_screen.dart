@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/widgets/app_empty_state.dart';
 import '../../auth/viewmodel/auth_notifier.dart';
 import '../viewmodel/chat_notifier.dart';
 
@@ -66,25 +67,39 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ChatInitial() || ChatLoading() => const Center(child: CircularProgressIndicator()),
       ChatError(:final message) => Center(child: Text(message)),
       ChatLoaded(messages: final messages) => messages.isEmpty
-          ? const Center(child: Text('No messages yet — say hello'))
-          : ListView.builder(
-              controller: _scrollController,
-              reverse: true,
-              itemCount: messages.length,
-              itemBuilder: (context, index) {
-                final message = messages[index];
-                final isSelf = message.senderId == currentUserId;
-                return Align(
-                  alignment: isSelf ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isSelf ? Colors.blue.shade100 : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(message.content),
-                  ),
+          ? const AppEmptyState(
+              icon: Icons.chat_bubble_outline,
+              message: 'No messages yet — say hello',
+            )
+          : Builder(
+              builder: (context) {
+                final colorScheme = Theme.of(context).colorScheme;
+                return ListView.builder(
+                  controller: _scrollController,
+                  reverse: true,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final isSelf = message.senderId == currentUserId;
+                    return Align(
+                      alignment: isSelf ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelf ? colorScheme.primary : colorScheme.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Text(
+                          message.content,
+                          style: TextStyle(
+                            color: isSelf ? colorScheme.onPrimary : colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
@@ -101,7 +116,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             if (sendError != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text(sendError, style: const TextStyle(color: Colors.red, fontSize: 12)),
+                child: Text(
+                  sendError,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12),
+                ),
               ),
             Row(
               children: [

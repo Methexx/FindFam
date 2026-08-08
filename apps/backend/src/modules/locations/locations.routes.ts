@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { postLocationBodySchema } from './locations.schema';
+import { postLocationBodySchema, updateSharingStatusBodySchema } from './locations.schema';
 import * as locationsService from './locations.service';
 import { LocationError } from './locations.service';
 import { rateLimitConfig } from '../../lib/rate-limit-config';
@@ -39,6 +39,16 @@ const locationsRoutes: FastifyPluginAsync = async (fastify) => {
         }
         throw err;
       }
+    },
+  );
+
+  fastify.patch(
+    '/locations/sharing-status',
+    { preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const body = updateSharingStatusBodySchema.parse(request.body);
+      const result = await locationsService.updateSharingStatus(request.user!.id, body.isSharing);
+      return reply.send({ data: result, error: null });
     },
   );
 };

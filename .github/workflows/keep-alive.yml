@@ -1,0 +1,24 @@
+name: Keep Alive
+
+# Pings the deployed backend's /health endpoint every 3 days to prevent
+# Supabase's free-tier project from pausing after 7 days of zero API
+# activity (see docs/00-master-project-reference.md). BACKEND_HEALTH_URL
+# is unset until the backend is actually deployed (Render deploy is
+# explicitly out of scope until the full feature set is stable) — this
+# workflow is a no-op until that secret is configured.
+on:
+  schedule:
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend health endpoint
+        run: |
+          if [ -z "${{ secrets.BACKEND_HEALTH_URL }}" ]; then
+            echo "BACKEND_HEALTH_URL not set yet — nothing deployed, skipping."
+            exit 0
+          fi
+          curl -fsS "${{ secrets.BACKEND_HEALTH_URL }}"

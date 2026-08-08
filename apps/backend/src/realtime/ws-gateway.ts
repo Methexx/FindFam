@@ -41,6 +41,27 @@ function send(socket: WebSocket, data: unknown) {
   socket.send(JSON.stringify(data));
 }
 
+// Mirrors the REST POST /locations limit (30/min, see lib/rate-limit-config.ts)
+// so a client can't bypass that throttle by pushing location:update over WS
+// instead. Per-connection, not per-user, since a user's connections don't
+// share a socket to track state on.
+const LOCATION_UPDATE_LIMIT = 30;
+const LOCATION_UPDATE_WINDOW_MS = 60_000;
+
+function isRateLimited(timestamps: number[]): boolean {
+  if (env.NODE_ENV === 'test') return false;
+  const now = Date.now();
+  const windowStart = now - LOCATION_UPDATE_WINDOW_MS;
+  while (timestamps.length > 0 && (timestamps[0] as number) < windowStart) {
+    timestamps.shift();
+  }
+  if (timestamps.length >= LOCATION_UPDATE_LIMIT) {
+    return true;
+  }
+  timestamps.push(now);
+  return false;
+}
+
 // Tracks which users currently have at least one open, authenticated WS
 // connection — used to decide who needs an FCM push for a chat message
 // they'd otherwise miss in real time. A refcount (not a boolean) so a user
@@ -48,20 +69,51 @@ function send(socket: WebSocket, data: unknown) {
 // of their connections closes.
 const connectedUserRefcounts = new Map<string, number>();
 
+// Parallel registry of the actual sockets per user, used only for admin
+// force-disconnect (suspension) — kept separate from the refcount map
+// since most callers only need the boolean/count, not the sockets.
+const connectedSockets = new Map<string, Set<WebSocket>>();
+
 export function isUserConnected(userId: string): boolean {
   return (connectedUserRefcounts.get(userId) ?? 0) > 0;
 }
 
-function markUserConnected(userId: string) {
-  connectedUserRefcounts.set(userId, (connectedUserRefcounts.get(userId) ?? 0) + 1);
+// Closes every open, authenticated WS connection for a user — used when an
+// admin suspends an account, per docs/07-data-flow.md Journey 5's
+// requirement that suspension force-disconnects live sessions immediately
+// rather than waiting for the socket to close naturally.
+export function forceDisconnectUser(userId: string): void {
+  const sockets = connectedSockets.get(userId);
+  if (!sockets) return;
+  for (const socket of sockets) {
+    socket.close(4001, 'Account suspended');
+  }
 }
 
-function markUserDisconnected(userId: string) {
+function markUserConnected(userId: string, socket: WebSocket) {
+  connectedUserRefcounts.set(userId, (connectedUserRefcounts.get(userId) ?? 0) + 1);
+  let sockets = connectedSockets.get(userId);
+  if (!sockets) {
+    sockets = new Set();
+    connectedSockets.set(userId, sockets);
+  }
+  sockets.add(socket);
+}
+
+function markUserDisconnected(userId: string, socket: WebSocket) {
   const count = connectedUserRefcounts.get(userId) ?? 0;
   if (count <= 1) {
     connectedUserRefcounts.delete(userId);
   } else {
     connectedUserRefcounts.set(userId, count - 1);
+  }
+
+  const sockets = connectedSockets.get(userId);
+  if (sockets) {
+    sockets.delete(socket);
+    if (sockets.size === 0) {
+      connectedSockets.delete(userId);
+    }
   }
 }
 
@@ -82,6 +134,7 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
     let userId: string | null = null;
     let isAdmin = false;
     const subscribedChannels = new Set<string>();
+    const locationUpdateTimestamps: number[] = [];
     const forwardToClient = (message: string) => send(socket, JSON.parse(message));
 
     const cleanup = async () => {
@@ -92,7 +145,7 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
       );
       subscribedChannels.clear();
       if (userId) {
-        markUserDisconnected(userId);
+        markUserDisconnected(userId, socket);
       }
     };
 
@@ -145,7 +198,7 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
           return socket.close();
         }
 
-        markUserConnected(userId);
+        markUserConnected(userId, socket);
 
         const circles = await circlesRepository.listCirclesForUser(userId);
         for (const circle of circles) {
@@ -173,6 +226,10 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
       }
 
       if (parsed.data.type === 'location:update') {
+        if (isRateLimited(locationUpdateTimestamps)) {
+          send(socket, { type: 'error', error: 'Rate limit exceeded' });
+          return;
+        }
         const result = await handleLocationUpdate(userId, parsedJson);
         if (!result.ok) {
           send(socket, { type: 'error', error: result.error });

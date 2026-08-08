@@ -2,6 +2,18 @@
 
 A new Flutter project.
 
+## Error tracking
+
+Sentry is wired in `lib/main.dart` but reads its DSN from a compile-time
+define rather than a checked-in file (same treatment as `firebase_options.dart`
+— gitignored, provided per-environment). Run/build with:
+
+```
+flutter run --dart-define=SENTRY_DSN=<your-dsn>
+```
+
+Omitting the flag is safe — an empty DSN is a valid no-op for local dev.
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.

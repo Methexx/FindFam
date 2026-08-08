@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/widgets/app_empty_state.dart';
 import '../viewmodel/circles_notifier.dart';
 import 'circle_detail_screen.dart';
 
@@ -59,24 +60,31 @@ class _CirclesListScreenState extends ConsumerState<CirclesListScreen> {
         CirclesInitial() || CirclesLoading() => const Center(child: CircularProgressIndicator()),
         CirclesError(:final message) => Center(child: Text(message)),
         CirclesLoaded(circles: final circles) => circles.isEmpty
-            ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    "You're not in any circles yet — create one or wait for an invite",
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+            ? const AppEmptyState(
+                icon: Icons.group_outlined,
+                message: "You're not in any circles yet — create one or wait for an invite",
               )
-            : ListView.builder(
+            : ListView.separated(
+                padding: const EdgeInsets.all(16),
                 itemCount: circles.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final circle = circles[index];
-                  return ListTile(
-                    title: Text(circle.name),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => CircleDetailScreen(circleId: circle.id),
+                  return Card(
+                    child: ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                        child: Icon(
+                          Icons.group,
+                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                      title: Text(circle.name),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CircleDetailScreen(circleId: circle.id),
+                        ),
                       ),
                     ),
                   );

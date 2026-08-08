@@ -14,6 +14,13 @@ const envSchema = z.object({
   SENTRY_DSN: z.string(),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(3000),
+  // Comma-separated list of origins allowed to call the API from a browser
+  // (i.e. admin-web). Mobile isn't affected — native HTTP clients aren't
+  // subject to CORS. Defaults to admin-web's local dev port.
+  ALLOWED_ORIGINS: z
+    .string()
+    .default('http://localhost:3001')
+    .transform((value) => value.split(',').map((origin) => origin.trim())),
 });
 
 export type Env = z.infer<typeof envSchema>;

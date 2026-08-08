@@ -64,3 +64,25 @@ Keep the access token payload minimal — no circle memberships or roles embedde
 
 ## Admin Token Storage Note
 Store the admin JWT in an **httpOnly, secure cookie**, not localStorage — the admin dashboard is a web app and is more exposed to XSS than the mobile app; httpOnly cookies prevent token theft via injected scripts.
+
+## JWT Secret Rotation (not yet automated)
+`JWT_SECRET` and `ADMIN_JWT_SECRET` are static values from env — no rotation
+mechanism exists as of Sprint 6. If a secret needs rotating (suspected leak,
+routine hygiene), the tradeoff is:
+
+- Rotating `JWT_SECRET` invalidates every currently-issued **access token**
+  immediately. Given the 15-minute lifetime, blast radius is low — affected
+  users just need a silent refresh (which uses the *refresh* token, a
+  separate secret/table, unaffected by an access-token secret rotation) or,
+  worst case, a re-login.
+- Rotating `JWT_REFRESH_SECRET` invalidates all refresh tokens, forcing
+  every user to log in again — a harder cutover, since there's no "reissue
+  refresh tokens under the new secret" migration path today. Treat this as
+  a forced-logout-everyone event, not a silent rotation.
+- Rotating `ADMIN_JWT_SECRET` forces every admin to log in again — acceptable
+  given admin sessions are already short (8 hours) and low in number.
+
+No automated rotation schedule or dual-secret grace-period support is built.
+If this becomes a real requirement, the standard pattern is accepting both
+the old and new secret for verification during a grace window, signing only
+with the new one — not implemented here.

@@ -64,6 +64,15 @@ export function updateUser(
     .executeTakeFirstOrThrow();
 }
 
+export function updateSharingStatus(id: string, isSharing: boolean) {
+  return db
+    .updateTable('users')
+    .set({ is_sharing: isSharing, updated_at: new Date() })
+    .where('id', '=', id)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+}
+
 export function createRefreshToken(userId: string, tokenHash: string, expiresAt: Date) {
   return db
     .insertInto('refresh_tokens')
@@ -81,4 +90,8 @@ export function findRefreshTokenByHash(tokenHash: string) {
 
 export function deleteRefreshTokenByHash(tokenHash: string) {
   return db.deleteFrom('refresh_tokens').where('token_hash', '=', tokenHash).execute();
+}
+
+export function deleteRefreshTokensForUser(userId: string) {
+  return db.deleteFrom('refresh_tokens').where('user_id', '=', userId).execute();
 }

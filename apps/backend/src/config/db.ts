@@ -11,6 +11,7 @@ export interface UsersTable {
   avatar_url: string | null;
   is_sharing: Generated<boolean>;
   fcm_token: string | null;
+  suspended_at: Date | null;
   created_at: Generated<Date>;
   updated_at: Date | null;
 }
@@ -91,6 +92,25 @@ export interface SosEventsTable {
   resolved_at: Date | null;
 }
 
+export interface GeofencesTable {
+  id: Generated<string>;
+  circle_id: string;
+  name: string;
+  // geography(Point, 4326) — no native Kysely type; written/read via raw SQL
+  // (ST_MakePoint on insert, ST_X/ST_Y on select) rather than modeled here.
+  center: string;
+  radius_meters: number;
+  created_by: string;
+}
+
+export interface AdminAuditLogTable {
+  id: Generated<string>;
+  admin_id: string;
+  action: string;
+  target_user_id: string;
+  created_at: Generated<Date>;
+}
+
 export interface Database {
   users: UsersTable;
   admins: AdminsTable;
@@ -102,6 +122,8 @@ export interface Database {
   messages: MessagesTable;
   emergency_contacts: EmergencyContactsTable;
   sos_events: SosEventsTable;
+  geofences: GeofencesTable;
+  admin_audit_log: AdminAuditLogTable;
 }
 
 // Supabase requires SSL on both its pooled and direct connections; local

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/widgets/app_empty_state.dart';
+import '../../../shared/widgets/app_error_text.dart';
 import '../viewmodel/follows_notifier.dart';
 
 class FollowsScreen extends ConsumerStatefulWidget {
@@ -77,32 +79,41 @@ class _FollowsScreenState extends ConsumerState<FollowsScreen> {
             if (actionError != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: Text(actionError, style: const TextStyle(color: Colors.red)),
+                child: AppErrorText(actionError),
               ),
             if (pending.isEmpty)
               const Expanded(
-                child: Center(child: Text('No pending requests')),
+                child: AppEmptyState(
+                  icon: Icons.person_add_alt_outlined,
+                  message: 'No pending requests',
+                ),
               )
             else
               Expanded(
-                child: ListView.builder(
+                child: ListView.separated(
                   itemCount: pending.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (context, index) {
                     final follow = pending[index];
-                    return ListTile(
-                      title: Text('Request from ${follow.followerId}'),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.check, color: Colors.green),
-                            onPressed: () => notifier.respond(follow.id, accept: true),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close, color: Colors.red),
-                            onPressed: () => notifier.respond(follow.id, accept: false),
-                          ),
-                        ],
+                    return Card(
+                      child: ListTile(
+                        title: Text('Request from ${follow.followerId}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.check, color: Colors.green),
+                              onPressed: () => notifier.respond(follow.id, accept: true),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.close,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              onPressed: () => notifier.respond(follow.id, accept: false),
+                            ),
+                          ],
+                        ),
                       ),
                     );
                   },

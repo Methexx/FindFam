@@ -1,4 +1,7 @@
-// TODO: Sprint 1 — redirect to /login or /dashboard depending on admin session
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+
 export default function HomePage() {
-  return <h1>FindFam Admin</h1>;
+  const hasSession = cookies().has('admin_token');
+  redirect(hasSession ? '/dashboard' : '/login');
 }

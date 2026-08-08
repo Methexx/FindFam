@@ -1,47 +1,50 @@
 'use client';
 
 import type { AdminSosEvent } from '@findfam/shared-types';
+import { AlertTriangle } from 'lucide-react';
 import { useAdminSosFeed } from '../../../lib/admin-ws-client';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 
 export default function SosLiveFeed({ initialEvents }: { initialEvents: AdminSosEvent[] }) {
   const { events, connectionStatus } = useAdminSosFeed(initialEvents);
   const activeEvents = events.filter((event) => event.status === 'active');
 
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-4">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Active SOS Events</h1>
-        <span
-          className={`text-xs px-2 py-1 rounded ${
-            connectionStatus === 'open'
-              ? 'bg-green-100 text-green-800'
-              : 'bg-yellow-100 text-yellow-800'
-          }`}
-        >
+        <Badge variant={connectionStatus === 'open' ? 'success' : 'secondary'}>
           {connectionStatus === 'open' ? 'Live' : connectionStatus}
-        </span>
+        </Badge>
       </div>
 
       {activeEvents.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No active SOS events.</p>
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            No active SOS events.
+          </CardContent>
+        </Card>
       ) : (
         <div className="space-y-3">
           {activeEvents.map((event) => (
-            <div
-              key={event.id}
-              className="border-2 border-red-500 bg-red-50 rounded-lg p-4 flex items-center justify-between"
-            >
-              <div>
-                <p className="font-semibold text-red-900">{event.username}</p>
-                <p className="text-sm text-red-800">
-                  {event.origin.lat.toFixed(5)}, {event.origin.lng.toFixed(5)}
-                </p>
-                <p className="text-xs text-red-700">
-                  Triggered {new Date(event.triggeredAt).toLocaleTimeString()}
-                </p>
-              </div>
-              <span className="text-xs font-bold uppercase text-red-600">Active</span>
-            </div>
+            <Card key={event.id} className="border-destructive/50 bg-destructive/5">
+              <CardContent className="flex items-center justify-between gap-4 p-4">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+                  <div>
+                    <p className="font-semibold text-destructive">{event.username}</p>
+                    <p className="text-sm text-destructive/80">
+                      {event.origin.lat.toFixed(5)}, {event.origin.lng.toFixed(5)}
+                    </p>
+                    <p className="text-xs text-destructive/70">
+                      Triggered {new Date(event.triggeredAt).toLocaleTimeString()}
+                    </p>
+                  </div>
+                </div>
+                <Badge variant="destructive">Active</Badge>
+              </CardContent>
+            </Card>
           ))}
         </div>
       )}
