@@ -82,3 +82,7 @@ export function findRefreshTokenByHash(tokenHash: string) {
 export function deleteRefreshTokenByHash(tokenHash: string) {
   return db.deleteFrom('refresh_tokens').where('token_hash', '=', tokenHash).execute();
 }
+
+export function deleteRefreshTokensForUser(userId: string) {
+  return db.deleteFrom('refresh_tokens').where('user_id', '=', userId).execute();
+}

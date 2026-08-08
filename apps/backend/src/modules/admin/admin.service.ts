@@ -2,7 +2,9 @@ import { env } from '../../config/env';
 import { verifyPassword } from '../../lib/password';
 import { signToken } from '../../lib/jwt';
 import * as adminRepository from './admin.repository';
-import type { AdminLoginBody } from './admin.schema';
+import * as authRepository from '../auth/auth.repository';
+import { forceDisconnectUser } from '../../realtime/ws-gateway';
+import type { AdminLoginBody, ListUsersQuery } from './admin.schema';
 
 const ADMIN_TOKEN_TTL = '8h';
 
@@ -90,4 +92,121 @@ export async function getSosEvent(id: string) {
     throw new AdminError('SOS event not found', 404);
   }
   return toPublicSosEvent(row);
+}
+
+function toPublicUser(row: {
+  id: string;
+  username: string;
+  email: string;
+  suspended_at: Date | null;
+  created_at: Date;
+}) {
+  return {
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    suspended: row.suspended_at !== null,
+    suspendedAt: row.suspended_at ? row.suspended_at.toISOString() : null,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+function toPublicAuditLogEntry(row: {
+  id: string;
+  admin_id: string;
+  action: string;
+  target_user_id: string;
+  created_at: Date;
+}) {
+  return {
+    id: row.id,
+    adminId: row.admin_id,
+    action: row.action,
+    targetUserId: row.target_user_id,
+    createdAt: row.created_at.toISOString(),
+  };
+}
+
+function decodeUserCursor(cursor: string): { createdAt: Date; id: string } {
+  let decoded: string;
+  try {
+    decoded = Buffer.from(cursor, 'base64url').toString('utf8');
+  } catch {
+    throw new AdminError('Invalid cursor', 400);
+  }
+  const [createdAtIso, id] = decoded.split('|');
+  const createdAt = createdAtIso ? new Date(createdAtIso) : null;
+  if (!createdAt || Number.isNaN(createdAt.getTime()) || !id) {
+    throw new AdminError('Invalid cursor', 400);
+  }
+  return { createdAt, id };
+}
+
+function encodeUserCursor(createdAt: Date, id: string): string {
+  return Buffer.from(`${createdAt.toISOString()}|${id}`, 'utf8').toString('base64url');
+}
+
+export async function listUsers(query: ListUsersQuery) {
+  const before = query.cursor ? decodeUserCursor(query.cursor) : undefined;
+  const rows = await adminRepository.listUsers({
+    search: query.search,
+    limit: query.limit,
+    before,
+  });
+
+  const users = rows.map(toPublicUser);
+  const last = rows[rows.length - 1];
+  const nextCursor =
+    rows.length === query.limit && last ? encodeUserCursor(last.created_at, last.id) : null;
+
+  return { users, nextCursor };
+}
+
+export async function getUserDetail(userId: string) {
+  const user = await adminRepository.findUserById(userId);
+  if (!user) {
+    throw new AdminError('User not found', 404);
+  }
+  const auditLog = await adminRepository.listAuditLogForUser(userId);
+  return { ...toPublicUser(user), auditLog: auditLog.map(toPublicAuditLogEntry) };
+}
+
+export async function suspendUser(adminId: string, targetUserId: string) {
+  const user = await adminRepository.findUserById(targetUserId);
+  if (!user) {
+    throw new AdminError('User not found', 404);
+  }
+  if (user.suspended_at) {
+    throw new AdminError('User is already suspended', 409);
+  }
+
+  const updated = await adminRepository.setUserSuspended(targetUserId, new Date());
+  await authRepository.deleteRefreshTokensForUser(targetUserId);
+  forceDisconnectUser(targetUserId);
+  await adminRepository.insertAuditLogEntry({
+    adminId,
+    action: 'suspend_user',
+    targetUserId,
+  });
+
+  return toPublicUser(updated);
+}
+
+export async function unsuspendUser(adminId: string, targetUserId: string) {
+  const user = await adminRepository.findUserById(targetUserId);
+  if (!user) {
+    throw new AdminError('User not found', 404);
+  }
+  if (!user.suspended_at) {
+    throw new AdminError('User is not suspended', 409);
+  }
+
+  const updated = await adminRepository.setUserSuspended(targetUserId, null);
+  await adminRepository.insertAuditLogEntry({
+    adminId,
+    action: 'unsuspend_user',
+    targetUserId,
+  });
+
+  return toPublicUser(updated);
 }

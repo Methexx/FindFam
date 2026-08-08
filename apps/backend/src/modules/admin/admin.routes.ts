@@ -1,5 +1,5 @@
 import type { FastifyPluginAsync } from 'fastify';
-import { adminLoginBodySchema } from './admin.schema';
+import { adminLoginBodySchema, listUsersQuerySchema } from './admin.schema';
 import * as adminService from './admin.service';
 import { AdminAuthError, AdminError } from './admin.service';
 import { rateLimitConfig } from '../../lib/rate-limit-config';
@@ -55,6 +55,74 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params as { id: string };
       try {
         const result = await adminService.getSosEvent(id);
+        return reply.send({ data: result, error: null });
+      } catch (err) {
+        if (err instanceof AdminError) {
+          return reply.code(err.statusCode).send({ data: null, error: err.message });
+        }
+        throw err;
+      }
+    },
+  );
+
+  fastify.get(
+    '/admin/users',
+    { preHandler: fastify.authenticateAdmin },
+    async (request, reply) => {
+      const query = listUsersQuerySchema.parse(request.query);
+      try {
+        const result = await adminService.listUsers(query);
+        return reply.send({ data: result, error: null });
+      } catch (err) {
+        if (err instanceof AdminError) {
+          return reply.code(err.statusCode).send({ data: null, error: err.message });
+        }
+        throw err;
+      }
+    },
+  );
+
+  fastify.get(
+    '/admin/users/:id',
+    { preHandler: fastify.authenticateAdmin },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        const result = await adminService.getUserDetail(id);
+        return reply.send({ data: result, error: null });
+      } catch (err) {
+        if (err instanceof AdminError) {
+          return reply.code(err.statusCode).send({ data: null, error: err.message });
+        }
+        throw err;
+      }
+    },
+  );
+
+  fastify.patch(
+    '/admin/users/:id/suspend',
+    { preHandler: fastify.authenticateAdmin },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        const result = await adminService.suspendUser(request.admin!.id, id);
+        return reply.send({ data: result, error: null });
+      } catch (err) {
+        if (err instanceof AdminError) {
+          return reply.code(err.statusCode).send({ data: null, error: err.message });
+        }
+        throw err;
+      }
+    },
+  );
+
+  fastify.patch(
+    '/admin/users/:id/unsuspend',
+    { preHandler: fastify.authenticateAdmin },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        const result = await adminService.unsuspendUser(request.admin!.id, id);
         return reply.send({ data: result, error: null });
       } catch (err) {
         if (err instanceof AdminError) {

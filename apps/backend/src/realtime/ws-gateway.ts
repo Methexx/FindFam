@@ -48,20 +48,51 @@ function send(socket: WebSocket, data: unknown) {
 // of their connections closes.
 const connectedUserRefcounts = new Map<string, number>();
 
+// Parallel registry of the actual sockets per user, used only for admin
+// force-disconnect (suspension) — kept separate from the refcount map
+// since most callers only need the boolean/count, not the sockets.
+const connectedSockets = new Map<string, Set<WebSocket>>();
+
 export function isUserConnected(userId: string): boolean {
   return (connectedUserRefcounts.get(userId) ?? 0) > 0;
 }
 
-function markUserConnected(userId: string) {
-  connectedUserRefcounts.set(userId, (connectedUserRefcounts.get(userId) ?? 0) + 1);
+// Closes every open, authenticated WS connection for a user — used when an
+// admin suspends an account, per docs/07-data-flow.md Journey 5's
+// requirement that suspension force-disconnects live sessions immediately
+// rather than waiting for the socket to close naturally.
+export function forceDisconnectUser(userId: string): void {
+  const sockets = connectedSockets.get(userId);
+  if (!sockets) return;
+  for (const socket of sockets) {
+    socket.close(4001, 'Account suspended');
+  }
 }
 
-function markUserDisconnected(userId: string) {
+function markUserConnected(userId: string, socket: WebSocket) {
+  connectedUserRefcounts.set(userId, (connectedUserRefcounts.get(userId) ?? 0) + 1);
+  let sockets = connectedSockets.get(userId);
+  if (!sockets) {
+    sockets = new Set();
+    connectedSockets.set(userId, sockets);
+  }
+  sockets.add(socket);
+}
+
+function markUserDisconnected(userId: string, socket: WebSocket) {
   const count = connectedUserRefcounts.get(userId) ?? 0;
   if (count <= 1) {
     connectedUserRefcounts.delete(userId);
   } else {
     connectedUserRefcounts.set(userId, count - 1);
+  }
+
+  const sockets = connectedSockets.get(userId);
+  if (sockets) {
+    sockets.delete(socket);
+    if (sockets.size === 0) {
+      connectedSockets.delete(userId);
+    }
   }
 }
 
@@ -92,7 +123,7 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
       );
       subscribedChannels.clear();
       if (userId) {
-        markUserDisconnected(userId);
+        markUserDisconnected(userId, socket);
       }
     };
 
@@ -145,7 +176,7 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
           return socket.close();
         }
 
-        markUserConnected(userId);
+        markUserConnected(userId, socket);
 
         const circles = await circlesRepository.listCirclesForUser(userId);
         for (const circle of circles) {
