@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/widgets/app_error_text.dart';
 import '../../auth/viewmodel/auth_notifier.dart';
 import '../../chat/ui/chat_screen.dart';
 import '../../map/ui/circle_map_screen.dart';
@@ -91,61 +92,76 @@ class _CircleDetailScreenState extends ConsumerState<CircleDetailScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Text(circle.name, style: Theme.of(context).textTheme.headlineSmall),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.map),
-            label: const Text('View live map'),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => CircleMapScreen(circleId: circle.id, circleName: circle.name),
+          child: Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.map),
+                  label: const Text('Live map'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => CircleMapScreen(circleId: circle.id, circleName: circle.name),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: OutlinedButton.icon(
-            icon: const Icon(Icons.chat_bubble_outline),
-            label: const Text('Chat'),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => ChatScreen(circleId: circle.id, circleName: circle.name),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  label: const Text('Chat'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ChatScreen(circleId: circle.id, circleName: circle.name),
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
         if (actionError != null)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(actionError, style: const TextStyle(color: Colors.red)),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: AppErrorText(actionError),
           ),
         if (isOwner)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: OutlinedButton(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.person_add),
               onPressed: _showAddMemberDialog,
-              child: const Text('Add member'),
+              label: const Text('Add member'),
             ),
           ),
         Expanded(
-          child: ListView.builder(
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
             itemCount: circle.members.length,
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final member = circle.members[index];
               final isSelf = member.userId == currentUserId;
-              return ListTile(
-                title: Text(member.username),
-                subtitle: Text(member.role),
-                trailing: (isOwner && !isSelf) || (isSelf && !member.isOwner)
-                    ? IconButton(
-                        icon: Icon(isSelf ? Icons.exit_to_app : Icons.remove_circle_outline),
-                        onPressed: () => notifier.removeMember(member.userId),
-                      )
-                    : null,
+              return Card(
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    child: Text(member.username.substring(0, 1).toUpperCase()),
+                  ),
+                  title: Text(member.username),
+                  subtitle: Text(member.role),
+                  trailing: (isOwner && !isSelf) || (isSelf && !member.isOwner)
+                      ? IconButton(
+                          icon: Icon(isSelf ? Icons.exit_to_app : Icons.remove_circle_outline),
+                          onPressed: () => notifier.removeMember(member.userId),
+                        )
+                      : null,
+                ),
               );
             },
           ),
@@ -154,7 +170,9 @@ class _CircleDetailScreenState extends ConsumerState<CircleDetailScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: OutlinedButton(
-              style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
               onPressed: () async {
                 final deleted = await notifier.deleteCircle();
                 if (deleted && context.mounted) {

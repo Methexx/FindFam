@@ -5,6 +5,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_empty_state.dart';
 import '../../auth/viewmodel/auth_notifier.dart';
 import '../domain/member_location.dart';
 import '../viewmodel/circle_map_notifier.dart';
@@ -82,14 +84,9 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
         CircleMapInitial() => const Center(child: CircularProgressIndicator()),
         CircleMapError(:final message) => Center(child: Text(message)),
         CircleMapLoaded(locationsByUserId: final locations) => locations.isEmpty
-            ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    'No one in this circle has shared their location yet',
-                    textAlign: TextAlign.center,
-                  ),
-                ),
+            ? const AppEmptyState(
+                icon: Icons.location_off_outlined,
+                message: 'No one in this circle has shared their location yet',
               )
             : _showMemberList
                 ? _buildMemberList(locations, currentUserId)
@@ -100,8 +97,10 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
 
   Widget _buildMemberList(Map<String, MemberLocation> locations, String? currentUserId) {
     final points = locations.values.toList();
-    return ListView.builder(
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
       itemCount: points.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
       itemBuilder: (context, index) {
         final location = points[index];
         final isSelf = location.userId == currentUserId;
@@ -110,16 +109,19 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
             : 'Speed unknown';
         final batteryText =
             location.batteryLevel != null ? '${location.batteryLevel}% battery' : 'Battery unknown';
-        return ListTile(
-          leading: Icon(
-            Icons.location_on,
-            color: isSelf ? Colors.blue : Colors.red,
-          ),
-          title: Text(isSelf ? 'You' : location.userId),
-          subtitle: Text('$speedText · $batteryText'),
-          trailing: Text(
-            TimeOfDay.fromDateTime(DateTime.parse(location.recordedAt).toLocal()).format(context),
-            style: const TextStyle(fontSize: 12),
+        final markerColor = isSelf ? AppColors.selfMarker : AppColors.memberMarker;
+        return Card(
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: markerColor.withValues(alpha: 0.15),
+              child: Icon(Icons.location_on, color: markerColor),
+            ),
+            title: Text(isSelf ? 'You' : location.userId),
+            subtitle: Text('$speedText · $batteryText'),
+            trailing: Text(
+              TimeOfDay.fromDateTime(DateTime.parse(location.recordedAt).toLocal()).format(context),
+              style: const TextStyle(fontSize: 12),
+            ),
           ),
         );
       },
@@ -147,7 +149,9 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
                   height: 40,
                   child: Icon(
                     Icons.location_on,
-                    color: location.userId == currentUserId ? Colors.blue : Colors.red,
+                    color: location.userId == currentUserId
+                        ? AppColors.selfMarker
+                        : AppColors.memberMarker,
                     size: 36,
                   ),
                 ),
@@ -172,9 +176,13 @@ class _ConnectionBanner extends StatelessWidget {
     final label = status == WsConnectionStatus.connecting ? 'Reconnecting…' : 'Offline';
     return Container(
       width: double.infinity,
-      color: Colors.orange.shade100,
+      color: AppColors.offline.withValues(alpha: 0.2),
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12)),
+      child: Text(
+        label,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }

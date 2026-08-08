@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_colors.dart';
 import '../domain/sos_event.dart';
 
 /// Full-screen, hard-to-miss alert shown when a circle member's SOS goes
@@ -21,7 +22,7 @@ class CircleSosAlert extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Dialog.fullscreen(
-      backgroundColor: Colors.red,
+      backgroundColor: AppColors.danger,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -44,7 +45,7 @@ class CircleSosAlert extends ConsumerWidget {
               FilledButton(
                 style: FilledButton.styleFrom(
                   backgroundColor: Colors.white,
-                  foregroundColor: Colors.red,
+                  foregroundColor: AppColors.danger,
                 ),
                 onPressed: () => Navigator.of(context).pop(),
                 child: const Text('Dismiss'),

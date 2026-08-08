@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../shared/widgets/app_empty_state.dart';
+import '../../../shared/widgets/app_error_text.dart';
 import '../viewmodel/emergency_contacts_notifier.dart';
 
 class EmergencyContactsScreen extends ConsumerStatefulWidget {
@@ -68,35 +70,37 @@ class _EmergencyContactsScreenState extends ConsumerState<EmergencyContactsScree
               if (actionError != null)
                 Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text(actionError, style: const TextStyle(color: Colors.red)),
+                  child: AppErrorText(actionError),
                 ),
               if (contacts.isEmpty)
                 const Expanded(
-                  child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text(
-                        'No emergency contacts yet — add someone you follow each other with',
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
+                  child: AppEmptyState(
+                    icon: Icons.contact_phone_outlined,
+                    message: 'No emergency contacts yet — add someone you follow each other with',
                   ),
                 )
               else
                 Expanded(
-                  child: ListView.builder(
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
                     itemCount: contacts.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final contact = contacts[index];
-                      return ListTile(
-                        leading: CircleAvatar(child: Text('${contact.priority}')),
-                        title: Text(contact.username),
-                        subtitle: contact.phone != null ? Text(contact.phone!) : null,
-                        trailing: IconButton(
-                          icon: const Icon(Icons.remove_circle_outline),
-                          onPressed: () => ref
-                              .read(emergencyContactsNotifierProvider.notifier)
-                              .removeContact(contact.id),
+                      return Card(
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                            child: Text('${contact.priority}'),
+                          ),
+                          title: Text(contact.username),
+                          subtitle: contact.phone != null ? Text(contact.phone!) : null,
+                          trailing: IconButton(
+                            icon: const Icon(Icons.remove_circle_outline),
+                            onPressed: () => ref
+                                .read(emergencyContactsNotifierProvider.notifier)
+                                .removeContact(contact.id),
+                          ),
                         ),
                       );
                     },

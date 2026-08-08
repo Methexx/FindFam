@@ -16,8 +16,9 @@ class SharingIndicator extends ConsumerWidget {
       return const SizedBox.shrink();
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.blue.shade50,
+      color: colorScheme.primaryContainer,
       child: SafeArea(
         bottom: false,
         child: Padding(
@@ -25,11 +26,11 @@ class SharingIndicator extends ConsumerWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.share_location, size: 16, color: Colors.blue.shade800),
+              Icon(Icons.share_location, size: 16, color: colorScheme.onPrimaryContainer),
               const SizedBox(width: 6),
               Text(
                 'You are sharing your location',
-                style: TextStyle(fontSize: 12, color: Colors.blue.shade800),
+                style: TextStyle(fontSize: 12, color: colorScheme.onPrimaryContainer),
               ),
             ],
           ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_colors.dart';
 import '../viewmodel/sos_notifier.dart';
 
 /// Persistent banner shown while the current user's own SOS is active.
@@ -18,7 +19,7 @@ class ActiveSosBanner extends ConsumerWidget {
     }
 
     return Material(
-      color: Colors.red,
+      color: AppColors.danger,
       child: SafeArea(
         bottom: false,
         child: Padding(

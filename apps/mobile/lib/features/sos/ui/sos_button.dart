@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_colors.dart';
 import '../viewmodel/sos_notifier.dart';
 
 /// The SOS trigger button — large and confirm-before-fire, since an
@@ -23,7 +24,7 @@ class SosButton extends ConsumerWidget {
             child: const Text('Cancel'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Send SOS'),
           ),
@@ -45,8 +46,10 @@ class SosButton extends ConsumerWidget {
       height: 120,
       child: FilledButton(
         style: FilledButton.styleFrom(
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.danger,
           shape: const CircleBorder(),
+          elevation: 6,
+          shadowColor: AppColors.danger.withValues(alpha: 0.5),
         ),
         onPressed: state.isTriggering ? null : () => _confirmAndTrigger(context, ref),
         child: state.isTriggering

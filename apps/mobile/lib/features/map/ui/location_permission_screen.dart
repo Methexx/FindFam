@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/widgets/app_error_text.dart';
 import '../viewmodel/location_sharing_notifier.dart';
 
 /// Shown before the system location-permission prompt fires. Explaining
@@ -42,7 +43,7 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Icon(Icons.people_outline, size: 64),
+            Icon(Icons.people_outline, size: 64, color: Theme.of(context).colorScheme.primary),
             const SizedBox(height: 24),
             const Text(
               'FindFam shows your location to the circles you choose to join — '
@@ -51,20 +52,23 @@ class _LocationPermissionScreenState extends ConsumerState<LocationPermissionScr
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'You\'ll see a persistent notification whenever sharing is active, '
               'and you can turn it off at any time.',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.black54),
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 32),
             if (_denied)
               const Padding(
                 padding: EdgeInsets.only(bottom: 16),
-                child: Text(
-                  'Location permission was denied. You can enable it in system settings.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.red),
+                child: Center(
+                  child: AppErrorText(
+                    'Location permission was denied. You can enable it in system settings.',
+                  ),
                 ),
               ),
             FilledButton(
