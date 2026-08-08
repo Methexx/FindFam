@@ -29,14 +29,13 @@ export default function UserActions({ userId, suspended }: { userId: string; sus
     <div className="flex flex-col items-end gap-1">
       <Button
         size="sm"
-        variant="outline"
+        variant={suspended ? 'outline' : 'destructive'}
         disabled={isPending}
         onClick={toggle}
-        className={suspended ? undefined : 'border-red-300 text-red-600 hover:bg-red-50'}
       >
         {suspended ? 'Unsuspend' : 'Suspend'}
       </Button>
-      {error ? <p className="text-xs text-red-600">{error}</p> : null}
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
   );
 }

@@ -2,6 +2,9 @@ import { cookies } from 'next/headers';
 import type { AdminUser } from '@findfam/shared-types';
 import UserSearch from './UserSearch';
 import UserActions from './UserActions';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 interface ListUsersResult {
   users: AdminUser[];
@@ -40,47 +43,51 @@ export default async function UsersPage({
   const { users } = await fetchUsers(search);
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Users</h1>
-      <UserSearch initialSearch={search} />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Users</h1>
+        <UserSearch initialSearch={search} />
+      </div>
 
       {users.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No users found.</p>
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            No users found.
+          </CardContent>
+        </Card>
       ) : (
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="text-left border-b border-input">
-              <th className="py-2 pr-4">Username</th>
-              <th className="py-2 pr-4">Email</th>
-              <th className="py-2 pr-4">Status</th>
-              <th className="py-2 pr-4">Created</th>
-              <th className="py-2 pr-4" />
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className="border-b border-input">
-                <td className="py-2 pr-4">{user.username}</td>
-                <td className="py-2 pr-4">{user.email}</td>
-                <td className="py-2 pr-4">
-                  {user.suspended ? (
-                    <span className="rounded bg-red-100 px-2 py-0.5 text-xs text-red-800">
-                      Suspended
-                    </span>
-                  ) : (
-                    <span className="rounded bg-green-100 px-2 py-0.5 text-xs text-green-800">
-                      Active
-                    </span>
-                  )}
-                </td>
-                <td className="py-2 pr-4">{new Date(user.createdAt).toLocaleDateString()}</td>
-                <td className="py-2 pr-4">
-                  <UserActions userId={user.id} suspended={user.suspended} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Username</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell className="font-medium">{user.username}</TableCell>
+                  <TableCell className="text-muted-foreground">{user.email}</TableCell>
+                  <TableCell>
+                    {user.suspended ? (
+                      <Badge variant="destructive">Suspended</Badge>
+                    ) : (
+                      <Badge variant="success">Active</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <UserActions userId={user.id} suspended={user.suspended} />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   );

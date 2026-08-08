@@ -1,5 +1,7 @@
 import { cookies } from 'next/headers';
 import type { AdminCircleSummary } from '@findfam/shared-types';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 async function fetchCircles(): Promise<AdminCircleSummary[]> {
   const token = cookies().get('admin_token')?.value;
@@ -25,32 +27,40 @@ export default async function CirclesPage() {
   const circles = await fetchCircles();
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Circles</h1>
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">Circles</h1>
 
       {circles.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No circles yet.</p>
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            No circles yet.
+          </CardContent>
+        </Card>
       ) : (
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="text-left border-b border-input">
-              <th className="py-2 pr-4">Name</th>
-              <th className="py-2 pr-4">Owner ID</th>
-              <th className="py-2 pr-4">Members</th>
-              <th className="py-2 pr-4">Created</th>
-            </tr>
-          </thead>
-          <tbody>
-            {circles.map((circle) => (
-              <tr key={circle.id} className="border-b border-input">
-                <td className="py-2 pr-4">{circle.name}</td>
-                <td className="py-2 pr-4 font-mono text-xs">{circle.ownerId}</td>
-                <td className="py-2 pr-4">{circle.memberCount}</td>
-                <td className="py-2 pr-4">{new Date(circle.createdAt).toLocaleDateString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <Card>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Owner ID</TableHead>
+                <TableHead>Members</TableHead>
+                <TableHead>Created</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {circles.map((circle) => (
+                <TableRow key={circle.id}>
+                  <TableCell className="font-medium">{circle.name}</TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {circle.ownerId}
+                  </TableCell>
+                  <TableCell>{circle.memberCount}</TableCell>
+                  <TableCell>{new Date(circle.createdAt).toLocaleDateString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       )}
     </div>
   );

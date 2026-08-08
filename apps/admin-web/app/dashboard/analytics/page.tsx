@@ -1,4 +1,7 @@
 import { cookies } from 'next/headers';
+import { Users, Radio, TriangleAlert } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 
 interface AnalyticsSummary {
   totalUsers: number;
@@ -27,12 +30,27 @@ async function fetchSummary(): Promise<AnalyticsSummary | null> {
   return body.data as AnalyticsSummary;
 }
 
-function StatTile({ label, value }: { label: string; value: number }) {
+function StatTile({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  icon: typeof Users;
+}) {
   return (
-    <div className="rounded-lg border border-input p-4">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="text-2xl font-semibold">{value}</p>
-    </div>
+    <Card>
+      <CardContent className="flex items-center gap-4 p-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
+          <Icon className="h-5 w-5 text-primary" />
+        </div>
+        <div>
+          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-2xl font-semibold">{value}</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -41,44 +59,56 @@ export default async function AnalyticsPage() {
 
   if (!summary) {
     return (
-      <div className="p-6">
-        <h1 className="text-xl font-semibold mb-4">Analytics</h1>
-        <p className="text-sm text-muted-foreground">Unable to load analytics.</p>
+      <div className="space-y-4">
+        <h1 className="text-xl font-semibold">Analytics</h1>
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            Unable to load analytics.
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <h1 className="text-xl font-semibold mb-4">Analytics</h1>
+    <div className="space-y-6">
+      <h1 className="text-xl font-semibold">Analytics</h1>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <StatTile label="Total Users" value={summary.totalUsers} />
-        <StatTile label="Active Circles" value={summary.activeCircles} />
-        <StatTile label="Total SOS Events" value={summary.totalSosEvents} />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <StatTile label="Total Users" value={summary.totalUsers} icon={Users} />
+        <StatTile label="Active Circles" value={summary.activeCircles} icon={Radio} />
+        <StatTile label="Total SOS Events" value={summary.totalSosEvents} icon={TriangleAlert} />
       </div>
 
-      <h2 className="text-sm font-medium mb-2">SOS Events (last 14 days)</h2>
-      {summary.sosEventsPerDay.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No SOS events in this window.</p>
-      ) : (
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="text-left border-b border-input">
-              <th className="py-2 pr-4">Day</th>
-              <th className="py-2 pr-4">Count</th>
-            </tr>
-          </thead>
-          <tbody>
-            {summary.sosEventsPerDay.map((row) => (
-              <tr key={row.day} className="border-b border-input">
-                <td className="py-2 pr-4">{new Date(row.day).toLocaleDateString()}</td>
-                <td className="py-2 pr-4">{row.count}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+      <div className="space-y-2">
+        <h2 className="text-sm font-medium text-muted-foreground">SOS Events (last 14 days)</h2>
+        {summary.sosEventsPerDay.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center text-sm text-muted-foreground">
+              No SOS events in this window.
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Day</TableHead>
+                  <TableHead>Count</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {summary.sosEventsPerDay.map((row) => (
+                  <TableRow key={row.day}>
+                    <TableCell>{new Date(row.day).toLocaleDateString()}</TableCell>
+                    <TableCell>{row.count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }
