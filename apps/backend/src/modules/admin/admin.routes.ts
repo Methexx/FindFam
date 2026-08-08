@@ -132,6 +132,15 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
       }
     },
   );
+
+  fastify.get(
+    '/admin/analytics/summary',
+    { preHandler: fastify.authenticateAdmin },
+    async (_request, reply) => {
+      const result = await adminService.getAnalyticsSummary();
+      return reply.send({ data: result, error: null });
+    },
+  );
 };
 
 export default adminRoutes;

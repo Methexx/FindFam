@@ -213,4 +213,30 @@ describe('admin routes (integration)', () => {
       expect(pagedRes.json().data.nextCursor).toBeTruthy();
     });
   });
+
+  describe('analytics summary', () => {
+    it('reports user and circle counts', async () => {
+      const adminToken = await loginAdmin('analytics-admin1@example.com', 'adminpass123');
+      const alice = await registerUser('analytics_alice1');
+      await app.inject({
+        method: 'POST',
+        url: '/api/v1/circles',
+        headers: { authorization: `Bearer ${alice.accessToken}` },
+        payload: { name: 'Family' },
+      });
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/v1/admin/analytics/summary',
+        headers: { authorization: `Bearer ${adminToken}` },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const body = res.json().data;
+      expect(body.totalUsers).toBeGreaterThanOrEqual(1);
+      expect(body.activeCircles).toBeGreaterThanOrEqual(1);
+      expect(typeof body.totalSosEvents).toBe('number');
+      expect(Array.isArray(body.sosEventsPerDay)).toBe(true);
+    });
+  });
 });

@@ -210,3 +210,24 @@ export async function unsuspendUser(adminId: string, targetUserId: string) {
 
   return toPublicUser(updated);
 }
+
+const SOS_TREND_WINDOW_DAYS = 14;
+
+export async function getAnalyticsSummary() {
+  const [totalUsers, activeCircles, totalSosEvents, sosEventsPerDay] = await Promise.all([
+    adminRepository.countUsers(),
+    adminRepository.countActiveCircles(),
+    adminRepository.countSosEvents(),
+    adminRepository.sosEventsPerDay(SOS_TREND_WINDOW_DAYS),
+  ]);
+
+  return {
+    totalUsers,
+    activeCircles,
+    totalSosEvents,
+    sosEventsPerDay: sosEventsPerDay.map((row) => ({
+      day: row.day,
+      count: Number(row.count),
+    })),
+  };
+}

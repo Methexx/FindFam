@@ -116,3 +116,46 @@ export function listAllCircles() {
     .groupBy(['circles.id', 'circles.name', 'circles.owner_id', 'circles.created_at'])
     .execute();
 }
+
+export async function countUsers(): Promise<number> {
+  const row = await db
+    .selectFrom('users')
+    .select(sql<number>`count(*)`.as('count'))
+    .executeTakeFirstOrThrow();
+  return Number(row.count);
+}
+
+export async function countActiveCircles(): Promise<number> {
+  const row = await db
+    .selectFrom('circles')
+    .select(sql<number>`count(*)`.as('count'))
+    .where('deleted_at', 'is', null)
+    .executeTakeFirstOrThrow();
+  return Number(row.count);
+}
+
+export async function countSosEvents(): Promise<number> {
+  const row = await db
+    .selectFrom('sos_events')
+    .select(sql<number>`count(*)`.as('count'))
+    .executeTakeFirstOrThrow();
+  return Number(row.count);
+}
+
+export interface SosEventsPerDayRow {
+  day: string;
+  count: number;
+}
+
+export function sosEventsPerDay(sinceDays: number): Promise<SosEventsPerDayRow[]> {
+  return db
+    .selectFrom('sos_events')
+    .select([
+      sql<string>`date_trunc('day', triggered_at)`.as('day'),
+      sql<number>`count(*)`.as('count'),
+    ])
+    .where('triggered_at', '>=', new Date(Date.now() - sinceDays * 24 * 60 * 60 * 1000))
+    .groupBy(sql`date_trunc('day', triggered_at)`)
+    .orderBy(sql`date_trunc('day', triggered_at)`, 'asc')
+    .execute() as Promise<SosEventsPerDayRow[]>;
+}
