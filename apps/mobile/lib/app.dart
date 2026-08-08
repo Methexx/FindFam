@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/ui/home_placeholder_screen.dart';
 import 'features/auth/ui/login_screen.dart';
 import 'features/auth/viewmodel/auth_notifier.dart';
@@ -32,6 +33,9 @@ class _FindFamAppState extends ConsumerState<FindFamApp> {
 
     return MaterialApp(
       title: 'FindFam',
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
+      themeMode: ThemeMode.system,
       home: home,
     );
   }
