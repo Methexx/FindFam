@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../auth/viewmodel/auth_notifier.dart';
 import '../../map/viewmodel/location_sharing_notifier.dart';
+import '../../settings/ui/privacy_policy_screen.dart';
 import '../viewmodel/profile_notifier.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -35,6 +36,14 @@ class ProfileScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(profileState.error!, style: const TextStyle(color: Colors.red)),
             ),
+          const Divider(),
+          ListTile(
+            title: const Text('Privacy Policy'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()),
+            ),
+          ),
         ],
       ),
     );
