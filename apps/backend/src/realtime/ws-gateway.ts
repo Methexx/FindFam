@@ -52,7 +52,7 @@ function isRateLimited(timestamps: number[]): boolean {
   if (env.NODE_ENV === 'test') return false;
   const now = Date.now();
   const windowStart = now - LOCATION_UPDATE_WINDOW_MS;
-  while (timestamps.length > 0 && timestamps[0] < windowStart) {
+  while (timestamps.length > 0 && (timestamps[0] as number) < windowStart) {
     timestamps.shift();
   }
   if (timestamps.length >= LOCATION_UPDATE_LIMIT) {

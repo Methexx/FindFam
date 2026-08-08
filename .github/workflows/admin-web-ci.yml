@@ -16,4 +16,9 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run lint --workspace=@findfam/admin-web
-      # TODO: Sprint 2 — add build step, Vercel preview deployment
+      - run: npm run build --workspace=@findfam/admin-web
+        env:
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:3000
+          NEXT_PUBLIC_WS_URL: ws://localhost:3000
+      # Vercel preview deployments are account/infra setup, out of scope
+      # for this pass — see docs/10-production-readiness.md.

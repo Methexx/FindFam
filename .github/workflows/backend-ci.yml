@@ -16,6 +16,44 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run lint --workspace=@findfam/backend
-      # TODO: Sprint 1 — add test and build steps
-      # No CI deploy step needed — Render deploys are triggered by its own
-      # git-push integration, not a GitHub Actions step (see render.yaml).
+      - run: npm run build --workspace=@findfam/backend
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: findfam
+          POSTGRES_PASSWORD: findfam
+          POSTGRES_DB: findfam
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U findfam -d findfam"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: psql -h localhost -U findfam -d findfam -c "CREATE DATABASE findfam_test;"
+        env:
+          PGPASSWORD: findfam
+      - run: npm run migrate:test:up --workspace=@findfam/backend
+      - run: npm test --workspace=@findfam/backend
+
+  # No CI deploy step needed — Render deploys are triggered by its own
+  # git-push integration, not a GitHub Actions step (see render.yaml).
