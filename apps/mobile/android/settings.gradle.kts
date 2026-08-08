@@ -21,6 +21,9 @@ plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "8.11.1" apply false
     id("org.jetbrains.kotlin.android") version "2.2.20" apply false
+    // Reads android/app/google-services.json (gitignored — not committed)
+    // to configure Firebase for firebase_messaging (FCM push, Sprint 4).
+    id("com.google.gms.google-services") version "4.4.2" apply false
 }
 
 include(":app")
