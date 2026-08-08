@@ -1,7 +1,9 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
+import cors from '@fastify/cors';
 import { sql } from 'kysely';
 import { ZodError } from 'zod';
+import { env } from './config/env';
 import authPlugin from './plugins/auth';
 import adminAuthPlugin from './plugins/admin-auth';
 import websocketPlugin from './plugins/websocket';
@@ -31,6 +33,7 @@ export function buildApp(): FastifyInstance {
     return reply.code(500).send({ data: null, error: 'Internal server error' });
   });
 
+  app.register(cors, { origin: env.ALLOWED_ORIGINS });
   app.register(rateLimit, { global: false });
   app.register(authPlugin);
   app.register(adminAuthPlugin);

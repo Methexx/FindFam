@@ -41,6 +41,27 @@ function send(socket: WebSocket, data: unknown) {
   socket.send(JSON.stringify(data));
 }
 
+// Mirrors the REST POST /locations limit (30/min, see lib/rate-limit-config.ts)
+// so a client can't bypass that throttle by pushing location:update over WS
+// instead. Per-connection, not per-user, since a user's connections don't
+// share a socket to track state on.
+const LOCATION_UPDATE_LIMIT = 30;
+const LOCATION_UPDATE_WINDOW_MS = 60_000;
+
+function isRateLimited(timestamps: number[]): boolean {
+  if (env.NODE_ENV === 'test') return false;
+  const now = Date.now();
+  const windowStart = now - LOCATION_UPDATE_WINDOW_MS;
+  while (timestamps.length > 0 && timestamps[0] < windowStart) {
+    timestamps.shift();
+  }
+  if (timestamps.length >= LOCATION_UPDATE_LIMIT) {
+    return true;
+  }
+  timestamps.push(now);
+  return false;
+}
+
 // Tracks which users currently have at least one open, authenticated WS
 // connection — used to decide who needs an FCM push for a chat message
 // they'd otherwise miss in real time. A refcount (not a boolean) so a user
@@ -113,6 +134,7 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
     let userId: string | null = null;
     let isAdmin = false;
     const subscribedChannels = new Set<string>();
+    const locationUpdateTimestamps: number[] = [];
     const forwardToClient = (message: string) => send(socket, JSON.parse(message));
 
     const cleanup = async () => {
@@ -204,6 +226,10 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
       }
 
       if (parsed.data.type === 'location:update') {
+        if (isRateLimited(locationUpdateTimestamps)) {
+          send(socket, { type: 'error', error: 'Rate limit exceeded' });
+          return;
+        }
         const result = await handleLocationUpdate(userId, parsedJson);
         if (!result.ok) {
           send(socket, { type: 'error', error: result.error });
