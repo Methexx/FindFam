@@ -8,3 +8,8 @@ export const postLocationBodySchema = z.object({
   recordedAt: z.string().datetime().optional(),
 });
 export type PostLocationBody = z.infer<typeof postLocationBodySchema>;
+
+export const updateSharingStatusBodySchema = z.object({
+  isSharing: z.boolean(),
+});
+export type UpdateSharingStatusBody = z.infer<typeof updateSharingStatusBodySchema>;

@@ -13,12 +13,12 @@ import locationsRoutes from './modules/locations/locations.routes';
 import messagesRoutes from './modules/messages/messages.routes';
 import emergencyContactsRoutes from './modules/emergency-contacts/emergency-contacts.routes';
 import sosRoutes from './modules/sos/sos.routes';
+import geofencesRoutes from './modules/geofences/geofences.routes';
 import wsGateway from './realtime/ws-gateway';
 import { db } from './config/db';
 import { redisPubSub } from './realtime/redis-pubsub';
 
-// TODO: Sprint 5+ — register remaining plugins (sentry) and module routes
-// (geofences, admin moderation) as they're implemented.
+// TODO: Sprint 6+ — register remaining plugins (sentry) as it's implemented.
 
 export function buildApp(): FastifyInstance {
   const app = Fastify({ logger: true });
@@ -44,6 +44,7 @@ export function buildApp(): FastifyInstance {
   app.register(messagesRoutes, { prefix: '/api/v1' });
   app.register(emergencyContactsRoutes, { prefix: '/api/v1' });
   app.register(sosRoutes, { prefix: '/api/v1' });
+  app.register(geofencesRoutes, { prefix: '/api/v1' });
   app.register(wsGateway);
 
   app.get('/health', async (_request, reply) => {

@@ -64,6 +64,15 @@ export function updateUser(
     .executeTakeFirstOrThrow();
 }
 
+export function updateSharingStatus(id: string, isSharing: boolean) {
+  return db
+    .updateTable('users')
+    .set({ is_sharing: isSharing, updated_at: new Date() })
+    .where('id', '=', id)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+}
+
 export function createRefreshToken(userId: string, tokenHash: string, expiresAt: Date) {
   return db
     .insertInto('refresh_tokens')
