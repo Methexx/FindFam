@@ -131,6 +131,19 @@ Index on `status` for the admin live-feed query (`WHERE status = 'active'`).
 
 Kept separate from `users` deliberately — an admin account should not double as a regular sharing user, and this keeps the admin-auth blast radius isolated (per 06-auth-flow).
 
+### `admin_audit_log` (Sprint 5)
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| admin_id | uuid, FK → admins.id | |
+| action | text | e.g. `suspend_user`, `unsuspend_user` |
+| target_user_id | uuid, FK → users.id | |
+| created_at | timestamptz | |
+
+Added when moderation actions shipped, per this table's original "add if
+moderation actions ship" placeholder. Index on `target_user_id` for
+per-user audit-trail lookups on the admin user-detail view.
+
 ## Indexing Summary (performance-critical)
 - `locations`: GIST index on `geom`, btree on `(user_id, recorded_at DESC)`
 - `messages`: btree on `(circle_id, sent_at DESC)`
@@ -138,6 +151,7 @@ Kept separate from `users` deliberately — an admin account should not double a
 - `follows`: unique on `(follower_id, followee_id)`, btree on `followee_id`
 - `sos_events`: btree on `status`
 - `users`: unique index on `username` (case-insensitive) and `email`
+- `admin_audit_log`: btree on `target_user_id`
 
 ## Retention Notes
 - `locations` will grow fast (one row per user per update interval). Plan a retention policy before Tier 2 history features ship — e.g., partition by month, or downsample/delete raw points older than N days while keeping a lower-resolution history table for the "Footprints" feature.

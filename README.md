@@ -26,6 +26,9 @@ The architecture, data model, API surface, and mobile structure are documented i
 - [08-flutter-app-structure](docs/08-flutter-app-structure.md)
 - [09-sprint-timeline](docs/09-sprint-timeline.md)
 - [10-production-readiness](docs/10-production-readiness.md)
+- [11-known-limitations](docs/11-known-limitations.md)
+
+See also [PRIVACY.md](PRIVACY.md) (draft, pending legal review).
 
 ## Current Status
 
