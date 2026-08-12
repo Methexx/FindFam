@@ -49,6 +49,53 @@ Keep the access token payload minimal — no circle memberships or roles embedde
 - Server verifies the token the same way as REST requests before allowing any subscription
 - Admin WS connections (subscribing to `admin:sos`) use the admin token and are verified against the admin secret
 
+## Web Sessions (Sprint 10)
+
+The web app serves both users and admins from one Next.js project, but they are
+two sessions against the two isolated systems above — not one session with a
+flag. Both are httpOnly cookies set by Next route handlers acting as a BFF; the
+browser never holds a token in JavaScript.
+
+| Cookie | Contents | Lifetime | Set by |
+|---|---|---|---|
+| `admin_token` | Admin JWT | 8 hours, then expires | `/api/admin/login` |
+| `user_token` | User access token | 15 minutes | `/api/auth/login` |
+| `user_refresh_token` | User refresh token | 7 days | `/api/auth/login` |
+
+**The user session needs a refresh loop; the admin session does not.** An admin
+token is a single 8-hour credential that is allowed to lapse. A user access token
+lasts 15 minutes, so the same cookie pattern applied to users would sign them out
+four times an hour. Server-side calls wrap a 401 in a refresh-then-retry against
+`POST /auth/refresh`.
+
+Note the coupling: refresh tokens do **not** rotate, and `refresh()` returns only
+`{ accessToken }`. The web client must therefore replace `user_token` and leave
+`user_refresh_token` alone. Writing a rotation-shaped client against a
+non-rotating server logs every user out at their first token expiry — the same
+trap documented for `api_client.dart` in `docs/09-sprint-timeline.md` Sprint 8.
+
+One login form may front both systems, routing on which issuer accepts the
+credentials. The form is shared; the endpoints, tables and secrets are not.
+
+## Admin View-as-User Does Not Mint a User Token (Sprint 12)
+
+An admin can open a read-only view of a user's account. It is worth being
+explicit about how, because the obvious implementation would break the isolation
+this document opens by insisting on.
+
+**Rejected:** having the backend issue a real user access token to an
+authenticated admin. It escalates an admin credential into a user session, which
+is the mirror image of the escalation the two-table design exists to prevent —
+and a token indistinguishable from the user's own is *writable* by construction.
+Nothing downstream could stop an admin sending a chat message or resolving an SOS
+as that person, because nothing downstream would be able to tell.
+
+**Adopted:** read-only `GET /admin/users/:id/*` endpoints served to the **admin**
+token, listed in `docs/03-api-endpoints.md`. No cross-issuer token exists, the
+`admin-auth.ts` plugin is reused unchanged, read-only is a property of the route
+set rather than a rule someone must remember, and each access is written to
+`admin_audit_log`.
+
 ## Password & Security Notes
 - Passwords hashed with **argon2id** (preferred) or bcrypt with a sufficient cost factor — never store or log plaintext
 - Rate-limit login attempts per username + per IP to slow brute force

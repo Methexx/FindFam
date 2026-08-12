@@ -1,7 +1,9 @@
 # 01 — System Architecture
 
 ## Overview
-FindFam is a three-application system sharing one backend: a Flutter mobile app (primary user surface), a Fastify API + realtime layer (backend), and a Next.js admin dashboard (moderation/monitoring). All three live in one monorepo and talk to a single Postgres+PostGIS database.
+FindFam is a three-application system sharing one backend: a Flutter mobile app (primary user surface), a Fastify API + realtime layer (backend), and a Next.js web app. All three live in one monorepo and talk to a single Postgres+PostGIS database.
+
+The Next.js app serves **two audiences from one project** as of Sprint 10 — a consumer surface for users and a moderation dashboard for admins, under separate route groups and separate cookies. They share a codebase and a deploy, not a session: see `docs/06-auth-flow.md`.
 
 ## Component Diagram (Mermaid — renders on GitHub/most markdown viewers)
 
@@ -9,7 +11,8 @@ FindFam is a three-application system sharing one backend: a Flutter mobile app 
 flowchart TB
     subgraph Client["Client Apps"]
         Mobile["Flutter Mobile App\n(iOS + Android)"]
-        AdminWeb["Next.js Admin Web"]
+        UserWeb["Next.js Web — User\nmap, circles, chat"]
+        AdminWeb["Next.js Web — Admin\nmoderation, SOS feed"]
     end
 
     subgraph Backend["Backend (Fastify, TypeScript)"]
@@ -79,9 +82,12 @@ flowchart TB
 - **PostgreSQL + PostGIS**: source of truth for users, circles, locations, messages, emergency contacts, SOS events. PostGIS enables geofence containment queries for Tier 1 place alerts.
 - **Redis**: Pub/Sub backplane for WebSocket fan-out, plus the BullMQ job queue for SOS delivery.
 
-### Admin web (Next.js)
-- Separate admin auth (not a regular user account)
-- Server-rendered dashboard: user list, circle list, live SOS feed (subscribes to the same WebSocket gateway), basic analytics queries against Postgres
+### Web app (Next.js)
+One project, two route groups, two cookie-backed sessions. Structure detail in `docs/12-web-app-structure.md`.
+
+- **User surface** — live map, circles, follows, chat, emergency contacts, profile. Everything the mobile app does except trigger an SOS, which stays on the phone. Uses the same WebSocket gateway and the same CARTO tile source as mobile, so the two clients look like one product.
+- **Admin surface** — separate admin auth (not a regular user account, not an escalated one). Server-rendered dashboard: user list, circle list, live SOS feed over the same gateway, analytics, and a read-only view of any user's account.
+- Tokens live in httpOnly cookies set by Next route handlers acting as a BFF; the browser never holds one in JavaScript.
 
 ## Data Flow Summary (detail in 07-data-flow)
 1. Mobile app streams location → WebSocket gateway → written to Postgres + broadcast to circle members' open connections

@@ -96,6 +96,8 @@ Full detail lives in the standalone feature list, but the phased summary is:
 | 08-flutter-app-structure | Flutter project structure, state management approach |
 | 09-sprint-timeline | Sprint-by-sprint build plan, including file/repo structure setup timing |
 | 10-production-readiness | Pre-launch checklist: security, DevOps, monitoring, legal/privacy |
+| 11-known-limitations | Honest gap list, updated after each audit |
+| 12-web-app-structure | Next.js project structure, route groups, BFF cookie layer, conventions |
 
 ## Realistic Timeline
 Solo build, part-time alongside coursework: **10–12 weeks** for MVP through Tier 1, based on your School Connect build pace. Full detail in 09-sprint-timeline.
