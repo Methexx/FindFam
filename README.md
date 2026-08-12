@@ -8,11 +8,11 @@ This repository is a Turborepo monorepo with three apps that share a single back
 |---|---|---|
 | `apps/mobile` | Flutter | Main user app for live location, chat, contacts, and SOS |
 | `apps/backend` | Fastify + TypeScript | REST API, realtime gateway, background jobs |
-| `apps/admin-web` | Next.js + Tailwind | Internal moderation dashboard and live SOS monitoring |
+| `apps/admin-web` | Next.js + Tailwind | Web app for users, plus the internal moderation dashboard and live SOS monitoring |
 
 ## What The Project Does
 
-At a high level, FindFam lets people create private circles, share their live location on a map, exchange messages, and trigger an SOS that is broadcast immediately and delivered through push notification. The admin dashboard is there for moderation and safety monitoring, not for public users.
+At a high level, FindFam lets people create private circles, share their live location on a map, exchange messages, and trigger an SOS that is broadcast immediately and delivered through push notification. Users reach it from the Flutter app or, as of Sprint 10, a browser — the web app carries everything except the SOS trigger, which stays on the phone you actually carry. The same Next.js app also hosts the moderation dashboard, behind a separate login and a separate credential store; the two are not the same session and a user account cannot become an admin one.
 
 The architecture, data model, API surface, and mobile structure are documented in the docs folder:
 - [00-master-project-reference](docs/00-master-project-reference.md)

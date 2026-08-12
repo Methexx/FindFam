@@ -20,9 +20,11 @@ Existing family location-sharing apps (Life360) dominate the market but are wide
 ## Roles (3)
 | Role | Platform | Purpose |
 |---|---|---|
-| **User (relative/family member)** | Flutter mobile | Share location, join circles, chat, manage emergency contacts, trigger SOS |
-| **Admin** | Next.js web | Moderate users/circles, monitor live SOS events, view analytics |
+| **User (relative/family member)** | Flutter mobile + Next.js web | Share location, join circles, chat, manage emergency contacts, trigger SOS. **Web has everything except the SOS trigger** — see the note below |
+| **Admin** | Next.js web | Moderate users/circles, monitor live SOS events, view analytics, view a user's account read-only |
 | *(No separate "child" role in MVP — symmetric sharing model, not parental control)* | | |
+
+**The web app serves both roles as of Sprint 10.** It was originally specified as an internal moderation dashboard only; that was reversed deliberately so people can watch a circle from a desk. Both audiences live in one Next.js app (`apps/admin-web`, to be renamed) under separate route groups and separate cookies, backed by the two isolated auth systems in `docs/06-auth-flow.md` — a user session and an admin session remain different tokens against different tables. Raising an SOS stays mobile-only: the phone is the device you are carrying when you need it. See `docs/09-sprint-timeline.md` Sprints 10–12.
 
 ## Tech Stack
 - **Mobile:** Flutter (iOS + Android)

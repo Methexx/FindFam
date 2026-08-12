@@ -3,7 +3,8 @@
 Honest list of gaps, updated after a full codebase audit following the Sprint 6
 hardening pass. Kept current rather than pretending scope gaps don't exist — see
 `docs/10-production-readiness.md`'s Documentation & Handoff section for why this
-matters. Remaining work is scheduled in `docs/09-sprint-timeline.md` (Sprints 7–9).
+matters. Remaining work is scheduled in `docs/09-sprint-timeline.md` (Sprints 7–9
+close out the original plan; Sprints 10–12 add the consumer web surface).
 
 ## Push notifications do not work — at all
 
@@ -34,6 +35,25 @@ Related, and fixed in the same sprint:
   push would land in Android's default channel.
 - Once tokens are stored, **logout must clear them.** Otherwise the next person
   to sign in on that phone receives the previous user's SOS alerts.
+
+## Suspending a user does not stop them logging back in
+
+`admin.service.ts` → `suspendUser` does the hard parts correctly: it sets
+`suspended_at`, deletes every refresh token for that user via
+`deleteRefreshTokensForUser`, and calls `forceDisconnectUser` to drop their live
+WebSocket. So the *current* session really does end.
+
+But **neither `login()` nor `refresh()` in `auth.service.ts` ever reads
+`suspended_at`.** `login` checks that the user exists and the password verifies,
+then issues a fresh token pair. So a suspended user types their password again
+and is back in, with a new 7-day refresh token, seconds later.
+
+Suspension is therefore a revoked session, not a disabled account — which is not
+what the admin dashboard's "Suspended" badge implies to the moderator who clicked
+it. `docs/09-sprint-timeline.md` Sprint 8 flagged the missing check in `refresh()`;
+the `login()` half is the larger one and both are scheduled in Sprint 10, before
+the web app becomes a second front door. The fix should return 403 rather than
+401 so a client can distinguish "wrong password" from "account suspended".
 
 ## Nothing is deployed
 
@@ -137,7 +157,29 @@ Scheduled across Sprints 7 and 8, listed here so the record is complete:
   clobbers the first and navigating away leaves a closure holding a disposed
   notifier.
 
-## admin-web
+## Web app
+
+There is no consumer web surface today. `apps/admin-web`'s entire route surface
+is `/` (a public landing page), `/login` (admin only) and `/dashboard/*`
+(moderation) — a user cannot sign in on the web at all. `docs/09-sprint-timeline.md`
+Sprints 10–12 add one; the limitations below are the state that work starts from,
+and the first two are prerequisites for it rather than merely adjacent.
+
+Two things that will still be true after the consumer surface lands, and should
+not be mistaken for bugs once it does:
+
+- **Browser location sharing only works while the tab is open.**
+  `navigator.geolocation` has no background mode, and there is no web equivalent
+  of the Android foreground service in `core/location/location_service.dart`.
+  The Background Sync and Periodic Background Sync APIs do not provide location.
+  The web sharing indicator must say "while this tab is open" rather than
+  implying the phone's coverage — an indicator that overstates what it is doing
+  is the same class of defect as sign-out-keeps-sharing, pointed the other way.
+- **The web will not have an SOS trigger.** Deliberate, recorded in doc 09's
+  Deferred table: receiving and resolving SOS events on the web is useful, but a
+  browser tab is not the device in your pocket during an emergency.
+
+### admin-web as it stands
 
 - **No tests and no test tooling** — the only app without a `test` script.
 - No shared API client: the base-URL fallback is duplicated across 8 files and
