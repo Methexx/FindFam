@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'app.dart';
+import 'config/env.dart';
 import 'firebase_options.dart';
 
 // DSN is provided at build/run time via --dart-define=SENTRY_DSN=... rather
@@ -14,6 +15,14 @@ const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Dart-defines don't persist across `flutter run` invocations, so a
+  // forgotten --dart-define=API_BASE_URL=... on a rerun silently falls back
+  // to the emulator-only 10.0.2.2 default and looks identical to a real
+  // network/firewall problem on a physical device. Printing the resolved
+  // URLs on every launch turns "is my flag even taking effect" from a guess
+  // into something visible in the console immediately.
+  debugPrint('API_BASE_URL=${Env.apiBaseUrl}  WS_URL=${Env.wsUrl}');
 
   // Firebase must never gate the first frame. It used to be awaited here
   // before runApp(), so anything that makes it hang or fail on a real
