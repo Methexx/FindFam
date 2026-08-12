@@ -21,12 +21,21 @@ services:
         sync: false
       - key: FCM_SERVICE_ACCOUNT_JSON
         sync: false
+      # Must be set to admin-web's deployed origin (comma-separated for
+      # more than one). Without it the backend falls back to its local-dev
+      # default of http://localhost:3001 and CORS-rejects every request
+      # from the deployed dashboard.
+      - key: ALLOWED_ORIGINS
+        sync: false
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 3000
       # SENTRY_DSN intentionally omitted — deferred to doc 10 production
-      # readiness, not needed for this deploy.
+      # readiness, not needed for this deploy. Safe to omit: env.ts
+      # defaults it to '', which @sentry/node treats as a disabled SDK.
+      # It was previously a required field here, which meant omitting it
+      # crash-looped the service at boot.
       # DATABASE_MIGRATIONS_URL intentionally omitted — migrations are run
       # manually (npm run migrate) against Supabase's direct connection,
       # not as part of the deploy, so the deployed service never needs it.
