@@ -102,6 +102,41 @@ describe('auth routes (integration)', () => {
     expect(res.statusCode).toBe(401);
   });
 
+  it('does not wipe other fields when PATCH /auth/me sets only one', async () => {
+    const registerRes = await registerUser('patchuser');
+    const { accessToken } = registerRes.json().data.tokens;
+    const auth = { authorization: `Bearer ${accessToken}` };
+
+    const withAvatar = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/auth/me',
+      headers: auth,
+      payload: { avatarUrl: 'https://example.com/a.png' },
+    });
+    expect(withAvatar.statusCode).toBe(200);
+    expect(withAvatar.json().data.avatarUrl).toBe('https://example.com/a.png');
+
+    // Patching a different field must leave avatarUrl alone.
+    //
+    // updateUser spreads `{avatar_url: undefined, phone: '…'}` into
+    // Kysely's .set(), which looks like it would null the column. It
+    // doesn't — Kysely drops undefined keys before compiling, emitting
+    // `set "phone" = $1, "updated_at" = $2` with no avatar_url clause at
+    // all. This test pins that down, because the behaviour is load-bearing
+    // and invisible at the call site: if updateUser is ever rewritten to
+    // raw SQL, or Kysely changes this, a partial PATCH starts silently
+    // wiping fields and nothing else in the suite would notice.
+    const withPhone = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/auth/me',
+      headers: auth,
+      payload: { phone: '+15551234567' },
+    });
+    expect(withPhone.statusCode).toBe(200);
+    expect(withPhone.json().data.phone).toBe('+15551234567');
+    expect(withPhone.json().data.avatarUrl).toBe('https://example.com/a.png');
+  });
+
   describe('auth isolation', () => {
     it('rejects a user access token on an admin-protected route', async () => {
       const registerRes = await registerUser('isolationuser');
