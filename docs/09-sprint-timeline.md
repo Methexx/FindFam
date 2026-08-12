@@ -1,9 +1,11 @@
 # 09 — Sprint Timeline
 
 ## Format
-6 sprints × 2 weeks = 12 weeks, solo/part-time. Sprints 0–6 are complete and recorded below as a status table rather than a plan. Sprints 7–9 are the work that actually remains, in the same **Feature work / DevOps / Checkpoint** format the original plan used.
+6 sprints × 2 weeks = 12 weeks, solo/part-time. Sprints 0–6 are complete and recorded below as a status table rather than a plan. Sprints 7–9 close out the original plan, in the same **Feature work / DevOps / Checkpoint** format it used.
 
 This document was rewritten after a full codebase audit. The point of the rewrite is that the original version described only what was intended — it had no way to say which checkpoints were met and which were not. One was not.
+
+**Sprints 10–12 are a scope addition, not part of the original 12 weeks.** They add a consumer web surface, which `docs/00-master-project-reference.md` originally ruled out. They are sequenced after Sprint 9 because they depend on work planned there and in Sprint 8 — `lib/api-client.ts`, the admin-web logout route, real 401 handling, `middleware.ts` validation, vitest, the WS heartbeat and the `aud: 'ws'` token fix are all prerequisites rather than tasks to redo. Starting them earlier means building the same plumbing twice.
 
 ---
 
@@ -145,6 +147,73 @@ Work that landed outside the sprint structure — recorded here so this document
 
 ---
 
+## Sprint 10 — Web User Sessions
+
+**Goal:** the same account that signs in on the phone signs in in a browser, and the app knows which of the two kinds of account it is holding.
+
+Sprints 10–12 add the thing `docs/00-master-project-reference.md` explicitly ruled out: a consumer web surface. That decision is being reversed deliberately, not forgotten — people want to watch a circle from a desk without a phone in hand. The roles table in doc 00 and README line 15 both still say the web app is admin-only and are corrected as part of Sprint 12.
+
+**The consumer surface joins `apps/admin-web` rather than becoming `apps/web`.** Three reasons, in order of weight. It keeps both session types in one cookie and one `middleware.ts`, which is what makes Sprint 12's view-as-user tractable at all. It reuses the shadcn/ui kit, the Tailwind theme, the Sentry wiring and `admin-web-ci.yml` instead of standing up a second copy of each. And because it is the same origin, `ALLOWED_ORIGINS` needs no new entry — `app.ts` registers `@fastify/cors` with a single origin list, so a separate web app would have meant a second origin to declare in an env var that Sprint 7 is already fixing for being undeclared in `render.yaml`. The app should be renamed away from "admin-web" once it serves both audiences, but not in the same commit as the routes — a rename and a feature in one diff is a review nobody can read.
+
+**Feature work:**
+- **The refresh loop is the whole sprint, and it is not the admin problem.** The admin session is a single 8-hour token in an `admin_token` cookie that is allowed to simply expire (`app/api/admin/login/route.ts`). User access tokens live **15 minutes** against a 7-day refresh token, so copying the admin pattern would sign every user out four times an hour. The BFF needs two httpOnly cookies — `user_token` and `user_refresh_token` — and a server-side 401 → refresh → retry wrapper. Mind the coupling recorded in Sprint 8: refresh-token rotation is deferred, and `refresh()` returns only `{ accessToken }`, so the web client must persist the access token alone and leave the refresh cookie untouched. Writing a rotation-shaped client against a non-rotating server is how you get a logout at every token expiry.
+- **Suspension does not currently work, and a second front door makes that worse.** `admin.service.ts` → `suspendUser` does the hard parts correctly: it sets `suspended_at`, deletes every refresh token via `deleteRefreshTokensForUser`, and calls `forceDisconnectUser`. But **neither `login()` nor `refresh()` in `auth.service.ts` ever reads `suspended_at`** — so the suspended user types their password again and receives a fresh token pair. Suspension today is a revoked session, not a disabled account. Sprint 8 flags the missing check in `refresh()`; this is the larger half of the same bug and both branches must be closed before the browser becomes a second way in. Add the check to `login` and `refresh`, return 403 rather than 401 so the client can tell "wrong password" from "account suspended", and cover both with tests.
+- **One login form, routed by account type.** `/login` posts unconditionally to `/api/admin/login` today. It should attempt user auth, fall back to admin, and redirect to `/app` or `/dashboard` accordingly. Do **not** merge the two backend endpoints or the two tables — the isolation in `docs/06-auth-flow.md` is the point, and a single form over two issuers preserves it while a single issuer would not.
+- **Route groups**, `app/(user)/app/*` and `app/(admin)/dashboard/*`, so each half gets its own layout and the existing `app/dashboard/layout.tsx` shell is untouched. `middleware.ts` matches both prefixes and redirects on whichever cookie is actually missing.
+- **Registration on the web** against the existing `POST /auth/register`. Username uniqueness is already case-insensitive server-side; surface that error rather than reimplementing the rule in a second place where it can drift.
+- **Extend Sprint 8's `lib/api-client.ts`, do not fork it** — one base with user-scoped and admin-scoped callers. Sprint 8 exists partly to collapse a base-URL fallback duplicated across 8 files; adding a second surface first would make it 16.
+
+**Verification:**
+- `npm run migrate:test:up && npm test --workspace=@findfam/backend` — new coverage that a suspended user is refused by both `POST /auth/login` and `POST /auth/refresh`, which is the safety test of this sprint.
+- `npm run build --workspace=@findfam/admin-web`, plus the first admin-web tests if Sprint 9's vitest setup has landed.
+- Manual: sign in on the web, leave the tab idle past the 15-minute access-token expiry, and confirm the next navigation silently refreshes instead of bouncing to `/login`. Then suspend that account from the dashboard and confirm the browser cannot sign back in.
+
+**Checkpoint:** a user registers in a browser, signs out, signs back in with the credentials they use on their phone, and stays signed in well past 15 minutes — and a suspended account can no longer log in anywhere.
+
+---
+
+## Sprint 11 — Web Feature Parity
+
+**Goal:** everything a user can do on their phone except raise an SOS, they can do in a browser.
+
+**Feature work:**
+- **A real web WebSocket client, not a second copy of the admin one.** `lib/admin-ws-client.ts` has no reconnect, no backoff and no heartbeat — it sets `'closed'` on the first error and stays there, which on Render's idle-socket-dropping proxy means the SOS feed silently dies and looks merely quiet. Mobile's `ws_client.dart` already has correct exponential backoff and an `onReconnected` reconcile hook; port those semantics to a shared web client and move the admin feed onto it, so the moderation surface gets the fix as a side effect. Sprint 8's `onReconnected`-as-a-list change and Sprint 9's server-side heartbeat are both prerequisites, not duplicated work.
+- **The map, on the same tiles as mobile.** Web has no map library at all — `app/dashboard/sos/SosLiveFeed.tsx` renders an SOS as `lat.toFixed(5), lng.toFixed(5)` text. Use `react-leaflet` against the **same CARTO Voyager URL** now held in `apps/mobile/lib/core/map/map_tile_config.dart`, so the two clients look like one product rather than two projects. Mirror `member_marker.dart`'s treatment — avatar rings, staleness fading, tap for detail — because a stale pin rendered as a live one is the specific way a location map lies to you.
+- **Circles, follows, emergency contacts, chat and profile** against the endpoints already inventoried in `docs/03-api-endpoints.md`. No backend work: every one of these modules exists. Chat needs the same care Sprint 8 calls out in `ChatNotifier.loadMore` — capturing state before an `await` and overwriting after drops any broadcast that lands mid-fetch, and the bug ports as easily as the feature does.
+- **SOS: receive and resolve, never trigger.** Subscribe to `sos:broadcast` and `sos:resolved`, render an alert surface, and allow resolving one's own event through `PATCH /sos/:id/resolve`. No trigger button on the web, deliberately — the phone is the device in your pocket during an emergency, and a browser tab is not. Recorded in the Deferred table below so it reads as a decision.
+- **Browser sharing is a weaker thing than the phone's, and the UI must not pretend otherwise.** `navigator.geolocation` runs only while the tab is open; there is no web equivalent of the Android foreground service in `core/location/location_service.dart`. Web may share while open, but the persistent sharing indicator must say "while this tab is open" — an indicator implying background coverage it does not have is the same class of defect as the sign-out-keeps-sharing bug Sprint 7 fixes, pointed the other way.
+- **The UI kit needs growing.** `components/ui/` holds only alert, badge, button, card, input, skeleton and table. Dialog, dropdown, toast, tabs and form are all needed; take them from shadcn rather than hand-rolling, matching how the existing seven arrived.
+
+**Verification:**
+- `npm run build --workspace=@findfam/admin-web` and `npm test --workspace=@findfam/backend` — the backend suite should stay untouched, which is the evidence that this sprint added no server-side surface.
+- Manual, two browsers and one phone: two accounts in one circle watch each other move, exchange a message, and a phone-triggered SOS raises an alert in both browsers. Then kill the network to one browser and confirm it reconnects on its own rather than sitting on "Offline".
+
+**Checkpoint:** two accounts in one circle see each other move on the web map in real time, exchange a chat message, and a phone-triggered SOS raises an alert in the browser — Sprint 3's checkpoint, re-met on a second client.
+
+---
+
+## Sprint 12 — Guided Onboarding & Admin View-as-User
+
+**Goal:** a first-time visitor understands what FindFam is and what to do next, and an admin can see what a user sees without being able to act as them.
+
+**Feature work:**
+- **The landing page is written for engineers.** `app/page.tsx` and its 322-line `lib/landing-content.ts` open with "Flutter · Fastify · PostGIS · Next.js" and count REST endpoints and migrations. It is a good artifact and it should **move to `/architecture`, not be deleted** — it was requested work and it is the honest description of the system. But `/` now greets people who want to find their family, so it becomes: what FindFam does, the two-sided consent model stated plainly, and a three-step path — create an account, make a circle, invite someone — leading into Sprint 10's signup.
+- **First-run guidance inside the app.** A new account lands on empty screens with no next action, and every empty state currently reads like a query result ("No users found.") rather than an instruction. Add a dismissible checklist driven off endpoints that already exist — `GET /circles`, `GET /follows/pending`, `GET /emergency-contacts` — so it needs no new state to persist and cannot drift out of sync with reality. This is the only part of these three sprints with no prior art in the repo: `docs/10-production-readiness.md` covers consent-first onboarding and the pre-permission explanation screen, and nothing anywhere covers a welcome flow.
+- **View-as-user must not mint a user token, and this is the load-bearing decision of the sprint.** The obvious implementation — issue a real user access token to an authenticated admin — breaks `docs/06-auth-flow.md`'s isolation invariant outright, and worse, a token indistinguishable from the user's own is by construction *writable*: nothing downstream could stop an admin sending a chat message or resolving an SOS as that person, because nothing downstream would know. Instead add **read-only `GET /admin/users/:id/circles`, `/locations`, `/contacts` and `/follows`** beside the `GET /admin/users/:id` that already exists, and render the page with the **admin** token. Read-only by construction, no cross-issuer token, no new secret, and `plugins/admin-auth.ts` is reused unchanged. Note that `GET /admin/users/:id` already returns the user's audit log, so the detail view is half-built already.
+- **Audit it and label it.** Every view-as-user entry writes to `admin_audit_log` through the existing `insertAuditLogEntry` used by `suspend_user`/`unsuspend_user`, with a new `view_as_user` action. The page carries a persistent banner naming whose account is on screen and an exit control — an admin must never be one glance away from mistaking someone else's map for their own.
+
+**Backend:**
+- The four read-only routes above, following the four-file module pattern in `docs/04-backend-structure.md`. They are joins the repository layer can already almost do: `admin.repository.ts` has the `innerJoin('users', …)` pattern Sprint 8 points at for the username work.
+
+**Verification:**
+- `npm test --workspace=@findfam/backend` — new coverage that the read-only admin routes reject a *user* token as firmly as user routes reject an admin one. That test is the isolation invariant, written down.
+- Manual: open a user's view as an admin, confirm the banner names them, and confirm there is no control on the page that writes. Confirm the entry appears in that user's audit log.
+- Manual: hand the landing page to somebody who has never seen the project and watch them reach a circle with one other person in it without being told how.
+
+**Checkpoint:** a visitor who has never seen FindFam gets from the landing page to a circle containing one other person unaided, and an admin can open any user's view, see whose it is, and find nothing on it that writes.
+
+---
+
 ## Deferred — explicitly not doing
 
 Decisions, not omissions. Each with its reason.
@@ -164,6 +233,10 @@ Decisions, not omissions. Each with its reason.
 | admin-web charts, user-detail, SOS-detail, audit-log pages | The backend endpoints exist and stay unused. Tables are sufficient for a moderation tool at this scale. |
 | `locations` retention job | Needs a policy decision (see `PRIVACY.md`) before it needs code. |
 | Crash detection, Tier 2/3 features | Traction-gated by the original plan. |
+| SOS **trigger** on the web (Sprint 11) | Web receives and resolves SOS events but cannot raise one. The phone is the device you are carrying when you need it; a browser tab is not. Adding the button would make the web look like a safety device it cannot be. |
+| A separate `apps/web` project (Sprint 10) | The consumer surface joins `apps/admin-web` instead. One cookie layer is what makes view-as-user possible, and a second app would duplicate the UI kit, API client, CI and CORS origin for no gain at this scale. |
+| Background location sharing from the browser (Sprint 11) | `navigator.geolocation` only runs while the tab is open. There is no web equivalent of the Android foreground service, and the Web Background Sync/Periodic Sync APIs do not provide location. Web shares while open and says so. |
+| Renaming `apps/admin-web` (Sprint 10) | It stops being admin-only in Sprint 10 and the name should follow, but not in the same commit as the routes — a rename plus a feature is an unreviewable diff. Its own commit, after Sprint 12. |
 
 ---
 
