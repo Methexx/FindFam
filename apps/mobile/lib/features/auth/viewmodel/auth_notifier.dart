@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../config/dev_auth.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/storage/secure_storage.dart';
 import '../data/auth_repository.dart';
@@ -94,6 +96,50 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = AuthAuthenticated(user);
     } catch (e) {
       state = AuthUnauthenticated(e.toString());
+    }
+  }
+
+  /// Debug-only shortcut past the login screen.
+  ///
+  /// Deliberately performs a *real* login (falling back to registering the
+  /// account the first time) rather than faking an authenticated state with
+  /// a synthetic user. A fake session has no access token, so every screen
+  /// behind it would 401 and the app would be useless for exactly the dev
+  /// work this exists to speed up. One tap, real token, everything works.
+  ///
+  /// Only ever called from a `kDebugMode`-gated button — see LoginScreen.
+  Future<void> devSignIn() async {
+    assert(kDebugMode, 'devSignIn must never be reachable in a release build');
+    state = const AuthLoading();
+
+    try {
+      state = AuthAuthenticated(
+        await _repository.login(
+          usernameOrEmail: DevAuth.username,
+          password: DevAuth.password,
+        ),
+      );
+      return;
+    } catch (_) {
+      // Most likely the dev account doesn't exist on this backend yet.
+      // Fall through and create it.
+    }
+
+    try {
+      state = AuthAuthenticated(
+        await _repository.register(
+          username: DevAuth.username,
+          email: DevAuth.email,
+          password: DevAuth.password,
+        ),
+      );
+    } catch (e) {
+      // Both paths failed, which almost always means the backend isn't
+      // reachable. Say so plainly rather than dropping into a fake session
+      // that would fail confusingly on the next screen.
+      state = AuthUnauthenticated(
+        'Dev sign-in failed — is the backend running and API_BASE_URL correct? ($e)',
+      );
     }
   }
 

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "86684026469",
+    "project_id": "findfam-db",
+    "storage_bucket": "findfam-db.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:86684026469:android:2558e798648d558a29a88c",
+        "android_client_info": {
+          "package_name": "com.findfam.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAREfbj6u9YN0Wj2ObbHmDVMGQjC9MmtBg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

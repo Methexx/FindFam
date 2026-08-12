@@ -16,9 +16,20 @@ yarn-error.log*
 !.env.test.example
 
 # Flutter / Dart
-apps/mobile/android/app/google-services.json
+#
+# google-services.json and firebase_options.dart are deliberately NOT
+# ignored. They hold client identifiers only — project id, app id, package
+# name and the Android API key — all of which ship inside every distributed
+# APK and are extractable from it. FlutterFire expects firebase_options.dart
+# to be committed. Keeping them out of the repo bought no security and cost
+# a permanently red mobile CI (nothing could resolve the import or run the
+# google-services Gradle plugin), plus a repo nobody else could build.
+#
+# The credential that can actually send pushes is the service account JSON,
+# which lives only in FCM_SERVICE_ACCOUNT_JSON on the backend and is not here.
+# Defence for the client key is API-key restriction (package name + SHA-1) in
+# the Google Cloud console, not gitignore.
 apps/mobile/ios/Runner/GoogleService-Info.plist
-apps/mobile/lib/firebase_options.dart
 apps/mobile/.dart_tool/
 apps/mobile/.flutter-plugins
 apps/mobile/.flutter-plugins-dependencies
@@ -27,6 +38,8 @@ apps/mobile/.pub/
 apps/mobile/build/
 apps/mobile/**/build/
 apps/mobile/android/**/build/
+# Kotlin incremental-compilation cache, created by Gradle builds
+apps/mobile/android/.kotlin/
 apps/mobile/android/.gradle/
 apps/mobile/android/local.properties
 apps/mobile/ios/Pods/

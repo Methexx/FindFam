@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../config/dev_auth.dart';
 import '../../../shared/widgets/app_error_text.dart';
 import '../viewmodel/auth_notifier.dart';
 import 'register_screen.dart';
@@ -87,6 +89,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: const Text("Don't have an account? Register"),
                 ),
               ),
+              // Debug builds only. `kDebugMode` is a const, so the whole
+              // branch is tree-shaken out of profile/release builds — this
+              // cannot ship to a store or reach a real user.
+              if (kDebugMode) ...[
+                const SizedBox(height: 8),
+                const Divider(),
+                const SizedBox(height: 8),
+                Center(
+                  child: OutlinedButton.icon(
+                    onPressed: isLoading
+                        ? null
+                        : () => ref.read(authNotifierProvider.notifier).devSignIn(),
+                    icon: const Icon(Icons.bolt, size: 18),
+                    label: Text('Skip auth as ${DevAuth.username} (debug)'),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

@@ -11,7 +11,14 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string(),
   ADMIN_JWT_SECRET: z.string(),
   FCM_SERVICE_ACCOUNT_JSON: z.string(),
-  SENTRY_DSN: z.string(),
+  // Defaulted, not required: this schema is parsed at module load, and
+  // render.yaml deliberately omits SENTRY_DSN. Requiring it meant the
+  // process threw before Fastify ever started, so the container
+  // crash-looped and /health never passed — a deploy blocker that could
+  // only ever surface on the first real deploy. An empty string is a
+  // valid no-op DSN for @sentry/node, matching how mobile already treats
+  // an unset --dart-define=SENTRY_DSN.
+  SENTRY_DSN: z.string().default(''),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(3000),
   // Comma-separated list of origins allowed to call the API from a browser
