@@ -40,6 +40,15 @@ Future<void> _initFirebase() async {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
         .timeout(const Duration(seconds: 10));
   } catch (error, stackTrace) {
+    // A PlatformException(channel-error, ...) here on a real device (as
+    // opposed to failing to build at all) is almost always one of two
+    // things, in order of likelihood: (1) Google Play Services on this
+    // specific device is outdated or unreachable, or (2) the debug
+    // keystore's SHA-1 fingerprint isn't registered against this app in
+    // the Firebase console — common when the project's Firebase config
+    // (google-services.json / firebase_options.dart) was originally
+    // generated on a different machine than the one currently building.
+    // Neither is fixable from here; check Play Services and the console.
     debugPrint('Firebase init failed or timed out, continuing without it: $error');
     // Sentry is started immediately after this future is fired off (see
     // above) and does no network work during init, so by the time a real

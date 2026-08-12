@@ -12,7 +12,20 @@ class ApiClient {
     required SecureStorage secureStorage,
     Dio? dio,
   })  : _secureStorage = secureStorage,
-        dio = dio ?? Dio(BaseOptions(baseUrl: Env.apiBaseUrl)) {
+        dio = dio ??
+            Dio(
+              BaseOptions(
+                baseUrl: Env.apiBaseUrl,
+                // Without these, a request to an unreachable host (wrong
+                // API_BASE_URL, backend down, no route to it) never fails —
+                // it hangs on the OS's own TCP timeout, which can run well
+                // past a minute, with the UI stuck on a spinner and no
+                // error ever reaching mapDioException below.
+                connectTimeout: const Duration(seconds: 15),
+                receiveTimeout: const Duration(seconds: 15),
+                sendTimeout: const Duration(seconds: 15),
+              ),
+            ) {
     this.dio.interceptors.add(
           QueuedInterceptorsWrapper(
             onRequest: _onRequest,
@@ -72,6 +85,25 @@ class ApiClient {
 }
 
 Exception mapDioException(DioException error) {
+  // Checked before the response-based branches below: a timeout or a
+  // connection error never has a response, so error.response?.data is
+  // always null here — without this branch these fall through to the
+  // generic case and surface whatever raw socket message Dio produced,
+  // rather than something a user can act on.
+  switch (error.type) {
+    case DioExceptionType.connectionTimeout:
+    case DioExceptionType.sendTimeout:
+    case DioExceptionType.receiveTimeout:
+    case DioExceptionType.connectionError:
+      return ApiException('Could not reach the server — check your connection and try again.');
+    case DioExceptionType.cancel:
+    case DioExceptionType.badCertificate:
+    case DioExceptionType.badResponse:
+    case DioExceptionType.unknown:
+    case DioExceptionType.transformTimeout:
+      break;
+  }
+
   final statusCode = error.response?.statusCode;
   final message = (error.response?.data is Map)
       ? (error.response?.data['error']?.toString() ?? error.message ?? 'Request failed')

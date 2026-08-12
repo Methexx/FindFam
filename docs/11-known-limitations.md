@@ -101,6 +101,16 @@ than engineered around, because the free tier is single-instance:
 - **Crash detection**: not implemented. Evaluated and deliberately deferred per
   the original feature research (liability/effort tradeoff) — see
   `docs/09-sprint-timeline.md`'s Tier 3 notes.
+- **Firebase init can fail on some real Android devices**, surfacing as
+  `PlatformException(channel-error, ...)`. Ruled out as a config mismatch —
+  `applicationId`, `google-services.json`'s `package_name`, and
+  `firebase_options.dart`'s `appId` are all verified consistent. The remaining
+  causes are device-specific and not fixable in code: outdated/unreachable
+  Google Play Services on that device, or the build's signing-key SHA-1 not
+  being registered against the app in the Firebase console. Already
+  non-blocking — `main.dart` catches it, times out at 10s, and reports to
+  Sentry — but on an affected device push notifications (Sprint 7) won't work
+  until the underlying device/console issue is resolved.
 - **Tier 1 partially met**: "pause/ghost mode" is only the binary sharing switch,
   and "time at place" is absent.
 - **Single-region deployment**: no multi-region or failover story; not needed at

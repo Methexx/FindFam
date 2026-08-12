@@ -4,4 +4,14 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Debug builds only (this file merges only into debug/profile, never
+         release): allows plain http:// to a local dev backend, since
+         Env.apiBaseUrl's default and the documented dart-define LAN-IP
+         override both use http://, not https://. Android blocks cleartext
+         traffic by default on API 28+, so without this every request to a
+         local backend would be blocked outright. Deliberately not added to
+         the main manifest: a release build should only ever talk to the
+         deployed backend over https and wss. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>
