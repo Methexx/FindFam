@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/location/location_service.dart';
+import '../../../core/network/exceptions.dart';
 import '../data/locations_repository.dart';
 import 'circle_map_notifier.dart' show locationsRepositoryProvider;
 import 'ws_connection_notifier.dart';
@@ -29,12 +32,13 @@ final locationSharingNotifierProvider =
 class LocationSharingNotifier extends StateNotifier<LocationSharingState> {
   LocationSharingNotifier(this._locationService, this._wsClient, this._locationsRepository)
       : super(LocationSharingState.off) {
-    _locationService.updates.listen(_onUpdate);
+    _updatesSubscription = _locationService.updates.listen(_onUpdate);
   }
 
   final LocationService _locationService;
   final WsClient _wsClient;
   final LocationsRepository _locationsRepository;
+  late final StreamSubscription<LocationUpdateEvent> _updatesSubscription;
 
   Future<bool> enableSharing() async {
     final granted = await _locationService.requestPermission();
@@ -50,7 +54,7 @@ class LocationSharingNotifier extends StateNotifier<LocationSharingState> {
     state = LocationSharingState.off;
   }
 
-  void _onUpdate(LocationUpdateEvent event) {
+  Future<void> _onUpdate(LocationUpdateEvent event) async {
     if (_wsClient.status == WsConnectionStatus.connected) {
       _wsClient.sendLocationUpdate(
         lat: event.lat,
@@ -58,16 +62,31 @@ class LocationSharingNotifier extends StateNotifier<LocationSharingState> {
         speed: event.speed,
         batteryLevel: event.batteryLevel,
       );
-    } else {
-      // REST fallback — fire-and-forget, matches SOS's "attempt both,
-      // either success is sufficient" spirit for reliability, minus the
-      // WS attempt since we already know it's down.
-      _locationsRepository.postLocation(
+      return;
+    }
+
+    // REST fallback, matching SOS's "attempt both, either success is
+    // sufficient" spirit for reliability, minus the WS attempt since we
+    // already know it's down. Awaited and caught rather than fire-and-
+    // forget — postLocation throws ApiException on failure, which an
+    // un-awaited call would surface as an unhandled async error on every
+    // single dropped update while offline.
+    try {
+      await _locationsRepository.postLocation(
         lat: event.lat,
         lng: event.lng,
         speed: event.speed,
         batteryLevel: event.batteryLevel,
       );
+    } on ApiException {
+      // Non-fatal — this sample is lost, but capture continues and the
+      // next one (WS or REST) will carry the user's current position.
     }
+  }
+
+  @override
+  void dispose() {
+    _updatesSubscription.cancel();
+    super.dispose();
   }
 }

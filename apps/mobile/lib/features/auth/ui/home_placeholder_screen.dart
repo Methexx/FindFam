@@ -51,6 +51,11 @@ class _HomePlaceholderScreenState extends ConsumerState<HomePlaceholderScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(sosNotifierProvider, (previous, next) {
+      // Prune ids no longer active *before* checking for new ones — without
+      // this, a resolved SOS that gets re-triggered would never show a
+      // second alert, since its id would still be marked as shown from the
+      // first time.
+      _shownAlertIds.retainAll(next.othersActiveSos.map((e) => e.id));
       for (final event in next.othersActiveSos) {
         if (_shownAlertIds.add(event.id)) {
           CircleSosAlert.maybeShow(context, ref, event);

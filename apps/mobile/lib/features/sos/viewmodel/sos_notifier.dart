@@ -52,7 +52,10 @@ final sosNotifierProvider = StateNotifierProvider<SosNotifier, SosState>((ref) {
   final notifier = SosNotifier(
     ref.read(sosRepositoryProvider),
     ref.read(wsClientProvider),
-    () => (ref.read(authNotifierProvider) as AuthAuthenticated?)?.user.id,
+    () {
+      final state = ref.read(authNotifierProvider);
+      return state is AuthAuthenticated ? state.user.id : null;
+    },
   );
   ref.onDispose(notifier.dispose);
   return notifier;
