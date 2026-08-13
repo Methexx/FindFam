@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/app_error_text.dart';
 import '../../auth/viewmodel/auth_notifier.dart';
 import '../../chat/ui/chat_screen.dart';
+import '../../geofences/ui/geofences_screen.dart';
 import '../../map/ui/circle_map_screen.dart';
 import '../domain/circle.dart';
 import '../viewmodel/circle_detail_notifier.dart';
@@ -123,6 +124,18 @@ class _CircleDetailScreenState extends ConsumerState<CircleDetailScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.fence_outlined),
+            label: const Text('Geofences'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => GeofencesScreen(circleId: circle.id, isOwner: isOwner),
+              ),
+            ),
           ),
         ),
         if (actionError != null)
