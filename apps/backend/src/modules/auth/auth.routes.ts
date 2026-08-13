@@ -4,6 +4,7 @@ import {
   loginBodySchema,
   refreshBodySchema,
   patchMeBodySchema,
+  fcmTokenBodySchema,
 } from './auth.schema';
 import * as authService from './auth.service';
 import { AuthError } from './auth.service';
@@ -79,6 +80,31 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       const body = patchMeBodySchema.parse(request.body);
       const user = await authService.updateMe(request.user!.id, body);
       return reply.send({ data: user, error: null });
+    },
+  );
+
+  // Separate from PATCH /auth/me deliberately: logout must be able to
+  // unambiguously delete the token (DELETE has exactly one meaning, unlike
+  // teaching PATCH to distinguish "absent" from "explicitly null"), token
+  // refresh is a platform-channel lifecycle event unrelated to profile
+  // edits, and both fire far more often than a profile edit so they get
+  // their own rate-limit budget.
+  fastify.put(
+    '/auth/fcm-token',
+    { preHandler: fastify.authenticate, config: rateLimitConfig(30, '1 minute') },
+    async (request, reply) => {
+      const body = fcmTokenBodySchema.parse(request.body);
+      await authService.registerFcmToken(request.user!.id, body.fcmToken);
+      return reply.send({ data: { success: true }, error: null });
+    },
+  );
+
+  fastify.delete(
+    '/auth/fcm-token',
+    { preHandler: fastify.authenticate, config: rateLimitConfig(30, '1 minute') },
+    async (request, reply) => {
+      await authService.deleteFcmToken(request.user!.id);
+      return reply.send({ data: { success: true }, error: null });
     },
   );
 };

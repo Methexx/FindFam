@@ -129,6 +129,17 @@ export async function updateMe(userId: string, body: PatchMeBody) {
   return toPublicUser(user);
 }
 
+export async function registerFcmToken(userId: string, fcmToken: string) {
+  // Must run before writing the new token to userId, or a handoff where B
+  // registers the same token A still holds would leave both rows set.
+  await authRepository.clearFcmTokenFromOtherUsers(fcmToken, userId);
+  await authRepository.setFcmToken(userId, fcmToken);
+}
+
+export async function deleteFcmToken(userId: string) {
+  await authRepository.setFcmToken(userId, null);
+}
+
 export async function verifyAccessToken(token: string) {
   return verifyToken<{ sub: string; username: string }>(token, env.JWT_SECRET);
 }
