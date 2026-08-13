@@ -62,26 +62,33 @@ exist and are configured, but no service runs outside local `docker-compose`.
 Tasks 1 (Supabase), 2 (Upstash) and 6 (re-verify Sprint 3 on the new stack) of
 `docs/claude-code-pre-sprint4-infra-migration-prompt.md` are unstarted.
 
-Two latent deploy blockers were found during the audit. Neither would surface
-until the first deploy failed:
+One latent deploy blocker was found during the audit and fixed in Sprint 7:
+`SENTRY_DSN` was a required env var that `render.yaml` deliberately omitted
+(`env.ts` declared it `z.string()` with no default, so the process would have
+thrown before Fastify started and crash-looped). `env.ts` now defaults it to
+`''`, which `@sentry/node` treats as a disabled SDK — no longer a blocker.
 
-- **`SENTRY_DSN` is a required env var that `render.yaml` deliberately omits.**
-  `env.ts` declares it `z.string()` with no default, and `envSchema.parse()`
-  runs at module load — so the process throws before Fastify starts, the
-  container crash-loops, and the `/health` check never passes.
-- **`ALLOWED_ORIGINS` is never declared in `render.yaml`** and defaults to
-  `http://localhost:3001`, which would CORS-block the deployed admin-web.
+**`ALLOWED_ORIGINS` is never declared in `render.yaml`** and defaults to
+`http://localhost:3001`, which would CORS-block the deployed admin-web. Still
+open — must be set to admin-web's real deployed origin when the Render
+service is created.
 
 Also: `keep-alive.yml` is inert until the `BACKEND_HEALTH_URL` secret is set,
 CI is PR-only with no `push: main` run and no CD workflow at all, and migrations
 are run by hand — which contradicts doc 10's "migrations run automatically as
-part of deploy".
+part of deploy". Sprint 9 adds a migration-on-push workflow to close this.
 
-`infra/Dockerfile.admin-web` is referenced by nothing and is broken twice over
-(it copies two `node_modules` trees onto the same path, and declares no
+`infra/Dockerfile.admin-web` was referenced by nothing and was broken twice
+over (it copied two `node_modules` trees onto the same path, and declared no
 build-time `ARG`/`ENV` for `NEXT_PUBLIC_*`, which Next inlines at build time —
-so it would ship `localhost:3000` baked in). Sprint 9 deletes it rather than
-repairing it; admin-web deploys to Vercel, which builds natively.
+so it would have shipped `localhost:3000` baked in). Deleted in Sprint 9 rather
+than repaired; admin-web deploys to Vercel, which builds natively.
+
+`/api/admin/ws-token` handed the full 8h admin session cookie to client JS
+just to open the SOS-feed WS connection, defeating the httpOnly cookie
+everywhere else in admin-web. Fixed in Sprint 9: the backend mints a
+60-second, `aud: 'ws'`-scoped token instead, which the WS gateway requires and
+every REST route now rejects.
 
 ## Single-instance assumptions
 
