@@ -1,59 +1,44 @@
 # 11 — Known Limitations
 
-Honest list of gaps, updated after a full codebase audit following the Sprint 6
-hardening pass. Kept current rather than pretending scope gaps don't exist — see
-`docs/10-production-readiness.md`'s Documentation & Handoff section for why this
-matters. Remaining work is scheduled in `docs/09-sprint-timeline.md` (Sprints 7–9
-close out the original plan; Sprints 10–12 add the consumer web surface).
+Honest list of gaps, kept current as each sprint closes items rather than
+pretending scope gaps don't exist — see `docs/10-production-readiness.md`'s
+Documentation & Handoff section for why this matters. Updated through
+Sprint 9's code changes (Part B — actual provisioning — is separate and not
+yet started). Remaining work is scheduled in `docs/09-sprint-timeline.md`
+(Sprints 7–9 close out the original plan; Sprints 10–12 add the consumer web
+surface).
 
-## Push notifications do not work — at all
+## Push notifications — fixed in Sprint 7
 
-This is the most serious gap in the project, and it invalidates Sprint 4's
-checkpoint.
+Previously the most serious gap in the project, invalidating Sprint 4's
+checkpoint: `users.fcm_token` was read but never written, so every push path
+(SOS, chat, geofence alerts) was a silent no-op.
 
-`users.fcm_token` is created by migration 008 and read by
-`auth.repository.ts` → `findFcmTokenForUser`. **Nothing ever writes it.**
-`patchMeBodySchema` accepts only `avatarUrl` and `phone`; on mobile,
-`firebase_messaging` is a declared dependency with zero imports, so
-`getToken()` is never called.
+Fixed in Sprint 7: `PUT`/`DELETE /auth/fcm-token` register and clear the
+device token, `push_service.dart` registers on sign-in and clears on
+sign-out, device handoff (a second user signing in on the same phone nulls
+the first user's token) is covered by a backend test, and `sendPushToToken`
+now reports to Sentry and self-heals a dead token instead of silently
+swallowing the failure. Android's missing `POST_NOTIFICATIONS` permission and
+high-importance notification channel were fixed in the same sprint.
 
-Consequently `sendPushToUser` always takes its `No FCM token registered`
-branch, and **every push path is a silent no-op**: SOS delivery to emergency
-contacts, chat messages to offline members, and geofence-enter alerts. The
-surrounding machinery is complete and correct — BullMQ enqueues, the worker
-runs, retry and backoff work, the fan-out resolves contacts. Only the final
-delivery step does nothing.
+Manually verified per `docs/09-sprint-timeline.md` Sprint 7: an SOS triggered
+on a real Android device delivered an FCM push to an emergency contact's
+cold-killed device — Sprint 4's checkpoint, met.
 
-It stayed hidden for two sprints because `sendPushToToken` deliberately never
-rethrows (correctly — one dead token must not block an SOS fan-out) and logs
-only to `console.warn`. Sprint 7 closes the write path and adds Sentry
-reporting so the next failure is visible.
+## Suspending a user — fixed in Sprint 8
 
-Related, and fixed in the same sprint:
-- Android does not declare `POST_NOTIFICATIONS`, mandatory on Android 13+, and
-  declares no high-importance notification channel — so even a delivered SOS
-  push would land in Android's default channel.
-- Once tokens are stored, **logout must clear them.** Otherwise the next person
-  to sign in on that phone receives the previous user's SOS alerts.
+Previously: `admin.service.ts` → `suspendUser` correctly set `suspended_at`,
+deleted refresh tokens, and force-disconnected the live WebSocket, but
+neither `login()` nor `refresh()` in `auth.service.ts` checked `suspended_at`
+— so a suspended user could type their password again and get a fresh token
+pair seconds later.
 
-## Suspending a user does not stop them logging back in
-
-`admin.service.ts` → `suspendUser` does the hard parts correctly: it sets
-`suspended_at`, deletes every refresh token for that user via
-`deleteRefreshTokensForUser`, and calls `forceDisconnectUser` to drop their live
-WebSocket. So the *current* session really does end.
-
-But **neither `login()` nor `refresh()` in `auth.service.ts` ever reads
-`suspended_at`.** `login` checks that the user exists and the password verifies,
-then issues a fresh token pair. So a suspended user types their password again
-and is back in, with a new 7-day refresh token, seconds later.
-
-Suspension is therefore a revoked session, not a disabled account — which is not
-what the admin dashboard's "Suspended" badge implies to the moderator who clicked
-it. `docs/09-sprint-timeline.md` Sprint 8 flagged the missing check in `refresh()`;
-the `login()` half is the larger one and both are scheduled in Sprint 10, before
-the web app becomes a second front door. The fix should return 403 rather than
-401 so a client can distinguish "wrong password" from "account suspended".
+Fixed in Sprint 8: both `login()` and `refresh()` now check `suspended_at`
+and return 403 (distinguishing "account suspended" from "wrong credentials"),
+mirroring the identical check already proven in `plugins/auth.ts` for
+already-issued tokens. Covered by a backend test asserting both endpoints
+reject a suspended account.
 
 ## Nothing is deployed
 
@@ -104,11 +89,15 @@ than engineered around, because the free tier is single-instance:
 
 ## Realtime gaps
 
-- **WebSocket circle subscriptions are resolved once, at auth time.** A user who
-  joins a circle mid-session receives nothing from it until they reconnect.
-- **No ping/pong heartbeat or idle timeout.** This becomes urgent before
-  deployment: Render's proxy drops idle sockets silently, and the client's
-  exponential backoff will present that as a permanent "Offline".
+- **~~WebSocket circle subscriptions are resolved once, at auth time~~ — fixed
+  in Sprint 8.** A new `circles:resync` WS message re-runs the subscribe loop;
+  mobile calls it after joining/creating a circle mid-session, mirroring the
+  existing `onReconnected` reconcile pattern.
+- **~~No ping/pong heartbeat or idle timeout~~ — fixed in Sprint 8.**
+  `ws-gateway.ts` now pings every 30s and terminates a connection that misses
+  a pong, so Render's silent idle-socket drop surfaces as a real `close`
+  event that triggers the client's existing exponential backoff, instead of
+  presenting as a permanent "Offline".
 - **Geofences fire on enter only** — there is no exit event.
 - **`sos_events.status = 'cancelled'` is unreachable.** The column allows it; no
   route sets it.
@@ -121,10 +110,10 @@ than engineered around, because the free tier is single-instance:
   there is no `GoogleService-Info.plist`. Sprint 7 makes this degrade gracefully
   instead of crashing; actual iOS support needs a Mac and an Apple Developer
   account and is not planned.
-- **Geofences have no mobile UI.** The backend module is complete — three routes,
-  containment checks, `geofence:event` broadcast — and `apps/mobile/lib/features/`
-  has no `geofences/` directory at all. This is the last unmet feature from the
-  original 6-sprint plan; Sprint 8 closes it.
+- **~~Geofences have no mobile UI~~ — fixed in Sprint 8.** New
+  `apps/mobile/lib/features/geofences/` (create/list/delete + live enter
+  alerts via the same `geofence:event` broadcast), closing the last unmet
+  feature from the original 6-sprint plan.
 - **Crash detection**: not implemented. Evaluated and deliberately deferred per
   the original feature research (liability/effort tradeoff) — see
   `docs/09-sprint-timeline.md`'s Tier 3 notes.
