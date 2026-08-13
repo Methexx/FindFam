@@ -7,6 +7,7 @@ import { forceDisconnectUser } from '../../realtime/ws-gateway';
 import type { AdminLoginBody, ListUsersQuery } from './admin.schema';
 
 const ADMIN_TOKEN_TTL = '8h';
+const ADMIN_WS_TOKEN_TTL = '60s';
 
 export class AdminAuthError extends Error {
   constructor(
@@ -47,6 +48,15 @@ export async function login(body: AdminLoginBody) {
     admin: { id: admin.id, email: admin.email, createdAt: admin.created_at.toISOString() },
     tokens: { accessToken },
   };
+}
+
+// Scoped replacement for handing the full 8h session token to client JS
+// just to open a WS connection (the SOS live feed). 60s is enough to open
+// one connection and authenticate; aud: 'ws' keeps it from working as a
+// general admin credential on any REST route (see plugins/admin-auth.ts).
+export async function mintWsToken(adminId: string, email: string) {
+  const token = await signToken({ sub: adminId, email, aud: 'ws' }, env.ADMIN_JWT_SECRET, ADMIN_WS_TOKEN_TTL);
+  return { token };
 }
 
 export async function listCircles() {

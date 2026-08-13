@@ -13,10 +13,17 @@ const adminAuthPlugin: FastifyPluginAsync = async (fastify) => {
     }
 
     try {
-      const payload = await verifyToken<{ sub: string; email: string }>(
+      const payload = await verifyToken<{ sub: string; email: string; aud?: string }>(
         token,
         env.ADMIN_JWT_SECRET,
       );
+      // A ws-scoped token (see POST /admin/auth/ws-token) is deliberately
+      // narrower than a full session token — it must not double as a
+      // general-purpose admin credential just because it verifies against
+      // the same secret.
+      if (payload.aud === 'ws') {
+        return reply.code(401).send({ data: null, error: 'Invalid or expired token' });
+      }
       request.admin = { id: payload.sub, email: payload.email };
     } catch {
       return reply.code(401).send({ data: null, error: 'Invalid or expired token' });

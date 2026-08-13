@@ -216,10 +216,17 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
       // that branches on token type.
       if (parsed.data.type === 'admin_auth') {
         try {
-          await verifyToken<{ sub: string; email: string }>(
+          // Only a short-lived, ws-scoped token (POST /admin/auth/ws-token)
+          // is accepted here — a full 8h session token must not double as a
+          // WS credential, which is the whole point of minting a separate
+          // one instead of handing the session token to client JS.
+          const payload = await verifyToken<{ sub: string; email: string; aud?: string }>(
             parsed.data.token,
             env.ADMIN_JWT_SECRET,
           );
+          if (payload.aud !== 'ws') {
+            throw new Error('not a ws-scoped token');
+          }
           isAdmin = true;
         } catch {
           send(socket, { type: 'error', error: 'Invalid or expired admin token' });

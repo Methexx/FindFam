@@ -30,6 +30,15 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+  fastify.post(
+    '/admin/auth/ws-token',
+    { preHandler: fastify.authenticateAdmin },
+    async (request, reply) => {
+      const result = await adminService.mintWsToken(request.admin!.id, request.admin!.email);
+      return reply.send({ data: result, error: null });
+    },
+  );
+
   fastify.get(
     '/admin/circles',
     { preHandler: fastify.authenticateAdmin },
