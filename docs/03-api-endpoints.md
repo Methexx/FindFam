@@ -90,14 +90,30 @@
 | Method | Path | Description |
 |---|---|---|
 | POST | `/admin/auth/login` | Admin login (separate credential store) |
+| GET | `/admin/auth/me` | Current admin |
 | GET | `/admin/users?cursor=&search=` | List/search users |
+| GET | `/admin/users/:id` | User detail + that user's audit-log entries |
 | PATCH | `/admin/users/:id/suspend` | Suspend a user account |
 | PATCH | `/admin/users/:id/unsuspend` | Restore a user account |
-| GET | `/admin/circles?cursor=&search=` | List/search circles |
-| GET | `/admin/circles/:id` | Circle detail + members (moderation view) |
+| GET | `/admin/circles` | List circles |
 | GET | `/admin/sos/active` | Live feed of active SOS events (also available via WS) |
 | GET | `/admin/sos/:id` | SOS event detail, including resolution history |
 | GET | `/admin/analytics/summary` | Active users, circles created, SOS events over time |
+
+**Correction:** earlier revisions of this table listed `GET /admin/circles/:id` ("circle detail + members") and omitted both `GET /admin/auth/me` and `GET /admin/users/:id`. The circle-detail route **does not exist** in `admin.routes.ts`; the other two do. The table above matches the code. `GET /admin/circles` also takes no `cursor`/`search` parameters today, unlike `/admin/users`.
+
+### Admin read-only user views (Sprint 12)
+
+Added for view-as-user. These return another user's data to an **admin** token — they do not issue a user token, because a token indistinguishable from the user's own would be writable by construction and would break the isolation invariant in `docs/06-auth-flow.md`. Read-only by design; there is deliberately no write counterpart.
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/admin/users/:id/circles` | Circles the user belongs to |
+| GET | `/admin/users/:id/locations` | Latest known location per circle the user is in |
+| GET | `/admin/users/:id/contacts` | The user's emergency contacts |
+| GET | `/admin/users/:id/follows` | The user's follows, both directions |
+
+Each access writes a `view_as_user` entry to `admin_audit_log` through the same `insertAuditLogEntry` path as `suspend_user`.
 
 ---
 

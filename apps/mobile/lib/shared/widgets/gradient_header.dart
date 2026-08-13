@@ -9,11 +9,13 @@ class GradientHeader extends StatelessWidget {
     super.key,
     required this.title,
     this.subtitle,
+    this.leading,
     this.actions = const [],
   });
 
   final String title;
   final String? subtitle;
+  final Widget? leading;
   final List<Widget> actions;
 
   @override
@@ -31,6 +33,7 @@ class GradientHeader extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (leading != null) ...[leading!, const SizedBox(width: 8)],
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

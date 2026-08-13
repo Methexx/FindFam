@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../core/map/map_tile_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../shared/utils/time_ago.dart';
 import '../../../shared/widgets/app_empty_state.dart';
@@ -13,6 +15,7 @@ import '../domain/member_location.dart';
 import '../viewmodel/circle_map_notifier.dart';
 import '../viewmodel/location_sharing_notifier.dart';
 import '../viewmodel/ws_connection_notifier.dart';
+import 'download_area_button.dart';
 import 'location_permission_screen.dart';
 import 'member_location_format.dart';
 import 'member_marker.dart';
@@ -112,10 +115,20 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
           child: _ConnectionBanner(status: connectionStatus.value),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _onShareTapped,
-        icon: Icon(sharingState == LocationSharingState.on ? Icons.stop_circle_outlined : Icons.share_location),
-        label: Text(sharingState == LocationSharingState.on ? 'Stop sharing' : 'Share location'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (!_showMemberList) ...[
+            DownloadAreaButton(mapController: _mapController, heroTag: 'downloadCircleMapArea'),
+            const SizedBox(height: 12),
+          ],
+          FloatingActionButton.extended(
+            onPressed: _onShareTapped,
+            icon: Icon(sharingState == LocationSharingState.on ? Icons.stop_circle_outlined : Icons.share_location),
+            label: Text(sharingState == LocationSharingState.on ? 'Stop sharing' : 'Share location'),
+          ),
+        ],
       ),
       body: switch (state) {
         CircleMapInitial() => const Center(child: CircularProgressIndicator()),
@@ -202,8 +215,10 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
       options: MapOptions(initialCenter: center, initialZoom: 13),
       children: [
         TileLayer(
-          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-          userAgentPackageName: 'app.findfam.mobile',
+          urlTemplate: kMapTileUrlTemplate,
+          userAgentPackageName: kMapUserAgentPackageName,
+          retinaMode: RetinaMode.isHighDensity(context),
+          tileProvider: const FMTCStore(kMapCacheStoreName).getTileProvider(),
         ),
         MarkerLayer(
           markers: points

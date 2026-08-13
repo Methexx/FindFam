@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'app.dart';
 import 'config/env.dart';
+import 'core/map/map_tile_config.dart';
 import 'firebase_options.dart';
 
 // DSN is provided at build/run time via --dart-define=SENTRY_DSN=... rather
@@ -15,6 +17,11 @@ const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Local disk I/O only (no network), so unlike Firebase below this is safe
+  // to await directly — it won't hang the first frame on a bad connection.
+  await FMTCObjectBoxBackend().initialise();
+  await const FMTCStore(kMapCacheStoreName).manage.create();
 
   // Dart-defines don't persist across `flutter run` invocations, so a
   // forgotten --dart-define=API_BASE_URL=... on a rerun silently falls back

@@ -4,13 +4,14 @@ import '../../../shared/widgets/gradient_header.dart';
 import '../../circles/ui/circles_list_screen.dart';
 import '../../circles/ui/follows_screen.dart';
 import '../../emergency_contacts/ui/emergency_contacts_screen.dart';
+import '../../map/ui/my_location_map_view.dart';
 import '../../profile/ui/profile_screen.dart';
 import '../../profile/ui/sharing_indicator.dart';
+import '../../settings/ui/settings_screen.dart';
 import '../../sos/ui/active_sos_banner.dart';
 import '../../sos/ui/circle_sos_alert.dart';
 import '../../sos/ui/sos_button.dart';
 import '../../sos/viewmodel/sos_notifier.dart';
-import '../viewmodel/auth_notifier.dart';
 
 class HomePlaceholderScreen extends ConsumerStatefulWidget {
   const HomePlaceholderScreen({super.key, required this.username});
@@ -23,11 +24,28 @@ class HomePlaceholderScreen extends ConsumerStatefulWidget {
 
 class _HomePlaceholderScreenState extends ConsumerState<HomePlaceholderScreen> {
   final Set<String> _shownAlertIds = {};
+  int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(sosNotifierProvider.notifier).loadActive());
+  }
+
+  Future<void> _onDestinationSelected(int index) async {
+    if (index == 0) {
+      setState(() => _selectedIndex = 0);
+      return;
+    }
+
+    setState(() => _selectedIndex = index);
+    final Widget screen = switch (index) {
+      1 => const CirclesListScreen(),
+      2 => const FollowsScreen(),
+      _ => const EmergencyContactsScreen(),
+    };
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    if (mounted) setState(() => _selectedIndex = 0);
   }
 
   @override
@@ -46,111 +64,63 @@ class _HomePlaceholderScreenState extends ConsumerState<HomePlaceholderScreen> {
           GradientHeader(
             title: 'Hi, ${widget.username}',
             subtitle: 'Welcome back',
+            leading: GradientHeaderAction(
+              icon: Icons.person,
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfileScreen()),
+              ),
+            ),
             actions: [
               GradientHeaderAction(
-                icon: Icons.logout,
-                onPressed: () => ref.read(authNotifierProvider.notifier).logout(),
+                icon: Icons.settings,
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                ),
               ),
             ],
           ),
           const ActiveSosBanner(),
           const SharingIndicator(),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(20),
+            child: Stack(
               children: [
-                const Center(child: SosButton()),
-                const SizedBox(height: 28),
-                _NavCard(
-                  icon: Icons.group,
-                  title: 'Circles',
-                  subtitle: 'See who you share with',
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const CirclesListScreen()),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _NavCard(
-                  icon: Icons.person_add_alt,
-                  title: 'Follows',
-                  subtitle: 'Manage follow requests',
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const FollowsScreen()),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _NavCard(
-                  icon: Icons.contact_phone,
-                  title: 'Emergency Contacts',
-                  subtitle: 'Who gets notified on SOS',
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const EmergencyContactsScreen()),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _NavCard(
-                  icon: Icons.person,
-                  title: 'Profile',
-                  subtitle: 'Sharing settings & privacy',
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                  ),
+                const MyLocationMapView(),
+                const Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 20,
+                  child: Center(child: SosButton()),
                 ),
               ],
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _NavCard extends StatelessWidget {
-  const _NavCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: colorScheme.primaryContainer,
-                child: Icon(icon, color: colorScheme.onPrimaryContainer),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleMedium),
-                    Text(
-                      subtitle,
-                      style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: colorScheme.outline),
-            ],
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onDestinationSelected,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.map_outlined),
+            selectedIcon: Icon(Icons.map),
+            label: 'Map',
           ),
-        ),
+          NavigationDestination(
+            icon: Icon(Icons.group_outlined),
+            selectedIcon: Icon(Icons.group),
+            label: 'Circles',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_add_alt_outlined),
+            selectedIcon: Icon(Icons.person_add_alt),
+            label: 'Follows',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.contact_phone_outlined),
+            selectedIcon: Icon(Icons.contact_phone),
+            label: 'Emergency',
+          ),
+        ],
       ),
     );
   }

@@ -50,6 +50,7 @@ dependencies:
   flutter_map: ^7.0.0
   latlong2: ^0.9.1
   permission_handler: ^11.3.0
+  flutter_map_tile_caching: ^9.1.4
 
   # Sprint 6 — error tracking
   sentry_flutter: ^8.9.0
