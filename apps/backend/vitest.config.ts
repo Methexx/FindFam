@@ -10,7 +10,6 @@ export default defineConfig({
       DATABASE_URL: 'postgres://findfam:findfam@localhost:5432/findfam_test',
       REDIS_URL: 'redis://localhost:6379',
       JWT_SECRET: 'test-jwt-secret',
-      JWT_REFRESH_SECRET: 'test-jwt-refresh-secret',
       ADMIN_JWT_SECRET: 'test-admin-jwt-secret',
       FCM_SERVICE_ACCOUNT_JSON: '{}',
       SENTRY_DSN: '',
