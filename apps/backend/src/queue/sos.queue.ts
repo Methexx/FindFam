@@ -24,3 +24,8 @@ export function enqueueSosDelivery(job: SosDeliveryJob) {
     backoff: { type: 'exponential', delay: 2000 },
   });
 }
+
+export async function closeSosQueue(): Promise<void> {
+  await sosQueue.close();
+  await connection.quit();
+}

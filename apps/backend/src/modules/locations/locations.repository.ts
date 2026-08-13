@@ -18,6 +18,7 @@ export interface LocationRow {
   speed: number | null;
   battery_level: number | null;
   recorded_at: Date;
+  username?: string;
 }
 
 export async function insertLocation(input: InsertLocationInput): Promise<LocationRow> {
@@ -53,6 +54,7 @@ export function latestLocationsForCircle(circleId: string): Promise<LocationRow[
   return db
     .selectFrom('locations')
     .innerJoin('circle_members', 'circle_members.user_id', 'locations.user_id')
+    .innerJoin('users', 'users.id', 'locations.user_id')
     .distinctOn('locations.user_id')
     .select([
       'locations.id',
@@ -62,6 +64,7 @@ export function latestLocationsForCircle(circleId: string): Promise<LocationRow[
       'locations.speed',
       'locations.battery_level',
       'locations.recorded_at',
+      'users.username',
     ])
     .where('circle_members.circle_id', '=', circleId)
     .orderBy('locations.user_id')

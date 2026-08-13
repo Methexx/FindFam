@@ -15,8 +15,6 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
-      - key: JWT_REFRESH_SECRET
-        sync: false
       - key: ADMIN_JWT_SECRET
         sync: false
       - key: FCM_SERVICE_ACCOUNT_JSON

@@ -64,6 +64,38 @@ export function updateUser(
     .executeTakeFirstOrThrow();
 }
 
+export function setFcmToken(id: string, fcmToken: string | null) {
+  return db
+    .updateTable('users')
+    .set({ fcm_token: fcmToken, updated_at: new Date() })
+    .where('id', '=', id)
+    .returningAll()
+    .executeTakeFirstOrThrow();
+}
+
+// FCM reported this token as dead (unregistered/invalid) — clear it
+// wherever it's currently stored, so a token that will never deliver again
+// doesn't sit there silently failing every future push to whoever holds it.
+export function clearFcmTokenByValue(token: string) {
+  return db
+    .updateTable('users')
+    .set({ fcm_token: null, updated_at: new Date() })
+    .where('fcm_token', '=', token)
+    .execute();
+}
+
+// Device handoff: if this token is currently registered to a different user
+// (e.g. A signs out ungracefully, B signs into the same phone), clear it from
+// A's row first. Otherwise A keeps receiving B's SOS alerts.
+export function clearFcmTokenFromOtherUsers(token: string, exceptUserId: string) {
+  return db
+    .updateTable('users')
+    .set({ fcm_token: null, updated_at: new Date() })
+    .where('fcm_token', '=', token)
+    .where('id', '!=', exceptUserId)
+    .execute();
+}
+
 export function updateSharingStatus(id: string, isSharing: boolean) {
   return db
     .updateTable('users')

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map_tile_caching/flutter_map_tile_caching.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 import 'app.dart';
 import 'config/env.dart';
 import 'core/map/map_tile_config.dart';
+import 'core/push/push_service.dart';
 import 'firebase_options.dart';
 
 // DSN is provided at build/run time via --dart-define=SENTRY_DSN=... rather
@@ -55,6 +57,12 @@ Future<void> _initFirebase() async {
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
         .timeout(const Duration(seconds: 10));
+    // Must be registered after Firebase.initializeApp() in this isolate, and
+    // is cheap/synchronous itself — safe to do here rather than gating it
+    // (or the frame) on this future the way the rest of this function
+    // already doesn't gate anything. The handler re-initializes Firebase in
+    // its own isolate regardless, since it runs with no access to this one.
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   } catch (error, stackTrace) {
     // A PlatformException(channel-error, ...) here on a real device (as
     // opposed to failing to build at all) is almost always one of two

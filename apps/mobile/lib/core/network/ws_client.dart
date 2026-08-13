@@ -44,7 +44,21 @@ class WsClient {
   /// Called after every successful (re)connection + auth, so callers can
   /// reconcile state that may have been missed while disconnected (e.g.
   /// re-fetch GET /circles/:id/locations/latest for visible circles).
-  void Function()? onReconnected;
+  ///
+  /// A list rather than a single nullable slot: a second screen registering
+  /// a listener used to silently clobber the first (e.g. navigating from
+  /// the circle map to chat and back), and nothing ever cleared a
+  /// registration on dispose, so a closure could keep a disposed notifier
+  /// alive. Callers add in initState and must remove in dispose.
+  final _reconnectedListeners = <void Function()>[];
+
+  void addReconnectedListener(void Function() listener) {
+    _reconnectedListeners.add(listener);
+  }
+
+  void removeReconnectedListener(void Function() listener) {
+    _reconnectedListeners.remove(listener);
+  }
 
   static const _baseBackoff = Duration(seconds: 1);
   static const _maxBackoff = Duration(seconds: 30);
@@ -91,7 +105,9 @@ class WsClient {
     if (decoded['type'] == 'auth:ok') {
       _reconnectAttempt = 0;
       _setStatus(WsConnectionStatus.connected);
-      onReconnected?.call();
+      for (final listener in List<void Function()>.of(_reconnectedListeners)) {
+        listener();
+      }
       return;
     }
 
@@ -181,6 +197,7 @@ class WsClient {
 
   void dispose() {
     disconnect();
+    _reconnectedListeners.clear();
     _messagesController.close();
     _statusController.close();
   }

@@ -13,11 +13,25 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Sprint 7 — required on Android 13+ (API 33) for any notification,
+         including FCM's, to display at all; without it a delivered SOS push
+         is silently dropped at the OS level with no error anywhere in the
+         app or backend. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:label="FindFam"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Points FCM's default notification builder at the high-importance
+             channel MainActivity.onCreate() creates. Declaring this alone,
+             without creating that channel, would let Android auto-create it
+             at IMPORTANCE_DEFAULT on first notification — silently
+             downgrading the SOS push (delivered, logged, but no heads-up
+             banner) with no other symptom. Both must ship together. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="sos_alerts" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

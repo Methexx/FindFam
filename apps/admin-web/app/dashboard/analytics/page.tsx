@@ -1,33 +1,13 @@
-import { cookies } from 'next/headers';
 import { Users, Radio, TriangleAlert } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { adminApiGet } from '@/lib/api-client';
 
 interface AnalyticsSummary {
   totalUsers: number;
   activeCircles: number;
   totalSosEvents: number;
   sosEventsPerDay: { day: string; count: number }[];
-}
-
-async function fetchSummary(): Promise<AnalyticsSummary | null> {
-  const token = cookies().get('admin_token')?.value;
-  if (!token) {
-    return null;
-  }
-
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
-  const res = await fetch(`${apiBaseUrl}/api/v1/admin/analytics/summary`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-
-  if (!res.ok) {
-    return null;
-  }
-
-  const body = await res.json();
-  return body.data as AnalyticsSummary;
 }
 
 function StatTile({
@@ -55,20 +35,24 @@ function StatTile({
 }
 
 export default async function AnalyticsPage() {
-  const summary = await fetchSummary();
+  const result = await adminApiGet<AnalyticsSummary>('/api/v1/admin/analytics/summary');
 
-  if (!summary) {
+  if (!result.ok) {
     return (
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">Analytics</h1>
         <Card>
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
-            Unable to load analytics.
+            {result.reason === 'unauthenticated'
+              ? 'Your session has expired. Please log in again.'
+              : result.message ?? 'Unable to load analytics — the backend request failed.'}
           </CardContent>
         </Card>
       </div>
     );
   }
+
+  const summary = result.data;
 
   return (
     <div className="space-y-6">

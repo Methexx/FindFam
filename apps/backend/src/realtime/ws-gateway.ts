@@ -34,12 +34,23 @@ const inboundMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('sos:trigger'),
     payload: z.unknown(),
   }),
+  z.object({
+    type: z.literal('circles:resync'),
+  }),
 ]);
 
 function send(socket: WebSocket, data: unknown) {
   if (socket.readyState !== socket.OPEN) return;
   socket.send(JSON.stringify(data));
 }
+
+// Render's proxy silently drops idle WebSocket connections — neither side
+// gets a close event, so a dead socket just sits in subscribedChannels
+// forever looking "connected". Standard ws heartbeat: ping every 30s, and
+// terminate any socket that hasn't ponged since the last ping. A real
+// terminate() fires the existing 'close' handler, which already runs
+// cleanup() and (client-side) triggers WsClient's exponential backoff.
+const HEARTBEAT_INTERVAL_MS = 30_000;
 
 // Mirrors the REST POST /locations limit (30/min, see lib/rate-limit-config.ts)
 // so a client can't bypass that throttle by pushing location:update over WS
@@ -138,6 +149,7 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
     const forwardToClient = (message: string) => send(socket, JSON.parse(message));
 
     const cleanup = async () => {
+      clearInterval(heartbeatInterval);
       await Promise.all(
         Array.from(subscribedChannels).map((channel) =>
           redisPubSub.unsubscribe(channel, forwardToClient),
@@ -148,6 +160,40 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
         markUserDisconnected(userId, socket);
       }
     };
+
+    // Idempotent: already-subscribed channels are skipped since
+    // subscribedChannels is a Set and redisPubSub.subscribe no-ops (beyond
+    // adding this handler again) for a channel it's already subscribed to.
+    // Used both at initial auth and on circles:resync.
+    const subscribeToUserCircles = async (forUserId: string) => {
+      const circles = await circlesRepository.listCirclesForUser(forUserId);
+      for (const circle of circles) {
+        const channels = [
+          `circle:${circle.id}:location`,
+          `circle:${circle.id}:chat`,
+          `circle:${circle.id}:sos`,
+        ];
+        for (const channel of channels) {
+          if (subscribedChannels.has(channel)) continue;
+          subscribedChannels.add(channel);
+          await redisPubSub.subscribe(channel, forwardToClient);
+        }
+      }
+    };
+
+    let isAlive = true;
+    socket.on('pong', () => {
+      isAlive = true;
+    });
+
+    const heartbeatInterval = setInterval(() => {
+      if (!isAlive) {
+        socket.terminate();
+        return;
+      }
+      isAlive = false;
+      socket.ping();
+    }, HEARTBEAT_INTERVAL_MS);
 
     socket.on('message', async (raw: Buffer) => {
       let parsedJson: unknown;
@@ -199,19 +245,7 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
         }
 
         markUserConnected(userId, socket);
-
-        const circles = await circlesRepository.listCirclesForUser(userId);
-        for (const circle of circles) {
-          const channels = [
-            `circle:${circle.id}:location`,
-            `circle:${circle.id}:chat`,
-            `circle:${circle.id}:sos`,
-          ];
-          for (const channel of channels) {
-            subscribedChannels.add(channel);
-            await redisPubSub.subscribe(channel, forwardToClient);
-          }
-        }
+        await subscribeToUserCircles(userId);
 
         return send(socket, { type: 'auth:ok' });
       }
@@ -223,6 +257,18 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
       if (!userId) {
         if (isAdmin) return;
         return send(socket, { type: 'error', error: 'Not authenticated' });
+      }
+
+      // Circle membership is resolved once at auth time (above) and never
+      // revisited otherwise — a user added to a new circle mid-session gets
+      // no circle:{id}:location/chat/sos events on this connection until
+      // they reconnect. The client calls this after a successful
+      // addMember/create-circle response rather than the server pushing it,
+      // since circles.service.ts has no existing hook into the realtime
+      // layer to push from.
+      if (parsed.data.type === 'circles:resync') {
+        await subscribeToUserCircles(userId);
+        return send(socket, { type: 'circles:resync:ok' });
       }
 
       if (parsed.data.type === 'location:update') {
@@ -253,6 +299,14 @@ const wsGateway: FastifyPluginAsync = async (fastify) => {
 
     socket.on('close', () => {
       void cleanup();
+    });
+
+    // No error handler existed before — an error-terminated connection
+    // relied entirely on `ws` eventually emitting 'close' too, with nothing
+    // logged in between. `ws` does still emit 'close' after 'error', so no
+    // separate cleanup() call is needed here, just visibility.
+    socket.on('error', (err) => {
+      fastify.log.error({ err, userId }, 'ws connection error');
     });
   });
 };

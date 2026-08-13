@@ -24,3 +24,8 @@ export const patchMeBodySchema = z.object({
   phone: z.string().optional(),
 });
 export type PatchMeBody = z.infer<typeof patchMeBodySchema>;
+
+export const fcmTokenBodySchema = z.object({
+  fcmToken: z.string().min(1),
+});
+export type FcmTokenBody = z.infer<typeof fcmTokenBodySchema>;

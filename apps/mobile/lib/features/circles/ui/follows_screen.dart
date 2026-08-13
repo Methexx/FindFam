@@ -97,7 +97,7 @@ class _FollowsScreenState extends ConsumerState<FollowsScreen> {
                     final follow = pending[index];
                     return Card(
                       child: ListTile(
-                        title: Text('Request from ${follow.followerId}'),
+                        title: Text('Request from ${follow.followerDisplayName}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [

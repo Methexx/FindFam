@@ -1,46 +1,51 @@
-import { cookies } from 'next/headers';
+import Link from 'next/link';
 import type { AdminUser } from '@findfam/shared-types';
 import UserSearch from './UserSearch';
 import UserActions from './UserActions';
 import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { adminApiGet } from '@/lib/api-client';
 
 interface ListUsersResult {
   users: AdminUser[];
   nextCursor: string | null;
 }
 
-async function fetchUsers(search?: string): Promise<ListUsersResult> {
-  const token = cookies().get('admin_token')?.value;
-  if (!token) {
-    return { users: [], nextCursor: null };
-  }
-
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
-  const params = new URLSearchParams();
-  if (search) params.set('search', search);
-
-  const res = await fetch(`${apiBaseUrl}/api/v1/admin/users?${params}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-
-  if (!res.ok) {
-    return { users: [], nextCursor: null };
-  }
-
-  const body = await res.json();
-  return body.data as ListUsersResult;
-}
-
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: { search?: string };
+  searchParams: { search?: string; cursor?: string };
 }) {
   const search = searchParams.search ?? '';
-  const { users } = await fetchUsers(search);
+  const cursor = searchParams.cursor ?? '';
+  const params = new URLSearchParams();
+  if (search) params.set('search', search);
+  if (cursor) params.set('cursor', cursor);
+
+  const result = await adminApiGet<ListUsersResult>(`/api/v1/admin/users?${params}`);
+
+  if (!result.ok) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-xl font-semibold">Users</h1>
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            {result.reason === 'unauthenticated'
+              ? 'Your session has expired. Please log in again.'
+              : result.message ?? 'Unable to load users — the backend request failed.'}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const { users, nextCursor } = result.data;
+
+  const nextPageParams = new URLSearchParams();
+  if (search) nextPageParams.set('search', search);
+  if (nextCursor) nextPageParams.set('cursor', nextCursor);
 
   return (
     <div className="space-y-4">
@@ -88,6 +93,17 @@ export default async function UsersPage({
             </TableBody>
           </Table>
         </Card>
+      )}
+
+      {nextCursor && (
+        <div className="flex justify-center">
+          <Link
+            href={`/dashboard/users?${nextPageParams}`}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Load more
+          </Link>
+        </div>
       )}
     </div>
   );

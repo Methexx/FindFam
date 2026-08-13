@@ -87,6 +87,16 @@ export async function login(body: LoginBody) {
     throw new AuthError('Invalid credentials', 401);
   }
 
+  // Checked after the password check (not before) so a wrong password on a
+  // suspended account still reads as "Invalid credentials" rather than
+  // leaking suspension status to an unauthenticated caller. 403 rather than
+  // 401 so the client can distinguish "wrong password" from "account
+  // suspended" — mirrors the identical check in plugins/auth.ts for
+  // already-issued tokens.
+  if (user.suspended_at) {
+    throw new AuthError('Account suspended', 403);
+  }
+
   const tokens = await issueTokenPair(user.id, user.username);
   return { user: toPublicUser(user), tokens };
 }
@@ -102,6 +112,14 @@ export async function refresh(refreshToken: string) {
   const user = await authRepository.findUserById(record.user_id);
   if (!user) {
     throw new AuthError('Invalid or expired refresh token', 401);
+  }
+
+  // suspendUser already deletes every refresh token for the user, so this
+  // mostly closes a race between "suspend" and an in-flight refresh rather
+  // than being the primary defense — but it's the only thing that stops a
+  // refresh token minted moments before suspension from still working.
+  if (user.suspended_at) {
+    throw new AuthError('Account suspended', 403);
   }
 
   const accessToken = await signToken({ sub: user.id, username: user.username }, env.JWT_SECRET, ACCESS_TOKEN_TTL);
@@ -127,6 +145,17 @@ export async function updateMe(userId: string, body: PatchMeBody) {
     phone: body.phone,
   });
   return toPublicUser(user);
+}
+
+export async function registerFcmToken(userId: string, fcmToken: string) {
+  // Must run before writing the new token to userId, or a handoff where B
+  // registers the same token A still holds would leave both rows set.
+  await authRepository.clearFcmTokenFromOtherUsers(fcmToken, userId);
+  await authRepository.setFcmToken(userId, fcmToken);
+}
+
+export async function deleteFcmToken(userId: string) {
+  await authRepository.setFcmToken(userId, null);
 }
 
 export async function verifyAccessToken(token: string) {

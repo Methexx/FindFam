@@ -1,48 +1,79 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { ShieldCheck, ArrowRight, MapPin, Siren, Users } from 'lucide-react';
+import {
+  ShieldCheck,
+  ArrowRight,
+  MapPin,
+  Users,
+  UserPlus,
+  MessageCircle,
+  Phone,
+  Siren,
+  Smartphone,
+  Code2,
+} from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ArchitectureDiagram } from '@/components/landing/architecture-diagram';
-import { JourneyTrace } from '@/components/landing/journey';
-import { JOURNEYS, SURFACES, DECISIONS } from '@/lib/landing-content';
 
-// The public front door. This route used to redirect straight to /login, which
-// meant anyone opening the deployed URL met a password box with no explanation
-// of what they were logging into. Now it explains the system and routes admins
-// onward; /dashboard stays protected by middleware either way.
+// The public front door. Rewritten to speak to the people FindFam is for,
+// not to the people who built it — the previous version of this page (43
+// REST endpoints, architecture diagrams, wire-level journey traces) moved to
+// /architecture rather than being deleted, since it's a genuinely useful
+// writeup, just not a useful first impression for a non-technical visitor.
 
 export const metadata = {
-  title: 'FindFam — Family location sharing, built on consent',
+  title: 'FindFam — Know your family is safe, without watching them',
   description:
-    'How FindFam works: architecture, the realtime location path, and the SOS delivery flow, traced end to end.',
+    'FindFam lets a family see where each other are, message in a group, and raise an SOS that reaches emergency contacts instantly. Built on consent, not surveillance.',
 };
 
-function SectionHeading({
-  eyebrow,
-  title,
-  lead,
-}: {
-  eyebrow: string;
-  title: string;
-  lead?: string;
-}) {
-  return (
-    <div className="mb-8 max-w-2xl">
-      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-        {eyebrow}
-      </p>
-      <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h2>
-      {lead ? <p className="mt-3 leading-relaxed text-muted-foreground">{lead}</p> : null}
-    </div>
-  );
-}
+const FEATURES = [
+  {
+    icon: MapPin,
+    title: 'Live map',
+    body: 'See where everyone in your circle is right now, updated as they move.',
+  },
+  {
+    icon: Users,
+    title: 'Circles & follow requests',
+    body: "Nobody sees your location just for knowing your username — sharing starts with a request you accept, and stays undone until you say so.",
+  },
+  {
+    icon: MessageCircle,
+    title: 'Group chat',
+    body: 'Talk to your circle in the same place you see them on the map.',
+  },
+  {
+    icon: Phone,
+    title: 'Emergency contacts',
+    body: 'Choose who gets notified first if something goes wrong.',
+  },
+  {
+    icon: Siren,
+    title: 'SOS',
+    body: "One button shares your location and alerts your circle and emergency contacts immediately. It's not a substitute for calling emergency services.",
+  },
+];
+
+const STEPS = [
+  {
+    number: '1',
+    title: 'Create an account',
+    body: 'Sign up on the FindFam app — it takes a minute and no one can find you by searching.',
+  },
+  {
+    number: '2',
+    title: 'Build a circle with people you trust',
+    body: 'Send a follow request, they accept, then you add each other to a circle together. Both sides agree before anything is shared.',
+  },
+  {
+    number: '3',
+    title: 'See each other, safely',
+    body: "Check the map when you want to, chat when you need to, and reach for SOS if something's wrong.",
+  },
+];
 
 export default function HomePage() {
-  // Signed-in admins get sent to the dashboard instead of a login form they
-  // don't need. Presence of the cookie is only a UI hint here — the real check
-  // still happens in middleware and, ultimately, at the backend.
   const hasSession = cookies().has('admin_token');
   const adminHref = hasSession ? '/dashboard' : '/login';
   const adminLabel = hasSession ? 'Open dashboard' : 'Admin login';
@@ -55,190 +86,126 @@ export default function HomePage() {
             <ShieldCheck className="h-5 w-5 text-primary" />
             FindFam
           </span>
-          <Link href={adminHref} className={buttonVariants({ size: 'sm' })}>
-            {adminLabel}
-          </Link>
+          <nav className="flex items-center gap-4">
+            <Link
+              href="/architecture"
+              className="hidden items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground sm:flex"
+            >
+              <Code2 className="h-3.5 w-3.5" />
+              How it&apos;s built
+            </Link>
+            <Link href={adminHref} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+              {adminLabel}
+            </Link>
+          </nav>
         </div>
       </header>
 
       <main className="mx-auto max-w-5xl px-6">
         {/* Hero */}
         <section className="border-b border-border py-16 sm:py-20">
-          <Badge variant="secondary" className="mb-5">
-            Flutter · Fastify · PostGIS · Next.js
-          </Badge>
-          <h1 className="max-w-3xl text-4xl font-semibold tracking-tight sm:text-5xl">
-            Family location sharing, built so it can&apos;t watch you quietly.
+          <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
+            Know your family is safe — without watching them.
           </h1>
-          <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
             FindFam lets a family see where each other are, message in a group, and raise an SOS
             that reaches their emergency contacts. Every sharing relationship needs two separate
-            acts of consent, and the app is incapable of capturing your location without saying so
-            on screen.
-          </p>
-          <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
-            This page traces how it actually works — the architecture, and then three real journeys
-            through the code, down to the request bodies and channel names.
+            acts of consent — nobody joins your circle without agreeing to it first, and you can
+            always see who can see you.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link href="#journeys" className={buttonVariants({ size: 'lg' })}>
-              See how it works
+            <Link href="#get-started" className={buttonVariants({ size: 'lg' })}>
+              Get started
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
-            <Link
-              href={adminHref}
-              className={buttonVariants({ variant: 'outline', size: 'lg' })}
-            >
-              {adminLabel}
+            <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+              How it works
             </Link>
           </div>
-
-          <dl className="mt-12 grid grid-cols-2 gap-x-6 gap-y-6 border-t border-border pt-8 sm:grid-cols-4">
-            {[
-              { value: '3', label: 'Applications, one monorepo' },
-              { value: '43', label: 'REST endpoints across 9 modules' },
-              { value: '15', label: 'Database migrations' },
-              { value: '65', label: 'Backend integration tests' },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <dt className="text-2xl font-semibold tabular-nums">{stat.value}</dt>
-                <dd className="mt-1 text-sm leading-snug text-muted-foreground">{stat.label}</dd>
-              </div>
-            ))}
-          </dl>
         </section>
 
-        {/* What it's made of */}
-        <section className="border-b border-border py-16">
-          <SectionHeading
-            eyebrow="The system"
-            title="Three surfaces, one backend"
-            lead="A Flutter app for families, a Fastify service that owns all the logic, and a Next.js dashboard for moderation. They share one database and one WebSocket gateway."
-          />
+        {/* How it works */}
+        <section id="how-it-works" className="scroll-mt-14 border-b border-border py-16">
+          <div className="mb-10 max-w-2xl">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Getting started
+            </p>
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Three steps, and you&apos;re connected
+            </h2>
+          </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            {SURFACES.map((surface) => (
-              <Card key={surface.name}>
+          <div className="grid gap-8 sm:grid-cols-3">
+            {STEPS.map((step) => (
+              <div key={step.number}>
+                <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                  {step.number}
+                </div>
+                <h3 className="font-medium">{step.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Features */}
+        <section className="border-b border-border py-16">
+          <div className="mb-10 max-w-2xl">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              What you get
+            </p>
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              Everything a family needs to look out for each other
+            </h2>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((feature) => (
+              <Card key={feature.title}>
                 <CardHeader>
-                  <CardTitle>{surface.name}</CardTitle>
-                  <CardDescription>{surface.role}</CardDescription>
+                  <feature.icon className="mb-1 h-5 w-5 text-primary" />
+                  <CardTitle className="text-base">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="mb-4 font-mono text-xs text-muted-foreground">{surface.stack}</p>
-                  <ul className="space-y-2">
-                    {surface.points.map((point) => (
-                      <li
-                        key={point}
-                        className="flex gap-2 text-sm leading-relaxed text-muted-foreground"
-                      >
-                        <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-border" />
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
+                  <CardDescription className="leading-relaxed">{feature.body}</CardDescription>
                 </CardContent>
               </Card>
             ))}
           </div>
         </section>
 
-        {/* Architecture */}
-        <section className="border-b border-border py-16">
-          <SectionHeading
-            eyebrow="Architecture"
-            title="How the pieces fit"
-            lead="Requests take HTTPS. Anything live — location, chat, SOS — takes a WebSocket. Redis sits between the gateway and its subscribers, and the queue exists for exactly one job."
-          />
-          <ArchitectureDiagram />
-        </section>
-
-        {/* Journeys */}
-        <section id="journeys" className="scroll-mt-14 border-b border-border py-16">
-          <SectionHeading
-            eyebrow="Worked examples"
-            title="Three journeys, traced through the code"
-            lead="One family, followed from signing up to raising an alarm. The endpoints, payloads and channel names below are the real ones."
-          />
-
-          <div className="space-y-14">
-            {JOURNEYS.map((journey) => (
-              <JourneyTrace key={journey.id} journey={journey} />
-            ))}
-          </div>
-        </section>
-
-        {/* Design decisions */}
-        <section className="border-b border-border py-16">
-          <SectionHeading
-            eyebrow="Design decisions"
-            title="Choices worth defending"
-            lead="The parts where an obvious shortcut existed and was deliberately not taken."
-          />
-
-          <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
-            {DECISIONS.map((decision) => (
-              <div key={decision.title}>
-                <h3 className="text-sm font-medium">{decision.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                  {decision.body}
-                </p>
+        {/* Get started */}
+        <section id="get-started" className="scroll-mt-14 border-b border-border py-16">
+          <Card className="overflow-hidden">
+            <CardContent className="flex flex-col items-start gap-4 p-8 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <Smartphone className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium">FindFam is available on the FindFam Android app</h3>
+                  <p className="mt-1 max-w-md text-sm leading-relaxed text-muted-foreground">
+                    It&apos;s currently in closed testing on Google Play — the fastest way in is an
+                    invite from someone already using it. A web app for signing in from a browser
+                    is on the way.
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Admin */}
-        <section className="py-16">
-          <SectionHeading
-            eyebrow="This site"
-            title="The moderation dashboard"
-            lead="What you are looking at is the admin surface. It signs in with its own credentials — admin accounts are a separate table, signed with a separate secret, and no user token can reach these routes."
-          />
-
-          <div className="mb-8 grid gap-4 sm:grid-cols-3">
-            {[
-              {
-                icon: Siren,
-                title: 'Live SOS feed',
-                body: 'Subscribes to the admin:sos channel. Events appear the moment they are raised, alongside the ones already active.',
-              },
-              {
-                icon: Users,
-                title: 'User moderation',
-                body: 'Search, suspend and unsuspend. Suspending closes the live socket and revokes refresh tokens, so it takes effect immediately.',
-              },
-              {
-                icon: MapPin,
-                title: 'Circles and analytics',
-                body: 'Circle membership at a glance, plus counts and an SOS trend for the recent period.',
-              },
-            ].map((item) => (
-              <Card key={item.title}>
-                <CardHeader>
-                  <item.icon className="mb-1 h-5 w-5 text-muted-foreground" />
-                  <CardTitle className="text-base">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{item.body}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <Link href={adminHref} className={buttonVariants({ size: 'lg' })}>
-            {adminLabel}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
+            </CardContent>
+          </Card>
         </section>
       </main>
 
       <footer className="border-t border-border py-8">
         <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>FindFam — family location sharing and personal safety.</p>
-          <p>
-            SOS is not a substitute for calling emergency services.
-          </p>
+          <div className="flex items-center gap-4">
+            <p>SOS is not a substitute for calling emergency services.</p>
+            <Link href="/architecture" className="underline underline-offset-2 hover:text-foreground">
+              How it&apos;s built
+            </Link>
+          </div>
         </div>
       </footer>
     </div>

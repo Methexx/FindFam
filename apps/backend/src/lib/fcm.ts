@@ -1,6 +1,7 @@
 import admin from 'firebase-admin';
 import { env } from '../config/env';
-import { findFcmTokenForUser } from '../modules/auth/auth.repository';
+import { findFcmTokenForUser, clearFcmTokenByValue } from '../modules/auth/auth.repository';
+import { captureException } from '../plugins/sentry';
 
 export interface PushNotification {
   title: string;
@@ -22,7 +23,9 @@ function ensureInitialized() {
 
 // Never rethrows — a single failed/expired token, unreachable FCM, or
 // missing credentials must never block delivery to other recipients (SOS
-// fan-out, chat fan-out).
+// fan-out, chat fan-out). But it must not fail *silently* either: this was
+// the exact gap that let a broken send path survive two sprints unnoticed
+// (see docs/09-sprint-timeline.md Sprint 4), so every failure is reported.
 export async function sendPushToToken(token: string, notification: PushNotification) {
   try {
     ensureInitialized();
@@ -33,6 +36,14 @@ export async function sendPushToToken(token: string, notification: PushNotificat
     });
   } catch (err) {
     console.warn(`FCM push failed for token ${token}:`, err);
+    captureException(err);
+
+    const code = (err as { code?: string } | undefined)?.code;
+    if (code === 'messaging/registration-token-not-registered' || code === 'messaging/invalid-argument') {
+      // This token will never deliver again — clear it rather than let it
+      // fail the same way on every future push to whoever holds it.
+      await clearFcmTokenByValue(token).catch((clearErr) => captureException(clearErr));
+    }
   }
 }
 

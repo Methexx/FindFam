@@ -8,7 +8,6 @@ const envSchema = z.object({
   DATABASE_MIGRATIONS_URL: z.string().optional(),
   REDIS_URL: z.string(),
   JWT_SECRET: z.string(),
-  JWT_REFRESH_SECRET: z.string(),
   ADMIN_JWT_SECRET: z.string(),
   FCM_SERVICE_ACCOUNT_JSON: z.string(),
   // Defaulted, not required: this schema is parsed at module load, and

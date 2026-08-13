@@ -1,30 +1,27 @@
-import { cookies } from 'next/headers';
 import type { AdminCircleSummary } from '@findfam/shared-types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-
-async function fetchCircles(): Promise<AdminCircleSummary[]> {
-  const token = cookies().get('admin_token')?.value;
-  if (!token) {
-    return [];
-  }
-
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
-  const res = await fetch(`${apiBaseUrl}/api/v1/admin/circles`, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: 'no-store',
-  });
-
-  if (!res.ok) {
-    return [];
-  }
-
-  const body = await res.json();
-  return body.data as AdminCircleSummary[];
-}
+import { adminApiGet } from '@/lib/api-client';
 
 export default async function CirclesPage() {
-  const circles = await fetchCircles();
+  const result = await adminApiGet<AdminCircleSummary[]>('/api/v1/admin/circles');
+
+  if (!result.ok) {
+    return (
+      <div className="space-y-4">
+        <h1 className="text-xl font-semibold">Circles</h1>
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            {result.reason === 'unauthenticated'
+              ? 'Your session has expired. Please log in again.'
+              : result.message ?? 'Unable to load circles — the backend request failed.'}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const circles = result.data;
 
   return (
     <div className="space-y-4">

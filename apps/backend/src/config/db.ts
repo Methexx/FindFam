@@ -137,7 +137,7 @@ const isLocalDatabase = ['localhost', '127.0.0.1'].includes(
   new URL(env.DATABASE_URL).hostname,
 );
 
-const pool = new Pool({
+export const pool = new Pool({
   connectionString: env.DATABASE_URL,
   ssl: isLocalDatabase ? false : { rejectUnauthorized: false },
 });

@@ -16,10 +16,12 @@ function toPublicFollow(row: {
   followee_id: string;
   status: string;
   created_at: Date;
+  follower_username?: string;
 }) {
   return {
     id: row.id,
     followerId: row.follower_id,
+    followerUsername: row.follower_username ?? null,
     followeeId: row.followee_id,
     status: row.status,
     createdAt: row.created_at.toISOString(),
