@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/location/location_service.dart';
 import '../../../core/network/exceptions.dart';
+import '../../auth/viewmodel/auth_notifier.dart';
 import '../data/locations_repository.dart';
 import 'circle_map_notifier.dart' show locationsRepositoryProvider;
 import 'ws_connection_notifier.dart';
@@ -18,10 +19,15 @@ final locationServiceProvider = Provider<LocationService>((ref) {
 
 final locationSharingNotifierProvider =
     StateNotifierProvider<LocationSharingNotifier, LocationSharingState>((ref) {
+  final authState = ref.read(authNotifierProvider);
+  final initial = authState is AuthAuthenticated && authState.user.isSharing
+      ? LocationSharingState.on
+      : LocationSharingState.off;
   return LocationSharingNotifier(
     ref.read(locationServiceProvider),
     ref.read(wsClientProvider),
     ref.read(locationsRepositoryProvider),
+    initial: initial,
   );
 });
 
@@ -30,9 +36,27 @@ final locationSharingNotifierProvider =
 /// REST endpoint when it isn't — mirroring the ingest-side split so a
 /// dropped WS connection never means a gap in location sharing.
 class LocationSharingNotifier extends StateNotifier<LocationSharingState> {
-  LocationSharingNotifier(this._locationService, this._wsClient, this._locationsRepository)
-      : super(LocationSharingState.off) {
+  LocationSharingNotifier(
+    this._locationService,
+    this._wsClient,
+    this._locationsRepository, {
+    LocationSharingState initial = LocationSharingState.off,
+  }) : super(LocationSharingState.off) {
     _updatesSubscription = _locationService.updates.listen(_onUpdate);
+    if (initial == LocationSharingState.on) {
+      _resumeIfPermitted();
+    }
+  }
+
+  // Server says sharing was on when the app last ran, but resuming capture
+  // still needs the OS permission check first — silently starting without
+  // it would throw, and re-prompting on every cold start would be worse
+  // than the stale-toggle bug this is fixing.
+  Future<void> _resumeIfPermitted() async {
+    final permitted = await _locationService.hasPermission();
+    if (!permitted) return;
+    _locationService.start();
+    state = LocationSharingState.on;
   }
 
   final LocationService _locationService;

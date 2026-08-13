@@ -63,6 +63,15 @@ class LocationService {
 
   Future<bool> isServiceEnabled() => Geolocator.isLocationServiceEnabled();
 
+  /// Non-prompting check, unlike [requestPermission] — used to decide
+  /// whether to resume capture on app start without surprising the user
+  /// with a permission dialog they haven't triggered.
+  Future<bool> hasPermission() async {
+    final permission = await Geolocator.checkPermission();
+    return permission == LocationPermission.always ||
+        permission == LocationPermission.whileInUse;
+  }
+
   void start() {
     if (_positionSubscription != null) return;
 

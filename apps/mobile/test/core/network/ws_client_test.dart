@@ -90,7 +90,7 @@ void main() {
     addTearDown(client.dispose);
 
     var reconnectedCalls = 0;
-    client.onReconnected = () => reconnectedCalls++;
+    client.addReconnectedListener(() => reconnectedCalls++);
 
     final firstConnected = client.connectionStatus.firstWhere(
       (s) => s == WsConnectionStatus.connected,

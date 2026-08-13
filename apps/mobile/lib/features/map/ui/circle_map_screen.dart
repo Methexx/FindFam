@@ -40,17 +40,31 @@ class _CircleMapScreenState extends ConsumerState<CircleMapScreen> {
   // an explicit action via the recenter button.
   bool _hasFitBounds = false;
 
+  // Captured in initState rather than re-read via ref in dispose — Riverpod
+  // disallows `ref.read` once the element is being disposed.
+  late final WsClient _wsClient;
+
   @override
   void initState() {
     super.initState();
+    _wsClient = ref.read(wsClientProvider);
     Future.microtask(() {
       ref.read(circleMapNotifierProvider(widget.circleId).notifier).load();
       // On WS reconnect, re-fetch this circle's latest state to reconcile
       // any broadcasts missed while disconnected.
-      ref.read(wsClientProvider).onReconnected =
-          () => ref.read(circleMapNotifierProvider(widget.circleId).notifier).reconcile();
-      ref.read(wsClientProvider).connect();
+      _wsClient.addReconnectedListener(_onReconnected);
+      _wsClient.connect();
     });
+  }
+
+  void _onReconnected() {
+    ref.read(circleMapNotifierProvider(widget.circleId).notifier).reconcile();
+  }
+
+  @override
+  void dispose() {
+    _wsClient.removeReconnectedListener(_onReconnected);
+    super.dispose();
   }
 
   Future<void> _onShareTapped() async {

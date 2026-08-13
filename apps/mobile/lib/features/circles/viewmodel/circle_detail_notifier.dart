@@ -28,12 +28,14 @@ class CircleDetailError extends CircleDetailState {
 
 final circleDetailNotifierProvider = StateNotifierProvider.family<CircleDetailNotifier,
     CircleDetailState, String>((ref, circleId) {
-  return CircleDetailNotifier(ref.read(circlesRepositoryProvider), circleId);
+  return CircleDetailNotifier(ref, ref.read(circlesRepositoryProvider), circleId);
 });
 
 class CircleDetailNotifier extends StateNotifier<CircleDetailState> {
-  CircleDetailNotifier(this._repository, this._circleId) : super(const CircleDetailInitial());
+  CircleDetailNotifier(this._ref, this._repository, this._circleId)
+      : super(const CircleDetailInitial());
 
+  final Ref _ref;
   final CirclesRepository _repository;
   final String _circleId;
 
@@ -78,6 +80,7 @@ class CircleDetailNotifier extends StateNotifier<CircleDetailState> {
   Future<bool> deleteCircle() async {
     try {
       await _repository.deleteCircle(_circleId);
+      _ref.invalidate(circlesNotifierProvider);
       return true;
     } catch (_) {
       return false;

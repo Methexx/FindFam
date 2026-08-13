@@ -86,12 +86,21 @@ class ChatNotifier extends StateNotifier<ChatState> {
     try {
       final page = await _repository.listMessages(_circleId, cursor: _nextCursor);
       _nextCursor = page.nextCursor;
+
+      // Re-read state rather than reusing the pre-await `current` — a
+      // message:broadcast can prepend a new message to state while this
+      // fetch is in flight, and overwriting with the stale capture would
+      // silently drop it.
+      final latest = state;
+      final messagesSoFar = latest is ChatLoaded ? latest.messages : current.messages;
       state = ChatLoaded(
-        [...current.messages, ...page.messages],
+        [...messagesSoFar, ...page.messages],
         hasMore: page.nextCursor != null,
       );
     } catch (_) {
-      state = ChatLoaded(current.messages, hasMore: current.hasMore);
+      final latest = state;
+      final messagesSoFar = latest is ChatLoaded ? latest.messages : current.messages;
+      state = ChatLoaded(messagesSoFar, hasMore: current.hasMore);
     }
   }
 
@@ -99,11 +108,28 @@ class ChatNotifier extends StateNotifier<ChatState> {
   /// unlike SOS, chat doesn't need an always-dual-send: a duplicate SOS is
   /// harmless (deduplicated server-side) but a duplicate chat message is a
   /// visible UX defect, so this only falls back, it doesn't always double-send.
+  ///
+  /// `sendLocationUpdate`-style fire-and-forget doesn't carry a delivery ack,
+  /// so a connected-but-actually-dead socket (not yet detected by
+  /// _handleDisconnect) would otherwise silently drop the message. Give the
+  /// broadcast echo a short window to arrive via _onWsMessage before falling
+  /// back to REST.
   Future<bool> sendMessage(String content) async {
     final current = state;
     try {
       if (_wsClient.status == WsConnectionStatus.connected) {
+        final beforeIds = current is ChatLoaded
+            ? current.messages.map((m) => m.id).toSet()
+            : <String>{};
         _wsClient.sendMessage(circleId: _circleId, content: content);
+
+        await Future<void>.delayed(const Duration(seconds: 3));
+        final landed = state;
+        final arrived = landed is ChatLoaded &&
+            landed.messages.any((m) => m.content == content && !beforeIds.contains(m.id));
+        if (!arrived) {
+          await _repository.sendMessage(_circleId, content);
+        }
       } else {
         await _repository.sendMessage(_circleId, content);
       }
