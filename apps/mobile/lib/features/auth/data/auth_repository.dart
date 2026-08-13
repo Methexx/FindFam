@@ -56,6 +56,17 @@ class AuthRepository {
   }
 
   Future<void> logout() async {
+    // Must run before secureStorage.clear() below, while the access token
+    // is still present — otherwise the next person to sign in on this
+    // device would keep receiving this user's SOS/chat/geofence pushes.
+    // Best-effort like the /auth/logout call: a failure here just leaves
+    // the token to be overwritten by the next registerForCurrentUser().
+    try {
+      await _apiClient.dio.delete('/auth/fcm-token');
+    } on DioException {
+      // Best-effort - clear local session regardless of server outcome.
+    }
+
     final refreshToken = await _secureStorage.readRefreshToken();
     if (refreshToken != null) {
       try {

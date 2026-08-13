@@ -25,4 +25,12 @@ class LocationCache {
     final byUser = _byCircle.putIfAbsent(circleId, () => {});
     byUser[location.userId] = location;
   }
+
+  /// Called on sign-out. Without this, this singleton's positions survive
+  /// into the next session — the next person to sign in on this device
+  /// would see the previous user's last-known circle locations until fresh
+  /// data arrives.
+  void clear() {
+    _byCircle.clear();
+  }
 }
