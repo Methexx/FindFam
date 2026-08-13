@@ -1,7 +1,9 @@
+import Link from 'next/link';
 import type { AdminUser } from '@findfam/shared-types';
 import UserSearch from './UserSearch';
 import UserActions from './UserActions';
 import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { adminApiGet } from '@/lib/api-client';
@@ -14,11 +16,13 @@ interface ListUsersResult {
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: { search?: string };
+  searchParams: { search?: string; cursor?: string };
 }) {
   const search = searchParams.search ?? '';
+  const cursor = searchParams.cursor ?? '';
   const params = new URLSearchParams();
   if (search) params.set('search', search);
+  if (cursor) params.set('cursor', cursor);
 
   const result = await adminApiGet<ListUsersResult>(`/api/v1/admin/users?${params}`);
 
@@ -37,7 +41,11 @@ export default async function UsersPage({
     );
   }
 
-  const { users } = result.data;
+  const { users, nextCursor } = result.data;
+
+  const nextPageParams = new URLSearchParams();
+  if (search) nextPageParams.set('search', search);
+  if (nextCursor) nextPageParams.set('cursor', nextCursor);
 
   return (
     <div className="space-y-4">
@@ -85,6 +93,17 @@ export default async function UsersPage({
             </TableBody>
           </Table>
         </Card>
+      )}
+
+      {nextCursor && (
+        <div className="flex justify-center">
+          <Link
+            href={`/dashboard/users?${nextPageParams}`}
+            className={buttonVariants({ variant: 'outline' })}
+          >
+            Load more
+          </Link>
+        </div>
       )}
     </div>
   );
