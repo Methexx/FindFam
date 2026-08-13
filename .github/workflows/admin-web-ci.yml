@@ -16,6 +16,7 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npm run lint --workspace=@findfam/admin-web
+      - run: npm run test --workspace=@findfam/admin-web
       - run: npm run build --workspace=@findfam/admin-web
         env:
           NEXT_PUBLIC_API_BASE_URL: http://localhost:3000
