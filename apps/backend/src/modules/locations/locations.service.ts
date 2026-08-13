@@ -44,6 +44,7 @@ function geofenceStateKey(userId: string, circleId: string): string {
 function toPublicLocation(row: locationsRepository.LocationRow) {
   return {
     userId: row.user_id,
+    username: row.username ?? null,
     lat: row.lat,
     lng: row.lng,
     speed: row.speed,

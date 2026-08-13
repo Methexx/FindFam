@@ -37,18 +37,36 @@ export function deleteFollow(id: string) {
 export function listPendingForUser(userId: string) {
   return db
     .selectFrom('follows')
-    .selectAll()
-    .where('followee_id', '=', userId)
-    .where('status', '=', 'pending')
+    .innerJoin('users', 'users.id', 'follows.follower_id')
+    .select([
+      'follows.id',
+      'follows.follower_id',
+      'follows.followee_id',
+      'follows.status',
+      'follows.created_at',
+      'users.username as follower_username',
+    ])
+    .where('follows.followee_id', '=', userId)
+    .where('follows.status', '=', 'pending')
     .execute();
 }
 
 export function listAcceptedForUser(userId: string) {
   return db
     .selectFrom('follows')
-    .selectAll()
-    .where('status', '=', 'accepted')
-    .where((eb) => eb.or([eb('follower_id', '=', userId), eb('followee_id', '=', userId)]))
+    .innerJoin('users', 'users.id', 'follows.follower_id')
+    .select([
+      'follows.id',
+      'follows.follower_id',
+      'follows.followee_id',
+      'follows.status',
+      'follows.created_at',
+      'users.username as follower_username',
+    ])
+    .where('follows.status', '=', 'accepted')
+    .where((eb) =>
+      eb.or([eb('follows.follower_id', '=', userId), eb('follows.followee_id', '=', userId)]),
+    )
     .execute();
 }
 
