@@ -102,6 +102,35 @@ describe('auth routes (integration)', () => {
     expect(res.statusCode).toBe(401);
   });
 
+  it('rejects both login and refresh for a suspended account with 403, not 401', async () => {
+    const registerRes = await registerUser('suspendeduser');
+    const { refreshToken } = registerRes.json().data.tokens;
+
+    // suspendUser (admin.service.ts) deletes refresh tokens as part of
+    // suspension, which would make this test pass for the wrong reason —
+    // updating suspended_at directly isolates the check this test actually
+    // targets from that separate defense.
+    await db
+      .updateTable('users')
+      .set({ suspended_at: new Date() })
+      .where('username', '=', 'suspendeduser')
+      .execute();
+
+    const loginRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: { usernameOrEmail: 'suspendeduser', password: 'password123' },
+    });
+    expect(loginRes.statusCode).toBe(403);
+
+    const refreshRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      payload: { refreshToken },
+    });
+    expect(refreshRes.statusCode).toBe(403);
+  });
+
   it('does not wipe other fields when PATCH /auth/me sets only one', async () => {
     const registerRes = await registerUser('patchuser');
     const { accessToken } = registerRes.json().data.tokens;
