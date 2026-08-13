@@ -95,11 +95,19 @@ function waitForMessage(socket: WebSocket, timeoutMs = 2000): Promise<any> {
 
 function waitForNoMessage(socket: WebSocket, timeoutMs = 1500): Promise<void> {
   return new Promise((resolve, reject) => {
-    const timer = setTimeout(resolve, timeoutMs);
-    socket.once('message', (raw) => {
+    const onMessage = (raw: Buffer) => {
       clearTimeout(timer);
       reject(new Error(`Expected no message, got ${raw.toString()}`));
-    });
+    };
+    // Must remove the listener on the timeout path too, or it lingers and
+    // silently consumes the *next* message a later waitForMessage() call
+    // expects to see — the reject() above would be a no-op against an
+    // already-resolved promise, but the message itself is still gone.
+    const timer = setTimeout(() => {
+      socket.off('message', onMessage);
+      resolve();
+    }, timeoutMs);
+    socket.once('message', onMessage);
   });
 }
 
@@ -231,4 +239,55 @@ describe('WS gateway realtime location broadcast (integration)', () => {
     });
     expect(outsiderRes.statusCode).toBe(404);
   });
+
+  it('receives broadcasts for a circle joined mid-session only after circles:resync', async () => {
+    const alice = await registerUser('alice_resync');
+    const bob = await registerUser('bob_resync');
+    await followAndAccept(alice, bob, 'bob_resync');
+
+    // Bob connects and authenticates before the circle exists at all — his
+    // subscribedChannels set is resolved from zero circles at auth time.
+    const bobSocket = await connectAndAuth(bob.accessToken);
+
+    const circleId = await createCircleWithMember(alice, 'bob_resync');
+
+    const aliceSocket = await connectAndAuth(alice.accessToken);
+
+    // Without a resync, Bob's original connection was never told about the
+    // new circle — a broadcast to it should reach nobody on his socket.
+    const bobReceivesNothingYet = waitForNoMessage(bobSocket, 800);
+    aliceSocket.send(
+      JSON.stringify({
+        type: 'location:update',
+        payload: { lat: 1, lng: 1 },
+      }),
+    );
+    await bobReceivesNothingYet;
+
+    const resyncOk = waitForMessage(bobSocket);
+    bobSocket.send(JSON.stringify({ type: 'circles:resync' }));
+    const resyncMessage = await resyncOk;
+    expect(resyncMessage.type).toBe('circles:resync:ok');
+
+    // locations.service's per-user rate limit (one accepted update per 4s)
+    // isn't relaxed in test mode — a second location:update from Alice
+    // inside that window is silently dropped (only an error reply to her
+    // own socket), so this test needs to clear the window before proving
+    // the post-resync broadcast actually reaches Bob.
+    await new Promise((resolve) => setTimeout(resolve, 4100));
+
+    const bobReceives = waitForMessage(bobSocket);
+    aliceSocket.send(
+      JSON.stringify({
+        type: 'location:update',
+        payload: { lat: 2, lng: 2 },
+      }),
+    );
+    const bobMessage = await bobReceives;
+    expect(bobMessage.type).toBe('location:broadcast');
+    expect(bobMessage.payload.circleId).toBe(circleId);
+
+    aliceSocket.close();
+    bobSocket.close();
+  }, 10_000);
 });
