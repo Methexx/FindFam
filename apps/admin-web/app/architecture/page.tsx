@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArchitectureDiagram } from '@/components/landing/architecture-diagram';
 import { JourneyTrace } from '@/components/landing/journey';
 import { JOURNEYS, SURFACES, DECISIONS } from '@/lib/landing-content';
+import { GlowBackdrop } from '@/components/ui/glow-backdrop';
 
 // The technical writeup, moved here from `/` so the front door can be a
 // product page for people who aren't developers. This page is unchanged in
@@ -49,7 +50,7 @@ export default function ArchitecturePage() {
       <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+            <ShieldCheck className="h-5 w-5 text-brand" />
             FindFam
           </Link>
           <div className="flex items-center gap-4">
@@ -69,7 +70,8 @@ export default function ArchitecturePage() {
 
       <main className="mx-auto max-w-5xl px-6">
         {/* Hero */}
-        <section className="border-b border-border py-16 sm:py-20">
+        <section className="relative border-b border-border py-16 sm:py-20">
+          <GlowBackdrop />
           <Badge variant="secondary" className="mb-5">
             Flutter · Fastify · PostGIS · Next.js
           </Badge>
@@ -103,7 +105,10 @@ export default function ArchitecturePage() {
               { value: '15', label: 'Database migrations' },
               { value: '65', label: 'Backend integration tests' },
             ].map((stat) => (
-              <div key={stat.label}>
+              <div
+                key={stat.label}
+                className="rounded-md border border-glass-border bg-glass px-4 py-3 backdrop-blur"
+              >
                 <dt className="text-2xl font-semibold tabular-nums">{stat.value}</dt>
                 <dd className="mt-1 text-sm leading-snug text-muted-foreground">{stat.label}</dd>
               </div>
@@ -121,7 +126,7 @@ export default function ArchitecturePage() {
 
           <div className="grid gap-4 md:grid-cols-3">
             {SURFACES.map((surface) => (
-              <Card key={surface.name}>
+              <Card key={surface.name} variant="glass">
                 <CardHeader>
                   <CardTitle>{surface.name}</CardTitle>
                   <CardDescription>{surface.role}</CardDescription>
@@ -180,7 +185,10 @@ export default function ArchitecturePage() {
 
           <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
             {DECISIONS.map((decision) => (
-              <div key={decision.title}>
+              <div
+                key={decision.title}
+                className="rounded-md border border-glass-border bg-glass p-4 backdrop-blur"
+              >
                 <h3 className="text-sm font-medium">{decision.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                   {decision.body}
@@ -216,9 +224,11 @@ export default function ArchitecturePage() {
                 body: 'Circle membership at a glance, plus counts and an SOS trend for the recent period.',
               },
             ].map((item) => (
-              <Card key={item.title}>
+              <Card key={item.title} variant="glass">
                 <CardHeader>
-                  <item.icon className="mb-1 h-5 w-5 text-muted-foreground" />
+                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md bg-brand/10">
+                    <item.icon className="h-4 w-4 text-brand" />
+                  </div>
                   <CardTitle className="text-base">{item.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
