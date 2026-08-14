@@ -16,6 +16,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { GlowBackdrop } from '@/components/ui/glow-backdrop';
 import { LiveMapMockup } from '@/components/landing/live-map-mockup';
+import { Reveal } from '@/components/motion/reveal';
 
 // The public front door. Rewritten to speak to the people FindFam is for,
 // not to the people who built it — the previous version of this page (43
@@ -132,7 +133,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            <LiveMapMockup />
+            <Reveal>
+              <LiveMapMockup />
+            </Reveal>
           </div>
         </section>
 
@@ -149,15 +152,17 @@ export default function HomePage() {
 
           <div className="grid gap-6 sm:grid-cols-3">
             {STEPS.map((step) => (
-              <Card key={step.number} variant="glass">
-                <CardContent className="p-5">
-                  <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand">
-                    {step.number}
-                  </div>
-                  <h3 className="font-medium">{step.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
-                </CardContent>
-              </Card>
+              <Reveal key={step.number}>
+                <Card variant="glass">
+                  <CardContent className="p-5">
+                    <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand">
+                      {step.number}
+                    </div>
+                    <h3 className="font-medium">{step.title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{step.body}</p>
+                  </CardContent>
+                </Card>
+              </Reveal>
             ))}
           </div>
         </section>
@@ -175,17 +180,19 @@ export default function HomePage() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map((feature) => (
-              <Card key={feature.title} variant="glass">
-                <CardHeader>
-                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md bg-brand/10">
-                    <feature.icon className="h-4 w-4 text-brand" />
-                  </div>
-                  <CardTitle className="text-base">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="leading-relaxed">{feature.body}</CardDescription>
-                </CardContent>
-              </Card>
+              <Reveal key={feature.title}>
+                <Card variant="glass">
+                  <CardHeader>
+                    <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md bg-brand/10">
+                      <feature.icon className="h-4 w-4 text-brand" />
+                    </div>
+                    <CardTitle className="text-base">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="leading-relaxed">{feature.body}</CardDescription>
+                  </CardContent>
+                </Card>
+              </Reveal>
             ))}
           </div>
         </section>
@@ -195,7 +202,7 @@ export default function HomePage() {
           <p className="mb-4 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Built on
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-2">
+          <Reveal className="flex flex-wrap items-center justify-center gap-2">
             {TECH_STACK.map((tech) => (
               <span
                 key={tech}
@@ -204,7 +211,7 @@ export default function HomePage() {
                 {tech}
               </span>
             ))}
-          </div>
+          </Reveal>
         </section>
 
         {/* Get started */}

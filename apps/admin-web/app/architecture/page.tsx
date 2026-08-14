@@ -8,6 +8,7 @@ import { ArchitectureDiagram } from '@/components/landing/architecture-diagram';
 import { JourneyTrace } from '@/components/landing/journey';
 import { JOURNEYS, SURFACES, DECISIONS } from '@/lib/landing-content';
 import { GlowBackdrop } from '@/components/ui/glow-backdrop';
+import { Reveal } from '@/components/motion/reveal';
 
 // The technical writeup, moved here from `/` so the front door can be a
 // product page for people who aren't developers. This page is unchanged in
@@ -105,13 +106,12 @@ export default function ArchitecturePage() {
               { value: '15', label: 'Database migrations' },
               { value: '65', label: 'Backend integration tests' },
             ].map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-md border border-glass-border bg-glass px-4 py-3 backdrop-blur"
-              >
-                <dt className="text-2xl font-semibold tabular-nums">{stat.value}</dt>
-                <dd className="mt-1 text-sm leading-snug text-muted-foreground">{stat.label}</dd>
-              </div>
+              <Reveal key={stat.label}>
+                <div className="rounded-md border border-glass-border bg-glass px-4 py-3 backdrop-blur">
+                  <dt className="text-2xl font-semibold tabular-nums">{stat.value}</dt>
+                  <dd className="mt-1 text-sm leading-snug text-muted-foreground">{stat.label}</dd>
+                </div>
+              </Reveal>
             ))}
           </dl>
         </section>
@@ -126,26 +126,28 @@ export default function ArchitecturePage() {
 
           <div className="grid gap-4 md:grid-cols-3">
             {SURFACES.map((surface) => (
-              <Card key={surface.name} variant="glass">
-                <CardHeader>
-                  <CardTitle>{surface.name}</CardTitle>
-                  <CardDescription>{surface.role}</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="mb-4 font-mono text-xs text-muted-foreground">{surface.stack}</p>
-                  <ul className="space-y-2">
-                    {surface.points.map((point) => (
-                      <li
-                        key={point}
-                        className="flex gap-2 text-sm leading-relaxed text-muted-foreground"
-                      >
-                        <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-border" />
-                        {point}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
+              <Reveal key={surface.name}>
+                <Card variant="glass">
+                  <CardHeader>
+                    <CardTitle>{surface.name}</CardTitle>
+                    <CardDescription>{surface.role}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-4 font-mono text-xs text-muted-foreground">{surface.stack}</p>
+                    <ul className="space-y-2">
+                      {surface.points.map((point) => (
+                        <li
+                          key={point}
+                          className="flex gap-2 text-sm leading-relaxed text-muted-foreground"
+                        >
+                          <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-border" />
+                          {point}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              </Reveal>
             ))}
           </div>
         </section>
@@ -170,7 +172,9 @@ export default function ArchitecturePage() {
 
           <div className="space-y-14">
             {JOURNEYS.map((journey) => (
-              <JourneyTrace key={journey.id} journey={journey} />
+              <Reveal key={journey.id}>
+                <JourneyTrace journey={journey} />
+              </Reveal>
             ))}
           </div>
         </section>
@@ -185,15 +189,14 @@ export default function ArchitecturePage() {
 
           <div className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
             {DECISIONS.map((decision) => (
-              <div
-                key={decision.title}
-                className="rounded-md border border-glass-border bg-glass p-4 backdrop-blur"
-              >
-                <h3 className="text-sm font-medium">{decision.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                  {decision.body}
-                </p>
-              </div>
+              <Reveal key={decision.title}>
+                <div className="rounded-md border border-glass-border bg-glass p-4 backdrop-blur">
+                  <h3 className="text-sm font-medium">{decision.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                    {decision.body}
+                  </p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </section>
@@ -224,17 +227,19 @@ export default function ArchitecturePage() {
                 body: 'Circle membership at a glance, plus counts and an SOS trend for the recent period.',
               },
             ].map((item) => (
-              <Card key={item.title} variant="glass">
-                <CardHeader>
-                  <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md bg-brand/10">
-                    <item.icon className="h-4 w-4 text-brand" />
-                  </div>
-                  <CardTitle className="text-base">{item.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm leading-relaxed text-muted-foreground">{item.body}</p>
-                </CardContent>
-              </Card>
+              <Reveal key={item.title}>
+                <Card variant="glass">
+                  <CardHeader>
+                    <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md bg-brand/10">
+                      <item.icon className="h-4 w-4 text-brand" />
+                    </div>
+                    <CardTitle className="text-base">{item.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm leading-relaxed text-muted-foreground">{item.body}</p>
+                  </CardContent>
+                </Card>
+              </Reveal>
             ))}
           </div>
 
