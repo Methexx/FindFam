@@ -20,10 +20,10 @@ function StatTile({
   icon: typeof Users;
 }) {
   return (
-    <Card>
+    <Card variant="glass">
       <CardContent className="flex items-center gap-4 p-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-          <Icon className="h-5 w-5 text-primary" />
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10">
+          <Icon className="h-5 w-5 text-brand" />
         </div>
         <div>
           <p className="text-sm text-muted-foreground">{label}</p>
@@ -41,7 +41,7 @@ export default async function AnalyticsPage() {
     return (
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">Analytics</h1>
-        <Card>
+        <Card variant="glass">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             {result.reason === 'unauthenticated'
               ? 'Your session has expired. Please log in again.'
@@ -67,13 +67,13 @@ export default async function AnalyticsPage() {
       <div className="space-y-2">
         <h2 className="text-sm font-medium text-muted-foreground">SOS Events (last 14 days)</h2>
         {summary.sosEventsPerDay.length === 0 ? (
-          <Card>
+          <Card variant="glass">
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
               No SOS events in this window.
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card variant="glass">
             <Table>
               <TableHeader>
                 <TableRow>

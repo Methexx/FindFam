@@ -20,7 +20,7 @@ export default function SosLiveFeed({ initialEvents }: { initialEvents: AdminSos
       </div>
 
       {activeEvents.length === 0 ? (
-        <Card>
+        <Card variant="glass">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             No active SOS events.
           </CardContent>
@@ -28,7 +28,11 @@ export default function SosLiveFeed({ initialEvents }: { initialEvents: AdminSos
       ) : (
         <div className="space-y-3">
           {activeEvents.map((event) => (
-            <Card key={event.id} className="border-destructive/50 bg-destructive/5">
+            <Card
+              key={event.id}
+              variant="glass"
+              className="border-destructive/40 bg-destructive/5 shadow-glow shadow-destructive/20"
+            >
               <CardContent className="flex items-center justify-between gap-4 p-4">
                 <div className="flex items-center gap-3">
                   <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
