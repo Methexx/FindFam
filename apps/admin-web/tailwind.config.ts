@@ -42,6 +42,21 @@ const config: Config = {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
+        // Brand violet system — additive, does not replace the shadcn tokens
+        // above. Opacity modifiers (bg-brand/20) work here since these are
+        // hsl(var(...)) like the rest of the palette.
+        brand: {
+          DEFAULT: 'hsl(var(--brand))',
+          strong: 'hsl(var(--brand-strong))',
+          soft: 'hsl(var(--brand-soft))',
+        },
+        // Glass tokens are raw rgba() strings with their own baked-in alpha,
+        // NOT hsl(var(...)) — opacity modifiers (bg-glass/50) are a no-op here.
+        glass: {
+          DEFAULT: 'var(--glass-bg)',
+          border: 'var(--glass-border)',
+          hover: 'var(--glass-bg-hover)',
+        },
       },
       borderRadius: {
         lg: '0.75rem',
@@ -50,6 +65,9 @@ const config: Config = {
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        glow: '0 0 40px -8px hsl(var(--brand) / 0.35)',
       },
     },
   },

@@ -13,18 +13,18 @@
  */
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --background: 247.5 50% 3.1%;
+    --foreground: 255 44.4% 96.5%;
+    --card: 247.5 50% 3.1%;
+    --card-foreground: 255 44.4% 96.5%;
+    --popover: 247.5 50% 3.1%;
+    --popover-foreground: 255 44.4% 96.5%;
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted-foreground: 253.8 16.5% 69%;
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
@@ -32,6 +32,21 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    /*
+     * Brand system, layered on top of the shadcn tokens above rather than
+     * replacing them (--accent above is shadcn's hover-state token, not the
+     * brand color, so the brand violet gets its own names to avoid colliding
+     * with it). --brand-* are HSL triples like the rest of this file;
+     * --glass-* are raw rgba() strings, NOT HSL triples, since the alpha is
+     * baked into the color itself — don't wrap them in hsl().
+     */
+    --brand: 258.3 89.5% 66.3%;
+    --brand-strong: 262.1 83.3% 57.8%;
+    --brand-soft: 252.5 94.7% 85.1%;
+    --glass-bg: rgba(255, 255, 255, 0.04);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg-hover: rgba(255, 255, 255, 0.07);
   }
 }
 

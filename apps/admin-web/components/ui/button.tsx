@@ -11,6 +11,8 @@ const buttonVariants = cva(
         outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
+        gradient:
+          'rounded-full text-white bg-[linear-gradient(135deg,hsl(var(--brand-strong)),hsl(var(--brand)))] shadow-md shadow-black/20 transition-[filter,box-shadow] hover:brightness-110 hover:shadow-glow',
       },
       size: {
         default: 'h-9 px-4 py-2',
