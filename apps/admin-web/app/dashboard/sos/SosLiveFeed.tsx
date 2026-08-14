@@ -35,13 +35,18 @@ export default function SosLiveFeed({ initialEvents }: { initialEvents: AdminSos
             >
               <CardContent className="flex items-center justify-between gap-4 p-4">
                 <div className="flex items-center gap-3">
-                  <AlertTriangle className="h-5 w-5 shrink-0 text-destructive" />
+                  {/* text-destructive itself is a dark red meant to sit under
+                      light foreground text on a solid destructive background
+                      (see Badge below) — reused as foreground text here it
+                      fails WCAG AA against a dark card, so these three lines
+                      use the lighter red-400 scale instead. */}
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-red-400" />
                   <div>
-                    <p className="font-semibold text-destructive">{event.username}</p>
-                    <p className="text-sm text-destructive/80">
+                    <p className="font-semibold text-red-400">{event.username}</p>
+                    <p className="text-sm text-red-400/90">
                       {event.origin.lat.toFixed(5)}, {event.origin.lng.toFixed(5)}
                     </p>
-                    <p className="text-xs text-destructive/70">
+                    <p className="text-xs text-red-400/80">
                       Triggered {new Date(event.triggeredAt).toLocaleTimeString()}
                     </p>
                   </div>
