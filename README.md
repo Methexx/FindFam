@@ -1,5 +1,5 @@
 # FindFam
-
+ 
 FindFam is a privacy-first family safety app for people who want to share live location with trusted circles, chat in context, and send an SOS when something feels wrong. The product is designed to feel closer to a consent-based alternative to Life360 or Zenly than to a surveillance app: everyone in a circle chooses to share, everyone can see the same live map, and SOS alerts go to the circle and emergency contacts.
 
 This repository is a Turborepo monorepo with three apps that share a single backend and database:
