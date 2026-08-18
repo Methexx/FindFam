@@ -12,7 +12,7 @@ interface NodeProps {
 
 function Node({ icon, name, detail }: NodeProps) {
   return (
-    <div className="flex flex-col items-center gap-1.5 rounded-md border border-border bg-background px-3 py-3 text-center">
+    <div className="flex flex-col items-center gap-1.5 rounded-md border border-glass-border bg-glass px-3 py-3 text-center backdrop-blur">
       <span className="text-muted-foreground">{icon}</span>
       <span className="text-sm font-medium leading-tight">{name}</span>
       <span className="text-xs leading-tight text-muted-foreground">{detail}</span>
@@ -35,9 +35,9 @@ function Layer({ label, children }: { label: string; children: React.ReactNode }
 function Connector({ label }: { label: string }) {
   return (
     <div className="flex items-center justify-center gap-2 py-2" aria-hidden="true">
-      <span className="h-4 w-px bg-border" />
+      <span className="h-4 w-px bg-brand/40" />
       <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
-      <span className="h-4 w-px bg-border" />
+      <span className="h-4 w-px bg-brand/40" />
     </div>
   );
 }

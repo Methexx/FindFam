@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { GlowBackdrop } from '@/components/ui/glow-backdrop';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,11 +44,12 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
-      <Card className="w-full max-w-sm">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden p-6">
+      <GlowBackdrop />
+      <Card variant="glass" className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
-          <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+          <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-brand/10">
+            <ShieldCheck className="h-5 w-5 text-brand" />
           </div>
           <CardTitle>Admin Login</CardTitle>
           <CardDescription>Sign in to the FindFam moderation dashboard</CardDescription>

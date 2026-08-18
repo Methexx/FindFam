@@ -24,7 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen">
-      <aside className="flex w-56 flex-col border-r border-border bg-card px-3 py-6">
+      <aside className="flex w-56 flex-col border-r border-glass-border bg-glass px-3 py-6 backdrop-blur-xl">
         <div className="mb-8 px-3 text-lg font-semibold tracking-tight">FindFam Admin</div>
         <nav className="flex flex-1 flex-col gap-1">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className={cn(
                   'flex items-center gap-2.5 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   isActive
-                    ? 'bg-primary text-primary-foreground'
+                    ? 'border border-brand/30 bg-brand/15 text-brand-soft'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                 )}
               >

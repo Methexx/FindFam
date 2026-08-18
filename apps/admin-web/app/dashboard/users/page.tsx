@@ -30,7 +30,7 @@ export default async function UsersPage({
     return (
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">Users</h1>
-        <Card>
+        <Card variant="glass">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             {result.reason === 'unauthenticated'
               ? 'Your session has expired. Please log in again.'
@@ -55,13 +55,13 @@ export default async function UsersPage({
       </div>
 
       {users.length === 0 ? (
-        <Card>
+        <Card variant="glass">
           <CardContent className="py-10 text-center text-sm text-muted-foreground">
             No users found.
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card variant="glass">
           <Table>
             <TableHeader>
               <TableRow>

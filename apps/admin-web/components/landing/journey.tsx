@@ -26,28 +26,35 @@ export function JourneyTrace({ journey }: { journey: Journey }) {
             <li key={step.title} className="relative flex gap-4">
               {/* Rail + step number */}
               <div className="flex flex-col items-center">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-border bg-background text-xs font-medium tabular-nums">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-glass-border bg-glass text-xs font-medium tabular-nums backdrop-blur">
                   {index + 1}
                 </span>
-                {!isLast ? <span className="w-px flex-1 bg-border" aria-hidden="true" /> : null}
+                {!isLast ? (
+                  <span
+                    className="w-px flex-1 bg-gradient-to-b from-brand/50 to-transparent"
+                    aria-hidden="true"
+                  />
+                ) : null}
               </div>
 
               <div className={isLast ? 'pb-0' : 'pb-7'}>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                  <Badge variant="secondary" className="font-mono text-[11px]">
-                    {step.actor}
-                  </Badge>
-                  <h4 className="text-sm font-medium">{step.title}</h4>
-                  {step.status ? (
-                    <Badge variant="outline" className="text-[11px] text-muted-foreground">
-                      {step.status}
+                <div className="rounded-md border border-glass-border bg-glass p-4 backdrop-blur">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <Badge variant="secondary" className="font-mono text-[11px]">
+                      {step.actor}
                     </Badge>
-                  ) : null}
-                </div>
+                    <h4 className="text-sm font-medium">{step.title}</h4>
+                    {step.status ? (
+                      <Badge variant="outline" className="text-[11px] text-muted-foreground">
+                        {step.status}
+                      </Badge>
+                    ) : null}
+                  </div>
 
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
-                  {step.detail}
-                </p>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                    {step.detail}
+                  </p>
+                </div>
 
                 {step.example ? (
                   <figure className="mt-3 overflow-hidden rounded-md border border-border bg-muted/40">
