@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server';
 // an already-expired cookie and every fetch silently failing underneath it.
 // Edge middleware can't use Node's Buffer/crypto, hence the manual
 // base64url decode instead of a JWT library.
-function isExpired(token: string): boolean {
+export function isExpired(token: string): boolean {
   const payloadSegment = token.split('.')[1];
   if (!payloadSegment) return true;
 

@@ -57,8 +57,7 @@ findfam/
 │   └── config/              # shared eslint/tsconfig
 ├── infra/
 │   ├── docker-compose.yml
-│   ├── Dockerfile.backend
-│   └── Dockerfile.admin-web
+│   └── Dockerfile.backend        # admin-web deploys to Vercel, no Dockerfile needed
 ├── .github/workflows/
 │   ├── backend-ci.yml
 │   ├── admin-web-ci.yml

@@ -1,0 +1,37 @@
+name: Deploy Migrations
+
+# Runs migrations against the deployed database on every push that touches
+# apps/backend/migrations/**, so a deploy no longer means "someone remembers
+# to run npm run migrate:up by hand" — docs/10-production-readiness.md
+# already claimed this happened automatically; this workflow makes that
+# true. DATABASE_MIGRATIONS_URL is Supabase's direct connection string, the
+# same one used for local manual migration runs, but held as a repo secret
+# rather than committed.
+on:
+  push:
+    branches:
+      - release
+    paths:
+      - 'apps/backend/migrations/**'
+  workflow_dispatch: {}
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - id: check_secret
+        run: |
+          if [ -z "${{ secrets.DATABASE_MIGRATIONS_URL }}" ]; then
+            echo "DATABASE_MIGRATIONS_URL not set yet — nothing to migrate against, skipping."
+            echo "has_secret=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "DATABASE_MIGRATIONS_URL=${{ secrets.DATABASE_MIGRATIONS_URL }}" > apps/backend/.env
+            echo "has_secret=true" >> "$GITHUB_OUTPUT"
+          fi
+      - run: npm run migrate:up --workspace=@findfam/backend
+        if: steps.check_secret.outputs.has_secret == 'true'

@@ -186,7 +186,11 @@ describe('SOS realtime broadcast (integration)', () => {
 
   it('delivers sos:broadcast to a valid admin_auth connection on admin:sos', async () => {
     const alice = await registerUser('alice_sosws2');
-    const adminToken = await signToken({ sub: 'admin-id', email: 'admin@example.com' }, env.ADMIN_JWT_SECRET, '8h');
+    const adminToken = await signToken(
+      { sub: 'admin-id', email: 'admin@example.com', aud: 'ws' },
+      env.ADMIN_JWT_SECRET,
+      '60s',
+    );
 
     const aliceSocket = await connectAndAuth(alice.accessToken);
     const adminSocket = await connectAndAdminAuth(adminToken);
