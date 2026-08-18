@@ -1,7 +1,7 @@
 import { Users, Radio, TriangleAlert } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { adminApiGet } from '@/lib/api-client';
+import { cn } from '@/lib/utils';
 
 interface AnalyticsSummary {
   totalUsers: number;
@@ -31,6 +31,49 @@ function StatTile({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function SosBarChart({ data }: { data: { day: string; count: number }[] }) {
+  const max = Math.max(...data.map((row) => row.count), 1);
+  const peakIndex = data.reduce(
+    (best, row, i) => (row.count > (data[best]?.count ?? -Infinity) ? i : best),
+    0,
+  );
+
+  return (
+    <div className="flex h-48 items-end gap-2 px-2 pt-8">
+      {data.map((row, i) => {
+        const heightPct = row.count === 0 ? 4 : Math.max((row.count / max) * 100, 10);
+        const isPeak = i === peakIndex && row.count > 0;
+        return (
+          <div key={row.day} className="group flex flex-1 flex-col items-center gap-2">
+            <div className="relative flex w-full flex-1 items-end justify-center">
+              <span
+                className={cn(
+                  'pointer-events-none absolute -top-6 whitespace-nowrap text-xs font-medium transition-opacity',
+                  isPeak
+                    ? 'text-brand-soft opacity-100'
+                    : 'text-muted-foreground opacity-0 group-hover:opacity-100',
+                )}
+              >
+                {row.count}
+              </span>
+              <div
+                className={cn(
+                  'w-full max-w-8 rounded-t-md bg-gradient-to-t from-brand-strong to-brand transition-[filter] group-hover:brightness-110',
+                  isPeak && 'shadow-glow',
+                )}
+                style={{ height: `${heightPct}%` }}
+              />
+            </div>
+            <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+              {new Date(row.day).toLocaleDateString(undefined, { weekday: 'short' })}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -74,22 +117,9 @@ export default async function AnalyticsPage() {
           </Card>
         ) : (
           <Card variant="glass">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Day</TableHead>
-                  <TableHead>Count</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {summary.sosEventsPerDay.map((row) => (
-                  <TableRow key={row.day}>
-                    <TableCell>{new Date(row.day).toLocaleDateString()}</TableCell>
-                    <TableCell>{row.count}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <CardContent className="p-6">
+              <SosBarChart data={summary.sosEventsPerDay} />
+            </CardContent>
           </Card>
         )}
       </div>
