@@ -123,7 +123,7 @@ export default function HomePage() {
 
       <main className="mx-auto max-w-5xl px-6">
         {/* Hero */}
-        <section className="relative border-b border-border py-16 sm:py-20">
+        <section className="relative isolate border-b border-border py-16 sm:py-20">
           <HorizonGlow />
           <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
