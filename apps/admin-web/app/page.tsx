@@ -99,7 +99,8 @@ export default function HomePage() {
   const restFeatures = FEATURES.slice(1);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative isolate min-h-screen bg-background">
+      <HorizonGlow />
       <header className="sticky top-4 z-10 px-4">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between rounded-full border border-glass-border bg-glass px-5 shadow-lg shadow-black/20 backdrop-blur-xl">
           <span className="flex items-center gap-2 font-semibold tracking-tight">
@@ -123,8 +124,7 @@ export default function HomePage() {
 
       <main className="mx-auto max-w-5xl px-6">
         {/* Hero */}
-        <section className="relative isolate border-b border-border py-16 sm:py-20">
-          <HorizonGlow />
+        <section className="border-b border-border py-16 sm:py-20">
           <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
