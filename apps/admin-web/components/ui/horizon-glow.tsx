@@ -12,10 +12,16 @@ import { cn } from '@/lib/utils';
  * black before it ever reaches the headline below. The band is tall enough
  * that the nav pill sits inside the fan (not right at its dimming edge) —
  * the curve is pushed down from the very top so it has room to breathe
- * before the nav, and still fully fades out before the headline. The radial
- * gradient's hot center is placed AT the curve itself (not at the bottom of
- * the SVG's bounding box) with a short radius, so brightness stays
- * concentrated near the line instead of washing out into a flat rectangle.
+ * before the nav, and still fully fades out before the headline.
+ *
+ * The SVG is inset in the same max-w-7xl/px-6 container as the nav and main
+ * content, not full-bleed to the viewport — and the path's endpoints sit
+ * exactly on the viewBox edges, where the line gradient's stops are already
+ * zero opacity. So the curve genuinely tapers to nothing at the container's
+ * edges instead of being cropped off mid-brightness. The radial gradient's
+ * hot center is placed AT the curve itself (not at the bottom of the SVG's
+ * bounding box) with a short radius, so brightness stays concentrated near
+ * the line instead of washing out into a flat rectangle of color.
  */
 export function HorizonGlow({ className }: { className?: string }) {
   return (
@@ -26,41 +32,39 @@ export function HorizonGlow({ className }: { className?: string }) {
         className,
       )}
     >
-      <svg
-        viewBox="0 0 1000 420"
-        preserveAspectRatio="xMidYMin slice"
-        className="absolute left-1/2 top-0 h-full w-[130%] -translate-x-1/2"
-      >
-        <defs>
-          <radialGradient id="horizon-fan" cx="50%" cy="30%" r="30%">
-            <stop offset="0%" stopColor="hsl(var(--brand-soft))" stopOpacity="0.55" />
-            <stop offset="30%" stopColor="hsl(var(--brand))" stopOpacity="0.28" />
-            <stop offset="65%" stopColor="hsl(var(--brand-strong))" stopOpacity="0.08" />
-            <stop offset="100%" stopColor="hsl(var(--brand-strong))" stopOpacity="0" />
-          </radialGradient>
-          <linearGradient id="horizon-line" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="hsl(var(--brand))" stopOpacity="0" />
-            <stop offset="50%" stopColor="hsl(255 100% 98%)" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="hsl(var(--brand))" stopOpacity="0" />
-          </linearGradient>
-          <filter id="horizon-blur" x="-20%" y="-300%" width="140%" height="700%">
-            <feGaussianBlur stdDeviation="8" />
-          </filter>
-        </defs>
+      <div className="mx-auto h-full max-w-7xl px-6">
+        <svg viewBox="0 0 1000 420" preserveAspectRatio="none" className="h-full w-full">
+          <defs>
+            <radialGradient id="horizon-fan" cx="50%" cy="30%" r="30%">
+              <stop offset="0%" stopColor="hsl(var(--brand-soft))" stopOpacity="0.55" />
+              <stop offset="30%" stopColor="hsl(var(--brand))" stopOpacity="0.28" />
+              <stop offset="65%" stopColor="hsl(var(--brand-strong))" stopOpacity="0.08" />
+              <stop offset="100%" stopColor="hsl(var(--brand-strong))" stopOpacity="0" />
+            </radialGradient>
+            <linearGradient id="horizon-line" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="hsl(var(--brand))" stopOpacity="0" />
+              <stop offset="50%" stopColor="hsl(255 100% 98%)" stopOpacity="0.9" />
+              <stop offset="100%" stopColor="hsl(var(--brand))" stopOpacity="0" />
+            </linearGradient>
+            <filter id="horizon-blur" x="-20%" y="-300%" width="140%" height="700%">
+              <feGaussianBlur stdDeviation="8" />
+            </filter>
+          </defs>
 
-        <rect width="1000" height="420" fill="url(#horizon-fan)" />
+          <rect width="1000" height="420" fill="url(#horizon-fan)" />
 
-        {/* Soft halo under the crisp line, same curve, heavily blurred */}
-        <path
-          d="M -50 190 Q 500 90 1050 190"
-          stroke="url(#horizon-line)"
-          strokeWidth="14"
-          fill="none"
-          filter="url(#horizon-blur)"
-        />
-        {/* Crisp bright line on top */}
-        <path d="M -50 190 Q 500 90 1050 190" stroke="url(#horizon-line)" strokeWidth="1.5" fill="none" />
-      </svg>
+          {/* Soft halo under the crisp line, same curve, heavily blurred */}
+          <path
+            d="M 0 190 Q 500 90 1000 190"
+            stroke="url(#horizon-line)"
+            strokeWidth="14"
+            fill="none"
+            filter="url(#horizon-blur)"
+          />
+          {/* Crisp bright line on top */}
+          <path d="M 0 190 Q 500 90 1000 190" stroke="url(#horizon-line)" strokeWidth="1.5" fill="none" />
+        </svg>
+      </div>
     </div>
   );
 }

@@ -17,7 +17,6 @@ import {
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { HorizonGlow } from '@/components/ui/horizon-glow';
-import { LiveMapMockup } from '@/components/landing/live-map-mockup';
 import { Reveal } from '@/components/motion/reveal';
 import { cn } from '@/lib/utils';
 
@@ -124,43 +123,37 @@ export default function HomePage() {
 
       <main className="mx-auto max-w-7xl px-6">
         {/* Hero */}
-        <section className="border-b border-border py-16 sm:py-20">
-          <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
-            <div>
-              <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-                Know your family is safe — without watching them.
-              </h1>
-              <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-                FindFam lets a family see where each other are, message in a group, and raise an
-                SOS that reaches their emergency contacts. Every sharing relationship needs two
-                separate acts of consent — nobody joins your circle without agreeing to it first,
-                and you can always see who can see you.
-              </p>
+        <section className="relative py-16 sm:py-20">
+          <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
+            Know your family is safe — without watching them.
+          </h1>
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+            FindFam lets a family see where each other are, message in a group, and raise an SOS
+            that reaches their emergency contacts. Every sharing relationship needs two separate
+            acts of consent — nobody joins your circle without agreeing to it first, and you can
+            always see who can see you.
+          </p>
 
-              <div className="mt-8 flex flex-wrap items-center gap-3">
-                <Link href="#get-started" className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
-                  Get started
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-                <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
-                  How it works
-                </Link>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
-                {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
-                  <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <Icon className="h-3.5 w-3.5 text-brand" />
-                    {label}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <Reveal>
-              <LiveMapMockup />
-            </Reveal>
+          <div className="mt-8 flex flex-wrap items-center gap-3">
+            <Link href="#get-started" className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
+              Get started
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+            <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+              How it works
+            </Link>
           </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+            {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
+              <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Icon className="h-3.5 w-3.5 text-brand" />
+                {label}
+              </span>
+            ))}
+          </div>
+
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
         </section>
 
         {/* How it works */}
