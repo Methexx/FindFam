@@ -122,7 +122,7 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-6">
+      <main className="mx-auto max-w-7xl px-6">
         {/* Hero */}
         <section className="border-b border-border py-16 sm:py-20">
           <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -292,7 +292,7 @@ export default function HomePage() {
       </main>
 
       <footer className="border-t border-border py-8">
-        <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>FindFam — family location sharing and personal safety.</p>
           <div className="flex items-center gap-4">
             <p>SOS is not a substitute for calling emergency services.</p>

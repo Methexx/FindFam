@@ -9,27 +9,30 @@ import { cn } from '@/lib/utils';
  * Lives at the very top of the page, behind the (glass, blurred) sticky nav,
  * not inside the hero section — so the curve sits in the nav's glass band
  * the way it does in the reference, and the glow has room to fully fade to
- * black before it ever reaches the headline below. The radial gradient's
- * hot center is placed AT the curve itself (not at the bottom of the SVG's
- * bounding box) with a short radius, so brightness stays concentrated near
- * the line instead of washing out into a flat rectangle of color.
+ * black before it ever reaches the headline below. The band is tall enough
+ * that the nav pill sits inside the fan (not right at its dimming edge) —
+ * the curve is pushed down from the very top so it has room to breathe
+ * before the nav, and still fully fades out before the headline. The radial
+ * gradient's hot center is placed AT the curve itself (not at the bottom of
+ * the SVG's bounding box) with a short radius, so brightness stays
+ * concentrated near the line instead of washing out into a flat rectangle.
  */
 export function HorizonGlow({ className }: { className?: string }) {
   return (
     <div
       aria-hidden="true"
       className={cn(
-        'pointer-events-none absolute inset-x-0 top-0 -z-10 h-[260px] overflow-hidden sm:h-[340px]',
+        'pointer-events-none absolute inset-x-0 top-0 -z-10 h-[320px] overflow-hidden sm:h-[420px]',
         className,
       )}
     >
       <svg
-        viewBox="0 0 1000 340"
+        viewBox="0 0 1000 420"
         preserveAspectRatio="xMidYMin slice"
         className="absolute left-1/2 top-0 h-full w-[130%] -translate-x-1/2"
       >
         <defs>
-          <radialGradient id="horizon-fan" cx="50%" cy="18%" r="30%">
+          <radialGradient id="horizon-fan" cx="50%" cy="30%" r="30%">
             <stop offset="0%" stopColor="hsl(var(--brand-soft))" stopOpacity="0.55" />
             <stop offset="30%" stopColor="hsl(var(--brand))" stopOpacity="0.28" />
             <stop offset="65%" stopColor="hsl(var(--brand-strong))" stopOpacity="0.08" />
@@ -45,18 +48,18 @@ export function HorizonGlow({ className }: { className?: string }) {
           </filter>
         </defs>
 
-        <rect width="1000" height="340" fill="url(#horizon-fan)" />
+        <rect width="1000" height="420" fill="url(#horizon-fan)" />
 
         {/* Soft halo under the crisp line, same curve, heavily blurred */}
         <path
-          d="M -50 90 Q 500 8 1050 90"
+          d="M -50 190 Q 500 90 1050 190"
           stroke="url(#horizon-line)"
           strokeWidth="14"
           fill="none"
           filter="url(#horizon-blur)"
         />
         {/* Crisp bright line on top */}
-        <path d="M -50 90 Q 500 8 1050 90" stroke="url(#horizon-line)" strokeWidth="1.5" fill="none" />
+        <path d="M -50 190 Q 500 90 1050 190" stroke="url(#horizon-line)" strokeWidth="1.5" fill="none" />
       </svg>
     </div>
   );
