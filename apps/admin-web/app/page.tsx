@@ -99,7 +99,6 @@ export default function HomePage() {
 
   return (
     <div className="relative isolate min-h-screen bg-background">
-      <HorizonGlow />
       <header className="sticky top-4 z-10 px-4">
         <div className="mx-auto flex h-14 max-w-3xl items-center justify-between rounded-full border border-glass-border bg-glass px-5 shadow-lg shadow-black/20 backdrop-blur-xl">
           <span className="flex items-center gap-2 font-semibold tracking-tight">
@@ -143,6 +142,8 @@ export default function HomePage() {
               How it works
             </Link>
           </div>
+
+          <HorizonGlow className="mt-8" />
 
           <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
             {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
