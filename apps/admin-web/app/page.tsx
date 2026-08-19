@@ -11,12 +11,15 @@ import {
   Siren,
   Smartphone,
   Code2,
+  Lock,
+  EyeOff,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { GlowBackdrop } from '@/components/ui/glow-backdrop';
 import { LiveMapMockup } from '@/components/landing/live-map-mockup';
 import { Reveal } from '@/components/motion/reveal';
+import { cn } from '@/lib/utils';
 
 // The public front door. Rewritten to speak to the people FindFam is for,
 // not to the people who built it — the previous version of this page (43
@@ -78,15 +81,27 @@ const STEPS = [
 
 const TECH_STACK = ['Flutter', 'Fastify', 'PostGIS', 'Next.js', 'Redis', 'BullMQ', 'Firebase Cloud Messaging'];
 
+// Honest trust signals, not vanity metrics — FindFam is in closed testing, so
+// there is no "10,000+ users" number to put here truthfully. These restate
+// guarantees that are already true of the product today.
+const TRUST_SIGNALS = [
+  { icon: Lock, label: 'Two-sided consent, always' },
+  { icon: EyeOff, label: "Can't be found by username alone" },
+  { icon: Siren, label: 'SOS is never rate-limited' },
+];
+
 export default function HomePage() {
   const hasSession = cookies().has('admin_token');
   const adminHref = hasSession ? '/dashboard' : '/login';
   const adminLabel = hasSession ? 'Open dashboard' : 'Admin login';
+  // FEATURES is a fixed, non-empty literal array, so this index is always defined.
+  const heroFeature = FEATURES[0]!;
+  const restFeatures = FEATURES.slice(1);
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/85 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
+      <header className="sticky top-4 z-10 px-4">
+        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between rounded-full border border-glass-border bg-glass px-5 shadow-lg shadow-black/20 backdrop-blur-xl">
           <span className="flex items-center gap-2 font-semibold tracking-tight">
             <ShieldCheck className="h-5 w-5 text-brand" />
             FindFam
@@ -130,6 +145,15 @@ export default function HomePage() {
                 <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
                   How it works
                 </Link>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+                {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
+                  <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Icon className="h-3.5 w-3.5 text-brand" />
+                    {label}
+                  </span>
+                ))}
               </div>
             </div>
 
@@ -178,22 +202,53 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((feature) => (
-              <Reveal key={feature.title}>
-                <Card variant="glass">
-                  <CardHeader>
-                    <div className="mb-2 flex h-9 w-9 items-center justify-center rounded-md bg-brand/10">
-                      <feature.icon className="h-4 w-4 text-brand" />
-                    </div>
-                    <CardTitle className="text-base">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="leading-relaxed">{feature.body}</CardDescription>
-                  </CardContent>
-                </Card>
-              </Reveal>
-            ))}
+          <div className="space-y-4">
+            <Reveal>
+              <Card variant="glass" className="overflow-hidden">
+                <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand/10">
+                    <heroFeature.icon className="h-6 w-6 text-brand" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium">{heroFeature.title}</h3>
+                    <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                      {heroFeature.body}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Reveal>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {restFeatures.map((feature) => (
+                <Reveal key={feature.title}>
+                  <Card
+                    variant="glass"
+                    className={cn(
+                      'h-full',
+                      feature.title === 'SOS' && 'border-destructive/30 bg-destructive/5',
+                    )}
+                  >
+                    <CardHeader>
+                      <div
+                        className={cn(
+                          'mb-2 flex h-9 w-9 items-center justify-center rounded-md',
+                          feature.title === 'SOS' ? 'bg-destructive/15' : 'bg-brand/10',
+                        )}
+                      >
+                        <feature.icon
+                          className={cn('h-4 w-4', feature.title === 'SOS' ? 'text-red-400' : 'text-brand')}
+                        />
+                      </div>
+                      <CardTitle className="text-base">{feature.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CardDescription className="leading-relaxed">{feature.body}</CardDescription>
+                    </CardContent>
+                  </Card>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
 
@@ -216,10 +271,10 @@ export default function HomePage() {
 
         {/* Get started */}
         <section id="get-started" className="scroll-mt-14 border-b border-border py-16">
-          <Card variant="glass" className="overflow-hidden">
+          <Card variant="glass" className="overflow-hidden border-brand/20">
             <CardContent className="flex flex-col items-start gap-4 p-8 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 shadow-glow">
                   <Smartphone className="h-5 w-5 text-brand" />
                 </div>
                 <div>
