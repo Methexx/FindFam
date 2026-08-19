@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GlowBackdrop } from '@/components/ui/glow-backdrop';
+import { HorizonGlow } from '@/components/ui/horizon-glow';
 import { LiveMapMockup } from '@/components/landing/live-map-mockup';
 import { Reveal } from '@/components/motion/reveal';
 import { cn } from '@/lib/utils';
@@ -124,7 +124,7 @@ export default function HomePage() {
       <main className="mx-auto max-w-5xl px-6">
         {/* Hero */}
         <section className="relative border-b border-border py-16 sm:py-20">
-          <GlowBackdrop />
+          <HorizonGlow />
           <div className="grid gap-10 lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
               <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
