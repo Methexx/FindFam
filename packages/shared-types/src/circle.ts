@@ -2,6 +2,12 @@ export interface Circle {
   id: string;
   name: string;
   ownerId: string;
+  /**
+   * The code somebody types to join this circle. Only ever populated for
+   * the circle's owner — every other member receives `null`, matching the
+   * server-side rule that only the owner can bring people in.
+   */
+  inviteCode: string | null;
   createdAt: string;
   deletedAt: string | null;
 }
@@ -28,6 +34,10 @@ export interface UpdateCircleRequest {
 
 export interface AddCircleMemberRequest {
   username: string;
+}
+
+export interface JoinCircleRequest {
+  code: string;
 }
 
 export interface AdminCircleSummary {

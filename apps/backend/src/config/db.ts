@@ -43,6 +43,7 @@ export interface CirclesTable {
   id: Generated<string>;
   name: string;
   owner_id: string;
+  invite_code: string;
   created_at: Generated<Date>;
   deleted_at: Date | null;
 }

@@ -73,6 +73,15 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+  fastify.post(
+    '/auth/ws-token',
+    { preHandler: fastify.authenticate, config: rateLimitConfig(30, '1 minute') },
+    async (request, reply) => {
+      const result = await authService.mintWsToken(request.user!.id, request.user!.username);
+      return reply.send({ data: result, error: null });
+    },
+  );
+
   fastify.patch(
     '/auth/me',
     { preHandler: fastify.authenticate },
