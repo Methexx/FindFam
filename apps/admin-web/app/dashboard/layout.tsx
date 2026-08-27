@@ -1,3 +1,8 @@
+'use client';
+
+// Client Component for the same reason as app/(user)/app/layout.tsx: icon
+// components in NAV_ITEMS cannot cross the server/client boundary.
+
 import { LayoutGrid, Radio, Users, BarChart3 } from 'lucide-react';
 import { AppShell } from '@/components/layout/app-shell';
 import type { NavItem } from '@/components/layout/nav-items';
