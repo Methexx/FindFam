@@ -54,7 +54,11 @@ async function proxy(request: Request, pathSegments: string[]): Promise<NextResp
 
   // Read the body once — a Request body is a stream and cannot be replayed
   // on the retry below, so it has to be buffered before the first attempt.
-  const body = request.method === 'GET' ? undefined : await request.text();
+  // Normalised to undefined when empty: DELETE and the parameterless POSTs
+  // (invite-code rotate) send no body, and forwarding a zero-length string
+  // is not the same thing as forwarding nothing.
+  const rawBody = request.method === 'GET' ? '' : await request.text();
+  const body = rawBody.length > 0 ? rawBody : undefined;
   const search = new URL(request.url).search;
   const target = `${API_BASE_URL}/api/v1/${path}${search}`;
 
