@@ -204,16 +204,23 @@ export default function HomePage() {
       <main className="mx-auto max-w-6xl px-6">
         {/* Hero */}
         <section className="relative pt-16 sm:pt-20">
-          <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-            Know your family is safe — without watching them.
-          </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            FindFam lets a family see where each other are, message in a group, and raise an SOS
-            that reaches their emergency contacts. Nobody joins your circle without choosing to, and
-            you can always see who can see you.
-          </p>
+          {/* Staggered so the hero resolves top-down in one movement. Reveal
+              uses whileInView, which fires immediately for content already on
+              screen, so this doubles as the above-the-fold entrance. */}
+          <Reveal>
+            <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
+              Know your family is safe — without watching them.
+            </h1>
+          </Reveal>
+          <Reveal delay={0.08}>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+              FindFam lets a family see where each other are, message in a group, and raise an SOS
+              that reaches their emergency contacts. Nobody joins your circle without choosing to,
+              and you can always see who can see you.
+            </p>
+          </Reveal>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Reveal delay={0.16} className="mt-8 flex flex-wrap items-center gap-3">
             <Link href={primaryHref} className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
               {primaryLabel}
               <ArrowRight className="h-4 w-4" />
@@ -221,18 +228,18 @@ export default function HomePage() {
             <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
               How it works
             </Link>
-          </div>
+          </Reveal>
 
           <HorizonGlow className="mt-8" />
 
-          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <Reveal delay={0.24} className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
             {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
               <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Icon className="h-3.5 w-3.5 text-brand" />
                 {label}
               </span>
             ))}
-          </div>
+          </Reveal>
         </section>
 
         {/* The product, immediately */}
@@ -257,8 +264,10 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-6 sm:grid-cols-3">
-            {STEPS.map((step) => (
-              <Reveal key={step.number}>
+            {STEPS.map((step, index) => (
+              // 0.06s apart: the row arrives as one movement rather than as
+              // a queue the reader has to wait through.
+              <Reveal key={step.number} delay={index * 0.06}>
                 <Card variant="glass" className="h-full">
                   <CardContent className="p-5">
                     <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand">
@@ -285,8 +294,8 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map((feature) => (
-              <Reveal key={feature.title}>
+            {FEATURES.map((feature, index) => (
+              <Reveal key={feature.title} delay={index * 0.06}>
                 <Card
                   variant="glass"
                   className={cn(
@@ -328,8 +337,8 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {AUDIENCES.map((audience) => (
-              <Reveal key={audience.title}>
+            {AUDIENCES.map((audience, index) => (
+              <Reveal key={audience.title} delay={index * 0.06}>
                 <Card variant="glass" className="h-full">
                   <CardContent className="p-5">
                     <audience.icon className="mb-3 h-5 w-5 text-brand" />
@@ -361,8 +370,8 @@ export default function HomePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              {PRIVACY_POINTS.map((point) => (
-                <Reveal key={point.title}>
+              {PRIVACY_POINTS.map((point, index) => (
+                <Reveal key={point.title} delay={index * 0.06}>
                   <Card variant="glass" className="h-full">
                     <CardContent className="p-5">
                       <h3 className="font-medium">{point.title}</h3>

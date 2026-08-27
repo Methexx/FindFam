@@ -140,8 +140,18 @@ function PreviewPin({
       className="absolute -translate-x-1/2 -translate-y-1/2"
       style={{ left: x, top: y, opacity: stale ? 0.55 : 1 }}
     >
+      {/* Live pins pulse, the stale one does not — the same rule the real
+          map follows, so this picture demonstrates the behaviour rather than
+          just illustrating a map. */}
+      {stale ? null : (
+        <span
+          aria-hidden="true"
+          className="absolute inset-0 animate-pulse-ring rounded-full border-2"
+          style={{ borderColor: ring }}
+        />
+      )}
       <div
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-[11px] font-semibold shadow-lg shadow-black/40"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white text-[11px] font-semibold shadow-lg shadow-black/40"
         style={{ border: `3px solid ${ring}`, color: ring }}
       >
         {name.slice(0, 2)}

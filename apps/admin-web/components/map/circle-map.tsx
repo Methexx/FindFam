@@ -30,9 +30,17 @@ function markerIcon(stale: boolean, self: boolean): L.DivIcon {
     ? '<circle cx="12" cy="12" r="3.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
     : '<circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/>';
 
-  // A stale position is faded and badged with a clock. Rendering it at full
-  // strength would present a possibly hours-old fix as somebody's current
-  // location, which is the specific way this kind of map misleads.
+  // The halo is on live markers ONLY, and that is the whole point of it: the
+  // map's job is to answer "is this where they are *now*", so the thing that
+  // moves is the thing that is current. A stale pin sits still, faded and
+  // badged — rendering it at full strength would present a possibly
+  // hours-old fix as somebody's present location, which is the specific way
+  // this kind of map misleads. Purely visual; the badge and the popup's
+  // "Last seen" carry the same fact in text.
+  const liveHalo = stale
+    ? ''
+    : `<span style="position:absolute;inset:0;border-radius:9999px;border:2px solid ${ring};" class="animate-pulse-ring"></span>`;
+
   const staleBadge = stale
     ? `<span style="position:absolute;right:-2px;bottom:-2px;width:16px;height:16px;border-radius:9999px;background:#fff;display:flex;align-items:center;justify-content:center;">
          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round">
@@ -48,7 +56,8 @@ function markerIcon(stale: boolean, self: boolean): L.DivIcon {
     popupAnchor: [0, -MARKER_SIZE / 2],
     html: `
       <div style="position:relative;width:${MARKER_SIZE}px;height:${MARKER_SIZE}px;opacity:${stale ? 0.55 : 1};">
-        <div style="width:100%;height:100%;border-radius:9999px;background:#fff;border:3px solid ${ring};
+        ${liveHalo}
+        <div style="position:relative;width:100%;height:100%;border-radius:9999px;background:#fff;border:3px solid ${ring};
                     box-shadow:0 2px 6px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;color:${ring};">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor">${glyph}</svg>
         </div>
