@@ -17,8 +17,11 @@
 | POST | `/auth/login` | Returns access + refresh token |
 | POST | `/auth/refresh` | Exchange refresh token for new access token |
 | POST | `/auth/logout` | Invalidate refresh token |
+| POST | `/auth/ws-token` | Mint a 60s, `aud: 'ws'` token for a browser WebSocket |
 | GET | `/auth/me` | Current user profile |
 | PATCH | `/auth/me` | Update profile (avatar, phone) |
+
+> `POST /auth/ws-token` exists because the web client holds its access token in an httpOnly cookie and so cannot read it to open a WebSocket; the BFF exchanges the cookie for one of these server-side. The gateway's user `auth` branch does **not** assert `aud: 'ws'` — mobile authenticates with a plain access token, and asserting it there would disconnect every phone. The admin branch does assert it.
 
 ## Follows
 
@@ -34,13 +37,23 @@
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/circles` | Create circle |
+| POST | `/circles` | Create circle — allocates an invite code |
 | GET | `/circles` | List circles current user belongs to |
 | GET | `/circles/:id` | Circle details + member list |
 | PATCH | `/circles/:id` | Update circle name (owner only) |
 | DELETE | `/circles/:id` | Delete circle (owner only) |
+| POST | `/circles/join` | Join by invite code (`{ code }`) — rate-limited |
+| POST | `/circles/:id/invite-code/rotate` | Issue a new code, invalidating the old (owner only) |
 | POST | `/circles/:id/members` | Add member by username (owner only) |
 | DELETE | `/circles/:id/members/:userId` | Remove member (owner) or leave (self) |
+
+### Invite codes
+
+Every circle has a unique 8-character code (migration `016`) over an alphabet with `I`, `L`, `O`, `0` and `1` removed — it gets read aloud and typed by hand, so ambiguous glyphs are a real defect. `Circle.inviteCode` is populated **only for the owner**; every other member receives `null`, matching `addMember`/`updateCircle`/`deleteCircle` already being owner-only.
+
+`POST /circles/join` deliberately does **not** require the mutual accepted follow that `POST /circles/:id/members` does. That is the same two-sided consent reached by a different pair of acts: `addMember` needs a follow because being *added* by somebody else is not consent from the person added, whereas here the owner consents by issuing the code and the joiner consents by entering it. Adding a follow check would make a circle unjoinable by exactly the people an invite code exists for.
+
+It is rate-limited (10/min, the same `rateLimitConfig` the auth routes use) because an unlimited join endpoint is a code-guessing oracle.
 
 ## Location
 
