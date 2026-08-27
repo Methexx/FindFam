@@ -62,7 +62,10 @@ export default async function MapPage({
   );
 
   return (
-    <div className="h-[calc(100vh-4rem)]">
+    // Fills whatever the shell's <main> leaves, rather than the old
+    // calc(100vh - 4rem) — that number was only ever right at one breakpoint,
+    // and is wrong the moment a top bar and a bottom nav are on screen.
+    <div className="flex min-h-0 flex-1 flex-col">
       <MapView
         circles={circles}
         initialCircleId={activeCircle.id}
