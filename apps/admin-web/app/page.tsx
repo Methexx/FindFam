@@ -1,14 +1,12 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import {
-  ShieldCheck,
   ArrowRight,
   MapPin,
   Users,
   MessageCircle,
   Phone,
   Siren,
-  Code2,
   Lock,
   EyeOff,
   Ticket,
@@ -24,6 +22,8 @@ import { HorizonGlow } from '@/components/ui/horizon-glow';
 import { Reveal } from '@/components/motion/reveal';
 import { AppPreview } from '@/components/landing/app-preview';
 import { Faq } from '@/components/landing/faq';
+import { SiteNav } from '@/components/layout/site-nav';
+import { SiteFooter } from '@/components/layout/site-footer';
 import { ADMIN_TOKEN_COOKIE, USER_REFRESH_TOKEN_COOKIE } from '@/lib/user-session';
 import { cn } from '@/lib/utils';
 
@@ -193,56 +193,13 @@ export default function HomePage() {
   const primaryLabel = hasUserSession ? 'Open FindFam' : 'Get started';
 
   return (
-    <div className="relative isolate min-h-screen bg-background">
-      <header className="sticky top-4 z-20 px-4">
-        <div className="mx-auto flex h-14 max-w-4xl items-center justify-between rounded-full border border-glass-border bg-glass px-5 shadow-lg shadow-black/20 backdrop-blur-xl">
-          <span className="flex items-center gap-2 font-semibold tracking-tight">
-            <ShieldCheck className="h-5 w-5 text-brand" />
-            FindFam
-          </span>
-
-          <nav className="flex items-center gap-1 sm:gap-4">
-            <Link
-              href="#how-it-works"
-              className="hidden text-sm text-muted-foreground hover:text-foreground sm:block"
-            >
-              How it works
-            </Link>
-            <Link
-              href="#features"
-              className="hidden text-sm text-muted-foreground hover:text-foreground sm:block"
-            >
-              Features
-            </Link>
-            <Link
-              href="#faq"
-              className="hidden text-sm text-muted-foreground hover:text-foreground sm:block"
-            >
-              FAQ
-            </Link>
-
-            {hasAdminSession ? (
-              <Link href="/dashboard" className={buttonVariants({ variant: 'outline', size: 'sm' })}>
-                Open dashboard
-              </Link>
-            ) : (
-              <>
-                {!hasUserSession ? (
-                  <Link
-                    href="/login"
-                    className="px-2 text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    Log in
-                  </Link>
-                ) : null}
-                <Link href={primaryHref} className={buttonVariants({ variant: 'gradient', size: 'sm' })}>
-                  {primaryLabel}
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
+    <div id="top" className="relative isolate min-h-screen bg-background">
+      <SiteNav
+        hasUserSession={hasUserSession}
+        hasAdminSession={hasAdminSession}
+        primaryHref={primaryHref}
+        primaryLabel={primaryLabel}
+      />
 
       <main className="mx-auto max-w-6xl px-6">
         {/* Hero */}
@@ -475,83 +432,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="border-t border-border py-12">
-        <div className="mx-auto grid max-w-6xl gap-8 px-6 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <span className="flex items-center gap-2 font-semibold tracking-tight">
-              <ShieldCheck className="h-5 w-5 text-brand" />
-              FindFam
-            </span>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Family location sharing and personal safety, built on consent.
-            </p>
-          </div>
-
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Product
-            </p>
-            <ul className="space-y-1.5 text-sm text-muted-foreground">
-              <li>
-                <Link href="#features" className="hover:text-foreground">
-                  Features
-                </Link>
-              </li>
-              <li>
-                <Link href="#how-it-works" className="hover:text-foreground">
-                  How it works
-                </Link>
-              </li>
-              <li>
-                <Link href="#faq" className="hover:text-foreground">
-                  FAQ
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Account
-            </p>
-            <ul className="space-y-1.5 text-sm text-muted-foreground">
-              <li>
-                <Link href="/register" className="hover:text-foreground">
-                  Create an account
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="hover:text-foreground">
-                  Log in
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              More
-            </p>
-            <ul className="space-y-1.5 text-sm text-muted-foreground">
-              <li>
-                <Link href="#privacy" className="hover:text-foreground">
-                  Privacy &amp; consent
-                </Link>
-              </li>
-              <li>
-                <Link href="/architecture" className="flex items-center gap-1.5 hover:text-foreground">
-                  <Code2 className="h-3.5 w-3.5" />
-                  How it&apos;s built
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mx-auto mt-10 max-w-6xl border-t border-border px-6 pt-6 text-sm text-muted-foreground">
-          <p>SOS is not a substitute for calling emergency services.</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
