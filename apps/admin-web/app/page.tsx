@@ -216,7 +216,7 @@ export default function HomePage() {
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href={primaryHref} className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
               {primaryLabel}
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="h-4 w-4" />
             </Link>
             <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
               How it works
@@ -425,7 +425,7 @@ export default function HomePage() {
                 className={cn(buttonVariants({ variant: 'gradient', size: 'lg' }), 'shrink-0')}
               >
                 {primaryLabel}
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </CardContent>
           </Card>

@@ -64,9 +64,9 @@ export function SendFollowRequestForm() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-            <Button type="submit" variant="outline" disabled={isSubmitting}>
-              <UserPlus className="mr-1.5 h-4 w-4" />
-              {isSubmitting ? 'Sending…' : 'Send'}
+            <Button type="submit" variant="outline" loading={isSubmitting}>
+              {isSubmitting ? null : <UserPlus className="h-4 w-4" />}
+              Send
             </Button>
           </div>
 
@@ -122,9 +122,10 @@ export function RespondToFollowButtons({ followId }: { followId: string }) {
         type="button"
         size="sm"
         disabled={pendingAction !== null}
+        loading={pendingAction === 'accept'}
         onClick={() => respond('accept')}
       >
-        {pendingAction === 'accept' ? 'Accepting…' : 'Accept'}
+        Accept
       </Button>
     </div>
   );
@@ -145,8 +146,8 @@ export function RemoveFollowButton({ followId }: { followId: string }) {
   }
 
   return (
-    <Button type="button" variant="ghost" size="sm" disabled={isRemoving} onClick={handleRemove}>
-      {isRemoving ? 'Removing…' : 'Remove'}
+    <Button type="button" variant="ghost" size="sm" loading={isRemoving} onClick={handleRemove}>
+      Remove
     </Button>
   );
 }

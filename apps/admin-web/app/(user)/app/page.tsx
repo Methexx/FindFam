@@ -124,7 +124,7 @@ export default async function AppOverviewPage() {
                     className={buttonVariants({ variant: 'outline', size: 'sm' })}
                   >
                     {step.cta}
-                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                    <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 ) : null}
               </CardContent>

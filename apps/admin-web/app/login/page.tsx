@@ -123,8 +123,8 @@ export default function LoginPage() {
               </Alert>
             ) : null}
 
-            <Button type="submit" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? 'Signing in…' : 'Sign in'}
+            <Button type="submit" loading={isSubmitting} className="w-full">
+              Sign in
             </Button>
           </form>
 

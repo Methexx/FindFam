@@ -205,7 +205,7 @@ export function SiteNav({
                   className={buttonVariants({ variant: 'gradient' })}
                 >
                   {primaryLabel}
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
                 {!hasUserSession && !hasAdminSession ? (
                   <Link

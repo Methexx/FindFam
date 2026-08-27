@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { MapPin } from 'lucide-react';
 import type { Circle, LocationUpdate, User } from '@findfam/shared-types';
 import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { buttonVariants } from '@/components/ui/button';
 import { userApiGet } from '@/lib/api-client';
 import { MapView } from './MapView';
@@ -34,19 +35,17 @@ export default async function MapPage({
 
   if (circles.length === 0) {
     return (
-      <div className="mx-auto max-w-lg">
-        <Card variant="glass">
-          <CardContent className="flex flex-col items-center gap-3 py-14 text-center">
-            <MapPin className="h-6 w-6 text-muted-foreground" />
-            <p className="font-medium">There is nobody to show yet</p>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              The map shows the people in your circles. Create a circle, or join one with a code.
-            </p>
+      <div className="mx-auto w-full max-w-lg">
+        <EmptyState
+          icon={MapPin}
+          title="There is nobody to show yet"
+          body="The map shows the people in your circles. Create a circle, or join one with a code."
+          action={
             <Link href="/app/circles" className={buttonVariants({ variant: 'gradient' })}>
               Go to circles
             </Link>
-          </CardContent>
-        </Card>
+          }
+        />
       </div>
     );
   }

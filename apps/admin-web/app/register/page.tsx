@@ -136,8 +136,8 @@ export default function RegisterPage() {
               </Alert>
             ) : null}
 
-            <Button type="submit" variant="gradient" disabled={isSubmitting} className="w-full">
-              {isSubmitting ? 'Creating account…' : 'Create account'}
+            <Button type="submit" variant="gradient" loading={isSubmitting} className="w-full">
+              Create account
             </Button>
           </form>
 

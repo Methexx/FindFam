@@ -1,6 +1,8 @@
 import { Users } from 'lucide-react';
 import type { Follow, User } from '@findfam/shared-types';
 import { Card, CardContent } from '@/components/ui/card';
+import { InlineEmptyState } from '@/components/ui/empty-state';
+import { PageHeader } from '@/components/ui/page-header';
 import { userApiGet } from '@/lib/api-client';
 import {
   SendFollowRequestForm,
@@ -38,12 +40,10 @@ export default async function PeoplePage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">People</h1>
-        <p className="mt-1.5 text-sm text-muted-foreground">
-          Following someone is what lets you add them to a circle. It shares nothing on its own.
-        </p>
-      </div>
+      <PageHeader
+        title="People"
+        description="Following someone is what lets you add them to a circle. It shares nothing on its own."
+      />
 
       {pending.length > 0 ? (
         <Card variant="glass" className="border-brand/30">
@@ -69,13 +69,10 @@ export default async function PeoplePage() {
         <CardContent className="p-5">
           <h2 className="mb-3 font-medium">Following</h2>
           {accepted.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-8 text-center">
-              <Users className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                Nobody yet. Send a request above, or share a circle invite code instead — that does
-                not need a follow.
-              </p>
-            </div>
+            <InlineEmptyState
+              icon={Users}
+              body="Nobody yet. Send a request above, or share a circle invite code instead — that does not need a follow."
+            />
           ) : (
             <ul className="divide-y divide-border">
               {accepted.map((follow) => (

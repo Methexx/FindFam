@@ -37,7 +37,7 @@ export function CircleActions() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogTrigger asChild>
           <Button variant="gradient">
-            <Plus className="mr-1.5 h-4 w-4" />
+            <Plus className="h-4 w-4" />
             Create a circle
           </Button>
         </DialogTrigger>
@@ -54,7 +54,7 @@ export function CircleActions() {
       <Dialog open={joinOpen} onOpenChange={setJoinOpen}>
         <DialogTrigger asChild>
           <Button variant="outline">
-            <Ticket className="mr-1.5 h-4 w-4" />
+            <Ticket className="h-4 w-4" />
             Join with a code
           </Button>
         </DialogTrigger>
@@ -129,8 +129,8 @@ function CreateCircleForm({ onDone }: { onDone: () => void }) {
       ) : null}
 
       <DialogFooter>
-        <Button type="submit" variant="gradient" disabled={isSubmitting}>
-          {isSubmitting ? 'Creating…' : 'Create circle'}
+        <Button type="submit" variant="gradient" loading={isSubmitting}>
+          Create circle
         </Button>
       </DialogFooter>
     </form>
@@ -201,8 +201,8 @@ function JoinCircleForm({ onDone }: { onDone: () => void }) {
       ) : null}
 
       <DialogFooter>
-        <Button type="submit" variant="gradient" disabled={isSubmitting}>
-          {isSubmitting ? 'Joining…' : 'Join circle'}
+        <Button type="submit" variant="gradient" loading={isSubmitting}>
+          Join circle
         </Button>
       </DialogFooter>
     </form>

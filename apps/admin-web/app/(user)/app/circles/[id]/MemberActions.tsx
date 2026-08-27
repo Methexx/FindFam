@@ -75,9 +75,9 @@ export function AddMemberForm({ circleId }: { circleId: string }) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-            <Button type="submit" variant="outline" disabled={isSubmitting}>
-              <UserPlus className="mr-1.5 h-4 w-4" />
-              {isSubmitting ? 'Adding…' : 'Add'}
+            <Button type="submit" variant="outline" loading={isSubmitting}>
+              {isSubmitting ? null : <UserPlus className="h-4 w-4" />}
+              Add
             </Button>
           </div>
 
@@ -131,10 +131,10 @@ export function RemoveMemberButton({
       variant="ghost"
       size="sm"
       onClick={handleRemove}
-      disabled={isRemoving}
+      loading={isRemoving}
       aria-label={`Remove ${username}`}
     >
-      {isRemoving ? 'Removing…' : 'Remove'}
+      Remove
     </Button>
   );
 }
@@ -191,12 +191,12 @@ export function LeaveOrDeleteButton({
       <Button type="button" variant="ghost" size="sm" onClick={() => setOpen(true)}>
         {isOwner ? (
           <>
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+            <Trash2 className="h-3.5 w-3.5" />
             Delete circle
           </>
         ) : (
           <>
-            <LogOut className="mr-1.5 h-3.5 w-3.5" />
+            <LogOut className="h-3.5 w-3.5" />
             Leave circle
           </>
         )}
@@ -227,9 +227,9 @@ export function LeaveOrDeleteButton({
               type="button"
               variant="destructive"
               onClick={handleConfirm}
-              disabled={isSubmitting}
+              loading={isSubmitting}
             >
-              {isSubmitting ? 'Working…' : isOwner ? 'Delete circle' : 'Leave circle'}
+              {isOwner ? 'Delete circle' : 'Leave circle'}
             </Button>
           </DialogFooter>
         </DialogContent>

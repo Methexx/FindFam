@@ -55,7 +55,7 @@ export default async function CircleDetailPage({ params }: { params: { id: strin
               href={`/app/map?circle=${circle.id}`}
               className={buttonVariants({ variant: 'outline', size: 'sm' })}
             >
-              <MapPin className="mr-1.5 h-3.5 w-3.5" />
+              <MapPin className="h-3.5 w-3.5" />
               View on map
             </Link>
             {selfUserId ? (
@@ -85,7 +85,7 @@ export default async function CircleDetailPage({ params }: { params: { id: strin
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{member.username}</span>
                   {member.userId === selfUserId ? <Badge variant="outline">You</Badge> : null}
-                  {member.role === 'owner' ? <Badge variant="secondary">Owner</Badge> : null}
+                  {member.role === 'owner' ? <Badge variant="brand">Owner</Badge> : null}
                 </div>
                 {isOwner && member.userId !== selfUserId ? (
                   <RemoveMemberButton

@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { Wifi, WifiOff, Loader2, MapPinOff } from 'lucide-react';
 import type { Circle, LocationUpdate } from '@findfam/shared-types';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { InlineEmptyState } from '@/components/ui/empty-state';
 import { useFindFamSocket, type WsMessage } from '@/lib/ws-client';
 import { isStale, timeAgo, displayNameFor } from '@/lib/map-config';
 import { ShareLocationToggle } from '@/components/map/share-location-toggle';
@@ -124,10 +125,10 @@ export function MapView({
               {locations.length} {locations.length === 1 ? 'position' : 'positions'}
             </h2>
             {locations.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                Nobody in this circle has shared a position yet. Start sharing above, or open the
-                phone app.
-              </p>
+              <InlineEmptyState
+                icon={MapPinOff}
+                body="Nobody in this circle has shared a position yet. Start sharing above, or open the phone app."
+              />
             ) : (
               <ul className="divide-y divide-border">
                 {locations.map((location) => {
