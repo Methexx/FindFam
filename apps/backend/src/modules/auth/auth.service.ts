@@ -8,6 +8,12 @@ import type { RegisterBody, LoginBody, PatchMeBody } from './auth.schema';
 const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
+// Same 60s as ADMIN_WS_TOKEN_TTL. Exists for the browser, which holds its
+// access token in an httpOnly cookie and so cannot read it to open a WS
+// connection; the BFF exchanges the cookie for one of these server-side.
+// Mobile keeps sending its plain access token over `auth` and is unaffected.
+const WS_TOKEN_TTL = '60s';
+
 export class AuthError extends Error {
   constructor(
     message: string,
@@ -156,6 +162,17 @@ export async function registerFcmToken(userId: string, fcmToken: string) {
 
 export async function deleteFcmToken(userId: string) {
   await authRepository.setFcmToken(userId, null);
+}
+
+/**
+ * Mints a short-lived, ws-scoped token for the web client. `aud: 'ws'` is
+ * informational on the user path — unlike the admin gateway branch, the
+ * user branch does NOT assert it, because mobile authenticates with a plain
+ * access token and asserting `aud` there would disconnect every phone.
+ */
+export async function mintWsToken(userId: string, username: string) {
+  const token = await signToken({ sub: userId, username, aud: 'ws' }, env.JWT_SECRET, WS_TOKEN_TTL);
+  return { token };
 }
 
 export async function verifyAccessToken(token: string) {

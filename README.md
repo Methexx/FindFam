@@ -12,7 +12,7 @@ This repository is a Turborepo monorepo with three apps that share a single back
 
 ## What The Project Does
 
-At a high level, FindFam lets people create private circles, share their live location on a map, exchange messages, and trigger an SOS that is broadcast immediately and delivered through push notification. Users reach it from the Flutter app or, as of Sprint 10, a browser — the web app carries everything except the SOS trigger, which stays on the phone you actually carry. The same Next.js app also hosts the moderation dashboard, behind a separate login and a separate credential store; the two are not the same session and a user account cannot become an admin one.
+At a high level, FindFam lets people create private circles, share their live location on a map, exchange messages, and trigger an SOS that is broadcast immediately and delivered through push notification. Users reach it from the Flutter app or from a browser. The web app currently carries registration and login, circles (including joining one by invite code), follows, and the live map; chat, emergency contacts and SOS-receive are mobile-only for now, and **raising** an SOS is deliberately mobile-only for good — the phone is the device you are carrying when you need it. Browser location sharing also only runs while the tab is open, and says so. The same Next.js app hosts the moderation dashboard behind a separate login and a separate credential store; the two are not the same session and a user account cannot become an admin one.
 
 The architecture, data model, API surface, and mobile structure are documented in the docs folder:
 - [00-master-project-reference](docs/00-master-project-reference.md)

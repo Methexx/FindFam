@@ -14,8 +14,15 @@ export default function SosLiveFeed({ initialEvents }: { initialEvents: AdminSos
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">Active SOS Events</h1>
+        {/* "Reconnecting", not "closed": the feed now retries with backoff
+            instead of dying on the first error, and the badge should say
+            which of those is happening. */}
         <Badge variant={connectionStatus === 'open' ? 'success' : 'secondary'}>
-          {connectionStatus === 'open' ? 'Live' : connectionStatus}
+          {connectionStatus === 'open'
+            ? 'Live'
+            : connectionStatus === 'connecting'
+              ? 'Connecting…'
+              : 'Reconnecting…'}
         </Badge>
       </div>
 

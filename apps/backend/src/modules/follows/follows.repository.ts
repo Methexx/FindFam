@@ -37,31 +37,40 @@ export function deleteFollow(id: string) {
 export function listPendingForUser(userId: string) {
   return db
     .selectFrom('follows')
-    .innerJoin('users', 'users.id', 'follows.follower_id')
+    .innerJoin('users as follower', 'follower.id', 'follows.follower_id')
+    .innerJoin('users as followee', 'followee.id', 'follows.followee_id')
     .select([
       'follows.id',
       'follows.follower_id',
       'follows.followee_id',
       'follows.status',
       'follows.created_at',
-      'users.username as follower_username',
+      'follower.username as follower_username',
+      'followee.username as followee_username',
     ])
     .where('follows.followee_id', '=', userId)
     .where('follows.status', '=', 'pending')
     .execute();
 }
 
+// Both sides are joined, not just the follower. This list is bidirectional —
+// it returns rows where the caller is the followee AND rows where they are
+// the follower — so joining only `follower_username` left the caller's own
+// name on half the rows and no name at all for the person on the other end,
+// which is exactly the name a client needs to render.
 export function listAcceptedForUser(userId: string) {
   return db
     .selectFrom('follows')
-    .innerJoin('users', 'users.id', 'follows.follower_id')
+    .innerJoin('users as follower', 'follower.id', 'follows.follower_id')
+    .innerJoin('users as followee', 'followee.id', 'follows.followee_id')
     .select([
       'follows.id',
       'follows.follower_id',
       'follows.followee_id',
       'follows.status',
       'follows.created_at',
-      'users.username as follower_username',
+      'follower.username as follower_username',
+      'followee.username as followee_username',
     ])
     .where('follows.status', '=', 'accepted')
     .where((eb) =>

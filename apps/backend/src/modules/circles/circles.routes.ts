@@ -3,9 +3,11 @@ import {
   createCircleBodySchema,
   updateCircleBodySchema,
   addMemberBodySchema,
+  joinCircleBodySchema,
 } from './circles.schema';
 import * as circlesService from './circles.service';
 import { CircleError } from './circles.service';
+import { rateLimitConfig } from '../../lib/rate-limit-config';
 
 const circlesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
@@ -24,6 +26,44 @@ const circlesRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const result = await circlesService.listCircles(request.user!.id);
       return reply.send({ data: result, error: null });
+    },
+  );
+
+  // Rate-limited because an unlimited join endpoint is a code-guessing
+  // oracle: 8 characters over a 31-symbol alphabet is only strong against
+  // an attacker who can't try millions of them. Same helper and budget as
+  // the auth routes.
+  fastify.post(
+    '/circles/join',
+    { preHandler: fastify.authenticate, config: rateLimitConfig(10, '1 minute') },
+    async (request, reply) => {
+      const body = joinCircleBodySchema.parse(request.body);
+      try {
+        const result = await circlesService.joinCircleByCode(request.user!.id, body.code);
+        return reply.code(201).send({ data: result, error: null });
+      } catch (err) {
+        if (err instanceof CircleError) {
+          return reply.code(err.statusCode).send({ data: null, error: err.message });
+        }
+        throw err;
+      }
+    },
+  );
+
+  fastify.post(
+    '/circles/:id/invite-code/rotate',
+    { preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      try {
+        const result = await circlesService.rotateInviteCode(request.user!.id, id);
+        return reply.send({ data: result, error: null });
+      } catch (err) {
+        if (err instanceof CircleError) {
+          return reply.code(err.statusCode).send({ data: null, error: err.message });
+        }
+        throw err;
+      }
     },
   );
 

@@ -1,5 +1,11 @@
 export interface LocationUpdate {
   userId: string;
+  /**
+   * Joined from `users` by the locations repository. Prefer it over
+   * `userId` for display and fall back to a short label — never render the
+   * raw UUID.
+   */
+  username: string | null;
   lat: number;
   lng: number;
   speed: number | null;

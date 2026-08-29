@@ -54,4 +54,37 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /*
+   * One global guard rather than a per-component check, because a
+   * per-component check is a thing somebody eventually forgets. Anything
+   * driven by CSS — the accordion, dialogs, the marker halo, the skeleton
+   * shimmer, every hover transition — collapses to effectively instant here.
+   *
+   * Not `animation: none`: some elements animate *into* their resting state,
+   * and removing the animation outright would strand them at the opening
+   * frame. A ~0 duration lands them on the final frame immediately, which is
+   * the state a reader actually wants.
+   *
+   * framer-motion is handled separately, in JS, via useReducedMotion — see
+   * components/motion/reveal.tsx and components/layout/bottom-nav.tsx.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  /* Keeps the bottom nav clear of the iOS home indicator. Resolves to 0 on
+     every platform that does not have one, so it needs no breakpoint. */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }

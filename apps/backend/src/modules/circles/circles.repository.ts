@@ -1,10 +1,10 @@
 import { db } from '../../config/db';
 
-export async function createCircleWithOwner(name: string, ownerId: string) {
+export async function createCircleWithOwner(name: string, ownerId: string, inviteCode: string) {
   return db.transaction().execute(async (trx) => {
     const circle = await trx
       .insertInto('circles')
-      .values({ name, owner_id: ownerId })
+      .values({ name, owner_id: ownerId, invite_code: inviteCode })
       .returningAll()
       .executeTakeFirstOrThrow();
 
@@ -24,6 +24,27 @@ export function findCircleById(id: string) {
     .where('id', '=', id)
     .where('deleted_at', 'is', null)
     .executeTakeFirst();
+}
+
+// The lookup behind POST /circles/join. Same deleted_at guard as
+// findCircleById — a soft-deleted circle's code must stop working, not
+// resurrect it.
+export function findCircleByInviteCode(inviteCode: string) {
+  return db
+    .selectFrom('circles')
+    .selectAll()
+    .where('invite_code', '=', inviteCode)
+    .where('deleted_at', 'is', null)
+    .executeTakeFirst();
+}
+
+export function updateInviteCode(id: string, inviteCode: string) {
+  return db
+    .updateTable('circles')
+    .set({ invite_code: inviteCode })
+    .where('id', '=', id)
+    .returningAll()
+    .executeTakeFirstOrThrow();
 }
 
 export function listCirclesForUser(userId: string) {

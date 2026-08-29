@@ -1,30 +1,35 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import {
-  ShieldCheck,
   ArrowRight,
   MapPin,
   Users,
-  UserPlus,
   MessageCircle,
   Phone,
   Siren,
-  Smartphone,
-  Code2,
   Lock,
   EyeOff,
+  Ticket,
+  Car,
+  Home,
+  GraduationCap,
+  HeartHandshake,
+  Briefcase,
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { HorizonGlow } from '@/components/ui/horizon-glow';
 import { Reveal } from '@/components/motion/reveal';
+import { AppPreview } from '@/components/landing/app-preview';
+import { Faq } from '@/components/landing/faq';
+import { SiteNav } from '@/components/layout/site-nav';
+import { SiteFooter } from '@/components/layout/site-footer';
+import { ADMIN_TOKEN_COOKIE, USER_REFRESH_TOKEN_COOKIE } from '@/lib/user-session';
 import { cn } from '@/lib/utils';
 
-// The public front door. Rewritten to speak to the people FindFam is for,
-// not to the people who built it — the previous version of this page (43
-// REST endpoints, architecture diagrams, wire-level journey traces) moved to
-// /architecture rather than being deleted, since it's a genuinely useful
-// writeup, just not a useful first impression for a non-technical visitor.
+// The public front door. Written for the people FindFam is for, not the
+// people who built it — the engineering writeup this page used to be lives
+// at /architecture, where it is still a good and honest artifact.
 
 export const metadata = {
   title: 'FindFam — Know your family is safe, without watching them',
@@ -36,12 +41,12 @@ const FEATURES = [
   {
     icon: MapPin,
     title: 'Live map',
-    body: 'See where everyone in your circle is right now, updated as they move.',
+    body: 'See where everyone in your circle is right now, updated as they move — in the app or in a browser.',
   },
   {
-    icon: Users,
-    title: 'Circles & follow requests',
-    body: "Nobody sees your location just for knowing your username — sharing starts with a request you accept, and stays undone until you say so.",
+    icon: Ticket,
+    title: 'Circles you join, not get added to',
+    body: 'Start a circle and share its invite code, or enter a code somebody sent you. Both ends are a choice somebody made.',
   },
   {
     icon: MessageCircle,
@@ -64,12 +69,12 @@ const STEPS = [
   {
     number: '1',
     title: 'Create an account',
-    body: 'Sign up on the FindFam app — it takes a minute and no one can find you by searching.',
+    body: 'Sign up in a browser or on the app. It takes a minute, and no one can find you by searching for your username.',
   },
   {
     number: '2',
-    title: 'Build a circle with people you trust',
-    body: 'Send a follow request, they accept, then you add each other to a circle together. Both sides agree before anything is shared.',
+    title: 'Create a circle, or join one with a code',
+    body: 'Start a circle and send people its invite code, or type in the code somebody sent you. Either way, both sides chose it.',
   },
   {
     number: '3',
@@ -78,87 +83,177 @@ const STEPS = [
   },
 ];
 
-const TECH_STACK = ['Flutter', 'Fastify', 'PostGIS', 'Next.js', 'Redis', 'BullMQ', 'Firebase Cloud Messaging'];
-
 // Honest trust signals, not vanity metrics — FindFam is in closed testing, so
 // there is no "10,000+ users" number to put here truthfully. These restate
 // guarantees that are already true of the product today.
 const TRUST_SIGNALS = [
-  { icon: Lock, label: 'Two-sided consent, always' },
+  { icon: Lock, label: 'Both sides choose, always' },
   { icon: EyeOff, label: "Can't be found by username alone" },
   { icon: Siren, label: 'SOS is never rate-limited' },
 ];
 
+const AUDIENCES = [
+  {
+    icon: GraduationCap,
+    title: 'Parents and teenagers',
+    body: 'Know they got there without texting to ask. They can see you too — it goes both ways by design.',
+  },
+  {
+    icon: HeartHandshake,
+    title: 'Grown children and parents',
+    body: 'Keep an eye out for someone living alone, with their agreement and their ability to stop at any time.',
+  },
+  {
+    icon: Home,
+    title: 'Housemates',
+    body: 'A small circle for the people you live with, without any of it touching your wider contacts.',
+  },
+  {
+    icon: Car,
+    title: 'Road trips',
+    body: 'Two cars, one map. Everybody can see where the other one got to without a phone call at every junction.',
+  },
+  {
+    icon: Users,
+    title: 'Nights out',
+    body: 'A circle that exists for one evening. Delete it in the morning and nothing is left behind.',
+  },
+  {
+    icon: Briefcase,
+    title: 'Small teams',
+    body: 'People working across a site or a city, sharing while they are on shift and not a minute longer.',
+  },
+];
+
+const PRIVACY_POINTS = [
+  {
+    title: 'Two things have to happen',
+    body: 'Either the circle owner hands you an invite code and you enter it, or you and somebody follow each other and they add you. There is no path where you end up shared without doing something yourself.',
+  },
+  {
+    title: 'You can always see who can see you',
+    body: 'Every circle lists its members. Leave a circle and your location stops going to it immediately.',
+  },
+  {
+    title: 'Nobody finds you by searching',
+    body: 'There is no user directory and no search. Somebody needs your exact username, or a code you gave them.',
+  },
+  {
+    title: 'The browser says what it can actually do',
+    body: 'Sharing from a browser tab stops when the tab closes, and the indicator says so rather than implying cover it does not have.',
+  },
+];
+
+const FAQ_ENTRIES = [
+  {
+    question: 'Is this tracking people without them knowing?',
+    answer:
+      'No, and it is built so it cannot be. Somebody joins a circle by entering a code they were given, or by being added after the two of you already follow each other. Every member of a circle can see the full member list, and leaving takes one tap.',
+  },
+  {
+    question: 'Do I need the phone app, or is the browser enough?',
+    answer:
+      'You can register, create and join circles, and watch your circle on the live map entirely in a browser. Two things stay on the phone: raising an SOS, and sharing your location in the background. A browser can only share while its tab is open, and there is no way around that on the web.',
+  },
+  {
+    question: 'What is an invite code?',
+    answer:
+      'Every circle has a short code that only its owner can see. Send it to somebody and they can join by typing it in. If it ends up somewhere it should not, the owner rotates it and the old code stops working immediately — people already in the circle stay in.',
+  },
+  {
+    question: 'Can I stop sharing without leaving the circle?',
+    answer:
+      'Yes. Sharing is a switch, not a condition of membership. You stay in the circle, keep the chat, and simply stop broadcasting a position.',
+  },
+  {
+    question: 'What happens when someone loses signal?',
+    answer:
+      'Their pin fades and picks up a clock badge once their last position is more than five minutes old, and the list says "last seen" instead of "updated". A map that showed an hours-old position as if it were current would be worse than showing nothing.',
+  },
+  {
+    question: 'Is SOS a replacement for calling emergency services?',
+    answer:
+      'No. SOS tells your circle and your emergency contacts where you are, immediately and without rate limiting. It does not contact police, fire or ambulance. If you are in danger, call your local emergency number.',
+  },
+];
+
+const TECH_STACK = ['Flutter', 'Fastify', 'PostGIS', 'Next.js', 'Redis', 'BullMQ', 'Firebase Cloud Messaging'];
+
 export default function HomePage() {
-  const hasSession = cookies().has('admin_token');
-  const adminHref = hasSession ? '/dashboard' : '/login';
-  const adminLabel = hasSession ? 'Open dashboard' : 'Admin login';
-  // FEATURES is a fixed, non-empty literal array, so this index is always defined.
-  const heroFeature = FEATURES[0]!;
-  const restFeatures = FEATURES.slice(1);
+  const jar = cookies();
+  // Three states, not two: the same browser can hold an admin session, a user
+  // session, or neither, and sending an admin to /app (or a user to
+  // /dashboard) would just bounce them off middleware. Keyed on the refresh
+  // token, not the 15-minute access token, so somebody returning to a tab
+  // after lunch is still greeted as signed in.
+  const hasUserSession = jar.has(USER_REFRESH_TOKEN_COOKIE);
+  const hasAdminSession = jar.has(ADMIN_TOKEN_COOKIE);
+
+  const primaryHref = hasUserSession ? '/app' : '/register';
+  const primaryLabel = hasUserSession ? 'Open FindFam' : 'Get started';
 
   return (
-    <div className="relative isolate min-h-screen bg-background">
-      <header className="sticky top-4 z-10 px-4">
-        <div className="mx-auto flex h-14 max-w-3xl items-center justify-between rounded-full border border-glass-border bg-glass px-5 shadow-lg shadow-black/20 backdrop-blur-xl">
-          <span className="flex items-center gap-2 font-semibold tracking-tight">
-            <ShieldCheck className="h-5 w-5 text-brand" />
-            FindFam
-          </span>
-          <nav className="flex items-center gap-4">
-            <Link
-              href="/architecture"
-              className="hidden items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground sm:flex"
-            >
-              <Code2 className="h-3.5 w-3.5" />
-              How it&apos;s built
-            </Link>
-            <Link href={adminHref} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
-              {adminLabel}
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <div id="top" className="relative isolate min-h-screen bg-background">
+      <SiteNav
+        hasUserSession={hasUserSession}
+        hasAdminSession={hasAdminSession}
+        primaryHref={primaryHref}
+        primaryLabel={primaryLabel}
+      />
 
-      <main className="mx-auto max-w-7xl px-6">
+      <main className="mx-auto max-w-6xl px-6">
         {/* Hero */}
-        <section className="relative py-16 sm:py-20">
-          <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-            Know your family is safe — without watching them.
-          </h1>
-          <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-            FindFam lets a family see where each other are, message in a group, and raise an SOS
-            that reaches their emergency contacts. Every sharing relationship needs two separate
-            acts of consent — nobody joins your circle without agreeing to it first, and you can
-            always see who can see you.
-          </p>
+        <section className="relative pt-16 sm:pt-20">
+          {/* Staggered so the hero resolves top-down in one movement. Reveal
+              uses whileInView, which fires immediately for content already on
+              screen, so this doubles as the above-the-fold entrance. */}
+          <Reveal>
+            <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
+              Know your family is safe — without watching them.
+            </h1>
+          </Reveal>
+          <Reveal delay={0.08}>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+              FindFam lets a family see where each other are, message in a group, and raise an SOS
+              that reaches their emergency contacts. Nobody joins your circle without choosing to,
+              and you can always see who can see you.
+            </p>
+          </Reveal>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <Link href="#get-started" className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
-              Get started
-              <ArrowRight className="ml-2 h-4 w-4" />
+          <Reveal delay={0.16} className="mt-8 flex flex-wrap items-center gap-3">
+            <Link href={primaryHref} className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
+              {primaryLabel}
+              <ArrowRight className="h-4 w-4" />
             </Link>
             <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
               How it works
             </Link>
-          </div>
+          </Reveal>
 
           <HorizonGlow className="mt-8" />
 
-          <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <Reveal delay={0.24} className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
             {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
               <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Icon className="h-3.5 w-3.5 text-brand" />
                 {label}
               </span>
             ))}
-          </div>
+          </Reveal>
+        </section>
 
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+        {/* The product, immediately */}
+        <section className="pb-16 pt-10">
+          <Reveal>
+            <AppPreview />
+          </Reveal>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            The circle map, in a browser. Faded pins are positions older than five minutes.
+          </p>
         </section>
 
         {/* How it works */}
-        <section id="how-it-works" className="scroll-mt-14 border-b border-border py-16">
+        <section id="how-it-works" className="scroll-mt-24 border-t border-border py-16">
           <div className="mb-10 max-w-2xl">
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               Getting started
@@ -169,9 +264,11 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-6 sm:grid-cols-3">
-            {STEPS.map((step) => (
-              <Reveal key={step.number}>
-                <Card variant="glass">
+            {STEPS.map((step, index) => (
+              // 0.06s apart: the row arrives as one movement rather than as
+              // a queue the reader has to wait through.
+              <Reveal key={step.number} delay={index * 0.06}>
+                <Card variant="glass" className="h-full">
                   <CardContent className="p-5">
                     <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand">
                       {step.number}
@@ -186,7 +283,7 @@ export default function HomePage() {
         </section>
 
         {/* Features */}
-        <section className="border-b border-border py-16">
+        <section id="features" className="scroll-mt-24 border-t border-border py-16">
           <div className="mb-10 max-w-2xl">
             <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
               What you get
@@ -196,48 +293,91 @@ export default function HomePage() {
             </h2>
           </div>
 
-          <div className="space-y-4">
-            <Reveal>
-              <Card variant="glass" className="overflow-hidden">
-                <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand/10">
-                    <heroFeature.icon className="h-6 w-6 text-brand" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium">{heroFeature.title}</h3>
-                    <p className="mt-1 max-w-xl text-sm leading-relaxed text-muted-foreground">
-                      {heroFeature.body}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </Reveal>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURES.map((feature, index) => (
+              <Reveal key={feature.title} delay={index * 0.06}>
+                <Card
+                  variant="glass"
+                  className={cn(
+                    'h-full',
+                    feature.title === 'SOS' && 'border-destructive/30 bg-destructive/5',
+                  )}
+                >
+                  <CardHeader>
+                    <div
+                      className={cn(
+                        'mb-2 flex h-9 w-9 items-center justify-center rounded-md',
+                        feature.title === 'SOS' ? 'bg-destructive/15' : 'bg-brand/10',
+                      )}
+                    >
+                      <feature.icon
+                        className={cn('h-4 w-4', feature.title === 'SOS' ? 'text-red-400' : 'text-brand')}
+                      />
+                    </div>
+                    <CardTitle className="text-base">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription className="leading-relaxed">{feature.body}</CardDescription>
+                  </CardContent>
+                </Card>
+              </Reveal>
+            ))}
+          </div>
+        </section>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {restFeatures.map((feature) => (
-                <Reveal key={feature.title}>
-                  <Card
-                    variant="glass"
-                    className={cn(
-                      'h-full',
-                      feature.title === 'SOS' && 'border-destructive/30 bg-destructive/5',
-                    )}
-                  >
-                    <CardHeader>
-                      <div
-                        className={cn(
-                          'mb-2 flex h-9 w-9 items-center justify-center rounded-md',
-                          feature.title === 'SOS' ? 'bg-destructive/15' : 'bg-brand/10',
-                        )}
-                      >
-                        <feature.icon
-                          className={cn('h-4 w-4', feature.title === 'SOS' ? 'text-red-400' : 'text-brand')}
-                        />
-                      </div>
-                      <CardTitle className="text-base">{feature.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="leading-relaxed">{feature.body}</CardDescription>
+        {/* Who it's for */}
+        <section className="border-t border-border py-16">
+          <div className="mb-10 max-w-2xl">
+            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+              Who it&apos;s for
+            </p>
+            <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              A circle is whoever you decide it is
+            </h2>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {AUDIENCES.map((audience, index) => (
+              <Reveal key={audience.title} delay={index * 0.06}>
+                <Card variant="glass" className="h-full">
+                  <CardContent className="p-5">
+                    <audience.icon className="mb-3 h-5 w-5 text-brand" />
+                    <h3 className="font-medium">{audience.title}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                      {audience.body}
+                    </p>
+                  </CardContent>
+                </Card>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
+        {/* Privacy & consent */}
+        <section id="privacy" className="scroll-mt-24 border-t border-border py-16">
+          <div className="grid gap-10 lg:grid-cols-[22rem_1fr]">
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Privacy
+              </p>
+              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Consent isn&apos;t a setting here. It&apos;s the only way in.
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                Plenty of apps can follow somebody who never agreed to it. FindFam is built so that
+                is not possible — not discouraged, not off by default, but absent.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {PRIVACY_POINTS.map((point, index) => (
+                <Reveal key={point.title} delay={index * 0.06}>
+                  <Card variant="glass" className="h-full">
+                    <CardContent className="p-5">
+                      <h3 className="font-medium">{point.title}</h3>
+                      <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
+                        {point.body}
+                      </p>
                     </CardContent>
                   </Card>
                 </Reveal>
@@ -246,12 +386,27 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Built with */}
-        <section className="border-b border-border py-12">
+        {/* FAQ */}
+        <section id="faq" className="scroll-mt-24 border-t border-border py-16">
+          <div className="grid gap-10 lg:grid-cols-[22rem_1fr]">
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Questions
+              </p>
+              <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                The things people ask first
+              </h2>
+            </div>
+            <Faq entries={FAQ_ENTRIES} />
+          </div>
+        </section>
+
+        {/* Built on */}
+        <section className="border-t border-border py-10">
           <p className="mb-4 text-center text-xs font-medium uppercase tracking-wider text-muted-foreground">
             Built on
           </p>
-          <Reveal className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             {TECH_STACK.map((tech) => (
               <span
                 key={tech}
@@ -260,42 +415,33 @@ export default function HomePage() {
                 {tech}
               </span>
             ))}
-          </Reveal>
+          </div>
         </section>
 
-        {/* Get started */}
-        <section id="get-started" className="scroll-mt-14 border-b border-border py-16">
+        {/* Closing CTA */}
+        <section className="border-t border-border py-16">
           <Card variant="glass" className="overflow-hidden border-brand/20">
-            <CardContent className="flex flex-col items-start gap-4 p-8 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-start gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-brand/10 shadow-glow">
-                  <Smartphone className="h-5 w-5 text-brand" />
-                </div>
-                <div>
-                  <h3 className="font-medium">FindFam is available on the FindFam Android app</h3>
-                  <p className="mt-1 max-w-md text-sm leading-relaxed text-muted-foreground">
-                    It&apos;s currently in closed testing on Google Play — the fastest way in is an
-                    invite from someone already using it. A web app for signing in from a browser
-                    is on the way.
-                  </p>
-                </div>
+            <CardContent className="flex flex-col items-start gap-5 p-8 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-lg font-medium">Start a circle in about a minute</h3>
+                <p className="mt-1 max-w-md text-sm leading-relaxed text-muted-foreground">
+                  Sign up in your browser, create a circle, and send someone the code. The Android
+                  app is in closed testing and adds background sharing and SOS.
+                </p>
               </div>
+              <Link
+                href={primaryHref}
+                className={cn(buttonVariants({ variant: 'gradient', size: 'lg' }), 'shrink-0')}
+              >
+                {primaryLabel}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </CardContent>
           </Card>
         </section>
       </main>
 
-      <footer className="border-t border-border py-8">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>FindFam — family location sharing and personal safety.</p>
-          <div className="flex items-center gap-4">
-            <p>SOS is not a substitute for calling emergency services.</p>
-            <Link href="/architecture" className="underline underline-offset-2 hover:text-foreground">
-              How it&apos;s built
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

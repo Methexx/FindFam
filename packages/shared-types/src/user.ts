@@ -12,7 +12,15 @@ export interface User {
 export interface Follow {
   id: string;
   followerId: string;
+  /**
+   * Joined from `users` by the follows repository. Null on rows read through
+   * a path that does not join — prefer it over `followerId` for display, and
+   * fall back rather than showing a raw UUID.
+   */
+  followerUsername: string | null;
   followeeId: string;
+  /** Joined alongside `followerUsername`; same null caveat. */
+  followeeUsername: string | null;
   status: 'pending' | 'accepted' | 'blocked';
   createdAt: string;
 }

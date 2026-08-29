@@ -50,8 +50,11 @@ Unique constraint on `(follower_id, followee_id)`. Index on `followee_id` for "w
 | id | uuid, PK | |
 | name | text, not null | |
 | owner_id | uuid, FK → users.id | |
+| invite_code | text, not null, unique | 8 chars, alphabet excludes I/L/O/0/1 (migration 016) |
 | created_at | timestamptz | |
 | deleted_at | timestamptz, nullable | soft delete |
+
+`invite_code` is the lookup key for `POST /circles/join`. The unique index is what guarantees no two circles share one — the service generates, inserts, and retries on a `23505` rather than pre-checking, which would race. It is only ever returned to the circle's owner. The ambiguous glyphs are excluded because the code is read aloud and typed by hand.
 
 ### `circle_members`
 | Column | Type | Notes |
