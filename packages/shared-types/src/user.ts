@@ -1,12 +1,26 @@
 export interface User {
   id: string;
   username: string;
+  /** Optional, falls back to username for display when unset. */
+  displayName: string | null;
   email: string;
   phone: string | null;
   avatarUrl: string | null;
   isSharing: boolean;
   createdAt: string;
   updatedAt: string | null;
+}
+
+export interface UpdateProfileRequest {
+  username?: string;
+  displayName?: string | null;
+  phone?: string;
+  avatarUrl?: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface Follow {

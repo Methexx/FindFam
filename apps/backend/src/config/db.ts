@@ -5,6 +5,7 @@ import { env } from './env';
 export interface UsersTable {
   id: Generated<string>;
   username: string;
+  display_name: string | null;
   email: string;
   phone: string | null;
   password_hash: string;

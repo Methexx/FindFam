@@ -54,7 +54,12 @@ export function createUser(input: {
 
 export function updateUser(
   id: string,
-  input: Partial<Pick<UsersTable, 'avatar_url' | 'phone'>>,
+  input: Partial<
+    Pick<
+      UsersTable,
+      'avatar_url' | 'phone' | 'username' | 'display_name' | 'suspended_at' | 'password_hash'
+    >
+  >,
 ) {
   return db
     .updateTable('users')

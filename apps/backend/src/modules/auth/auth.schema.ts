@@ -22,6 +22,8 @@ export type RefreshBody = z.infer<typeof refreshBodySchema>;
 export const patchMeBodySchema = z.object({
   avatarUrl: z.string().optional(),
   phone: z.string().optional(),
+  displayName: z.string().max(100).nullable().optional(),
+  username: z.string().min(3).max(32).optional(),
 });
 export type PatchMeBody = z.infer<typeof patchMeBodySchema>;
 
@@ -29,3 +31,9 @@ export const fcmTokenBodySchema = z.object({
   fcmToken: z.string().min(1),
 });
 export type FcmTokenBody = z.infer<typeof fcmTokenBodySchema>;
+
+export const changePasswordBodySchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8),
+});
+export type ChangePasswordBody = z.infer<typeof changePasswordBodySchema>;

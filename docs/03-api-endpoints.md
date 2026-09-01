@@ -19,7 +19,10 @@
 | POST | `/auth/logout` | Invalidate refresh token |
 | POST | `/auth/ws-token` | Mint a 60s, `aud: 'ws'` token for a browser WebSocket |
 | GET | `/auth/me` | Current user profile |
-| PATCH | `/auth/me` | Update profile (avatar, phone) |
+| PATCH | `/auth/me` | Update profile (`avatarUrl`, `phone`, `displayName`, `username` — all optional; `username` 409s on collision with another user) |
+| POST | `/auth/me/avatar` | Upload a profile image (multipart, one `file` field, JPEG/PNG/WebP, 5MB max) — stores to Supabase Storage and sets `avatarUrl`. 503 if Storage isn't configured (`SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` unset) |
+| PATCH | `/auth/me/password` | Change password (`{ currentPassword, newPassword }`) — 401 on wrong current password; revokes every other session's refresh token on success, current session stays logged in |
+| POST | `/auth/me/deactivate` | Self-service account deactivation — same effect as an admin suspension (blocks login/refresh with 403, revokes all refresh tokens), reversible only by an admin today |
 
 > `POST /auth/ws-token` exists because the web client holds its access token in an httpOnly cookie and so cannot read it to open a WebSocket; the BFF exchanges the cookie for one of these server-side. The gateway's user `auth` branch does **not** assert `aud: 'ws'` — mobile authenticates with a plain access token, and asserting it there would disconnect every phone. The admin branch does assert it.
 

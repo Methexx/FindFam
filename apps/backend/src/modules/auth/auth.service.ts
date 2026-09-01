@@ -2,8 +2,9 @@ import { randomBytes, createHash } from 'node:crypto';
 import { env } from '../../config/env';
 import { hashPassword, verifyPassword } from '../../lib/password';
 import { signToken, verifyToken } from '../../lib/jwt';
+import { uploadAvatar } from '../../lib/supabase-storage';
 import * as authRepository from './auth.repository';
-import type { RegisterBody, LoginBody, PatchMeBody } from './auth.schema';
+import type { RegisterBody, LoginBody, PatchMeBody, ChangePasswordBody } from './auth.schema';
 
 const ACCESS_TOKEN_TTL = '15m';
 const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -26,6 +27,7 @@ export class AuthError extends Error {
 function toPublicUser(row: {
   id: string;
   username: string;
+  display_name: string | null;
   email: string;
   phone: string | null;
   avatar_url: string | null;
@@ -36,6 +38,7 @@ function toPublicUser(row: {
   return {
     id: row.id,
     username: row.username,
+    displayName: row.display_name,
     email: row.email,
     phone: row.phone,
     avatarUrl: row.avatar_url,
@@ -146,11 +149,62 @@ export async function getMe(userId: string) {
 }
 
 export async function updateMe(userId: string, body: PatchMeBody) {
+  if (body.username) {
+    // Same case-insensitive collision check as registration, backed by the
+    // same users_username_lower_idx unique index — a match that isn't this
+    // user is a real conflict; a match that IS this user just means they
+    // PATCHed their own current username back in, which is a no-op, not
+    // an error.
+    const existing = await authRepository.findUserByUsername(body.username);
+    if (existing && existing.id !== userId) {
+      throw new AuthError('Username already taken', 409);
+    }
+  }
+
   const user = await authRepository.updateUser(userId, {
     avatar_url: body.avatarUrl,
     phone: body.phone,
+    display_name: body.displayName,
+    username: body.username,
   });
   return toPublicUser(user);
+}
+
+export async function updateAvatar(userId: string, contentType: string, data: Buffer) {
+  const publicUrl = await uploadAvatar(userId, contentType, data);
+  const user = await authRepository.updateUser(userId, { avatar_url: publicUrl });
+  return toPublicUser(user);
+}
+
+export async function changePassword(userId: string, body: ChangePasswordBody) {
+  const user = await authRepository.findUserById(userId);
+  if (!user) {
+    throw new AuthError('User not found', 404);
+  }
+
+  const valid = await verifyPassword(body.currentPassword, user.password_hash);
+  if (!valid) {
+    throw new AuthError('Incorrect password', 401);
+  }
+
+  const passwordHash = await hashPassword(body.newPassword);
+  await authRepository.updateUser(userId, { password_hash: passwordHash });
+
+  // Every *other* session's refresh token must die so a password leaked
+  // and then changed can't still be used to mint fresh access tokens — but
+  // the caller's own current access token stays valid for the rest of this
+  // request/response, since it already had to be to authenticate the call.
+  await authRepository.deleteRefreshTokensForUser(userId);
+}
+
+export async function deactivateAccount(userId: string) {
+  // Reuses the exact suspend mechanism admin.service.ts's suspendUser
+  // already exercises — suspended_at already fully blocks login and
+  // refresh (see the checks above), so a self-deactivation needs no new
+  // blocking logic, and it stays reversible by an admin the same way an
+  // admin-issued suspension is today.
+  await authRepository.updateUser(userId, { suspended_at: new Date() });
+  await authRepository.deleteRefreshTokensForUser(userId);
 }
 
 export async function registerFcmToken(userId: string, fcmToken: string) {

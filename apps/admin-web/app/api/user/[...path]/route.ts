@@ -23,7 +23,7 @@ import {
  * admin secret would reject it anyway, but "rejected by a second mechanism"
  * is a worse story than "never reachable".
  */
-const ALLOWED_PREFIXES = ['circles', 'follows', 'locations', 'auth/me'];
+const ALLOWED_PREFIXES = ['circles', 'follows', 'locations', 'auth/me', 'emergency-contacts'];
 
 function isAllowed(path: string): boolean {
   return ALLOWED_PREFIXES.some(

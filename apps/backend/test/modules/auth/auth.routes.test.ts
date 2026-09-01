@@ -281,6 +281,139 @@ describe('auth routes (integration)', () => {
     });
   });
 
+  it('rejects a username already taken by someone else, but allows patching your own back in', async () => {
+    await registerUser('takenname');
+    const registerRes = await registerUser('changer');
+    const { accessToken } = registerRes.json().data.tokens;
+    const auth = { authorization: `Bearer ${accessToken}` };
+
+    const collision = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/auth/me',
+      headers: auth,
+      payload: { username: 'takenname' },
+    });
+    expect(collision.statusCode).toBe(409);
+
+    const ownName = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/auth/me',
+      headers: auth,
+      payload: { username: 'changer' },
+    });
+    expect(ownName.statusCode).toBe(200);
+
+    const renamed = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/auth/me',
+      headers: auth,
+      payload: { username: 'newchangername', displayName: 'A New Name' },
+    });
+    expect(renamed.statusCode).toBe(200);
+    expect(renamed.json().data.username).toBe('newchangername');
+    expect(renamed.json().data.displayName).toBe('A New Name');
+  });
+
+  describe('change password', () => {
+    it('rejects the wrong current password, then accepts the right one and revokes other sessions', async () => {
+      const registerRes = await registerUser('pwchanger');
+      const { accessToken, refreshToken } = registerRes.json().data.tokens;
+      const auth = { authorization: `Bearer ${accessToken}` };
+
+      const wrongCurrent = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/auth/me/password',
+        headers: auth,
+        payload: { currentPassword: 'not-it', newPassword: 'newpassword123' },
+      });
+      expect(wrongCurrent.statusCode).toBe(401);
+
+      const changeRes = await app.inject({
+        method: 'PATCH',
+        url: '/api/v1/auth/me/password',
+        headers: auth,
+        payload: { currentPassword: 'password123', newPassword: 'newpassword123' },
+      });
+      expect(changeRes.statusCode).toBe(200);
+
+      // The refresh token minted at registration must now be dead.
+      const refreshRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/refresh',
+        payload: { refreshToken },
+      });
+      expect(refreshRes.statusCode).toBe(401);
+
+      const loginOld = await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        payload: { usernameOrEmail: 'pwchanger', password: 'password123' },
+      });
+      expect(loginOld.statusCode).toBe(401);
+
+      const loginNew = await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        payload: { usernameOrEmail: 'pwchanger', password: 'newpassword123' },
+      });
+      expect(loginNew.statusCode).toBe(200);
+    });
+  });
+
+  describe('deactivate account', () => {
+    it('blocks subsequent login with 403, same as an admin suspension', async () => {
+      const registerRes = await registerUser('deactivateme');
+      const { accessToken } = registerRes.json().data.tokens;
+
+      const deactivateRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/me/deactivate',
+        headers: { authorization: `Bearer ${accessToken}` },
+      });
+      expect(deactivateRes.statusCode).toBe(200);
+
+      const loginRes = await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        payload: { usernameOrEmail: 'deactivateme', password: 'password123' },
+      });
+      expect(loginRes.statusCode).toBe(403);
+    });
+  });
+
+  describe('avatar upload', () => {
+    // No SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY in .env.test — this pins
+    // down the "not configured" 503 rather than a crash, since exercising
+    // a real Supabase Storage upload needs live credentials this suite
+    // deliberately doesn't have (see lib/supabase-storage.ts's lazy init).
+    it('returns 503 when Supabase Storage is not configured', async () => {
+      const registerRes = await registerUser('avataruser');
+      const { accessToken } = registerRes.json().data.tokens;
+
+      const boundary = '----findfamtestboundary';
+      const body = [
+        `--${boundary}`,
+        'Content-Disposition: form-data; name="file"; filename="avatar.png"',
+        'Content-Type: image/png',
+        '',
+        'fake-image-bytes',
+        `--${boundary}--`,
+        '',
+      ].join('\r\n');
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/v1/auth/me/avatar',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          'content-type': `multipart/form-data; boundary=${boundary}`,
+        },
+        payload: body,
+      });
+      expect(res.statusCode).toBe(503);
+    });
+  });
+
   describe('auth isolation', () => {
     it('rejects a user access token on an admin-protected route', async () => {
       const registerRes = await registerUser('isolationuser');
