@@ -95,6 +95,27 @@ describe('GET /locations/latest — self, no circle required (integration)', () 
       userId: alice.userId,
       lat: 37.7749,
       lng: -122.4194,
+      platform: null,
     });
+  });
+
+  it('carries the platform tag through when the client sends one', async () => {
+    const bob = await registerUser('bob_selfloc1');
+
+    const postRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/locations',
+      headers: { authorization: `Bearer ${bob.accessToken}` },
+      payload: { lat: 51.5074, lng: -0.1278, platform: 'web' },
+    });
+    expect(postRes.statusCode).toBe(201);
+    expect(postRes.json().data.platform).toBe('web');
+
+    const afterRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/locations/latest',
+      headers: { authorization: `Bearer ${bob.accessToken}` },
+    });
+    expect(afterRes.json().data.platform).toBe('web');
   });
 });

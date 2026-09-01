@@ -99,6 +99,7 @@ export function ShareLocationToggle({
             lng: position.coords.longitude,
             speed: position.coords.speed,
             batteryLevel: batteryRef.current,
+            platform: 'web',
           },
         });
 

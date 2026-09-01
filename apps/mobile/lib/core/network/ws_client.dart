@@ -129,6 +129,7 @@ class WsClient {
           'lng': lng,
           'speed': ?speed,
           'batteryLevel': ?batteryLevel,
+          'platform': 'mobile',
         },
       }),
     );

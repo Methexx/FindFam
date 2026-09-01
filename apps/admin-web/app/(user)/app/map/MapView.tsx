@@ -134,6 +134,7 @@ export function MapView({
                   speed: fix.speed,
                   batteryLevel: null,
                   recordedAt: fix.recordedAt,
+                  platform: 'web',
                 })
             : undefined
         }

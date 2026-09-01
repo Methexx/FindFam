@@ -64,6 +64,7 @@ export interface LocationsTable {
   speed: number | null;
   battery_level: number | null;
   recorded_at: Date;
+  platform: string | null;
 }
 
 export interface MessagesTable {

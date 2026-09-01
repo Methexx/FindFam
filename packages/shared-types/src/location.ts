@@ -11,6 +11,12 @@ export interface LocationUpdate {
   speed: number | null;
   batteryLevel: number | null;
   recordedAt: string;
+  /**
+   * Which client submitted this fix — drives the laptop/phone marker glyph
+   * on the web map. `null` for a row recorded before this field existed, or
+   * a client build that hasn't been updated to send it yet.
+   */
+  platform: 'web' | 'mobile' | null;
 }
 
 export interface PostLocationRequest {
@@ -19,6 +25,7 @@ export interface PostLocationRequest {
   speed?: number | null;
   batteryLevel?: number | null;
   recordedAt?: string;
+  platform?: 'web' | 'mobile';
 }
 
 /** WS client → server, sent once immediately after opening the connection. */
@@ -35,6 +42,7 @@ export interface WsLocationUpdateMessage {
     lng: number;
     speed?: number | null;
     batteryLevel?: number | null;
+    platform?: 'web' | 'mobile';
   };
 }
 

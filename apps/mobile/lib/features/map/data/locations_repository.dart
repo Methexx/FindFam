@@ -31,6 +31,7 @@ class LocationsRepository {
           'lng': lng,
           'speed': ?speed,
           'batteryLevel': ?batteryLevel,
+          'platform': 'mobile',
         },
       );
     } on DioException catch (e) {

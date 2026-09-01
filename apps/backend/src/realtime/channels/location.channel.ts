@@ -9,6 +9,7 @@ const locationUpdateSchema = z.object({
     lng: z.number().min(-180).max(180),
     speed: z.number().nullable().optional(),
     batteryLevel: z.number().int().min(0).max(100).nullable().optional(),
+    platform: z.enum(['web', 'mobile']).optional(),
   }),
 });
 
@@ -41,6 +42,7 @@ export async function handleLocationUpdate(
       lng: parsed.data.payload.lng,
       speed: parsed.data.payload.speed,
       batteryLevel: parsed.data.payload.batteryLevel,
+      platform: parsed.data.payload.platform,
     });
     return { ok: true };
   } catch (err) {

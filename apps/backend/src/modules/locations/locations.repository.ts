@@ -8,6 +8,7 @@ export interface InsertLocationInput {
   speed: number | null;
   batteryLevel: number | null;
   recordedAt: Date;
+  platform: 'web' | 'mobile' | null;
 }
 
 export interface LocationRow {
@@ -18,6 +19,7 @@ export interface LocationRow {
   speed: number | null;
   battery_level: number | null;
   recorded_at: Date;
+  platform: string | null;
   username?: string;
 }
 
@@ -30,6 +32,7 @@ export async function insertLocation(input: InsertLocationInput): Promise<Locati
       speed: input.speed,
       battery_level: input.batteryLevel,
       recorded_at: input.recordedAt,
+      platform: input.platform,
     })
     .returning([
       'id',
@@ -39,6 +42,7 @@ export async function insertLocation(input: InsertLocationInput): Promise<Locati
       'speed',
       'battery_level',
       'recorded_at',
+      'platform',
     ])
     .executeTakeFirstOrThrow();
 
@@ -64,6 +68,7 @@ export function latestLocationsForCircle(circleId: string): Promise<LocationRow[
       'locations.speed',
       'locations.battery_level',
       'locations.recorded_at',
+      'locations.platform',
       'users.username',
     ])
     .where('circle_members.circle_id', '=', circleId)
@@ -89,6 +94,7 @@ export function latestLocationForUser(userId: string): Promise<LocationRow | und
       'locations.speed',
       'locations.battery_level',
       'locations.recorded_at',
+      'locations.platform',
       'users.username',
     ])
     .where('locations.user_id', '=', userId)
