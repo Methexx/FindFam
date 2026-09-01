@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import type { LocationUpdate } from '@findfam/shared-types';
@@ -24,11 +24,27 @@ import {
  */
 const MARKER_SIZE = 44;
 
-function markerIcon(stale: boolean, self: boolean): L.DivIcon {
+/**
+ * Which device reported this fix, not who reported it — self vs. others is
+ * carried separately by the ring colour. Falls back to the generic person
+ * glyph for a `null` platform (a row recorded before this field existed, or
+ * a client build that hasn't been updated to send it yet).
+ */
+function platformGlyph(platform: 'web' | 'mobile' | null): string {
+  if (platform === 'web') {
+    // Laptop.
+    return '<rect x="3" y="4" width="18" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2 20h20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+  }
+  if (platform === 'mobile') {
+    // Phone.
+    return '<rect x="7" y="2" width="10" height="20" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><line x1="11" y1="18" x2="13" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>';
+  }
+  return '<circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/>';
+}
+
+function markerIcon(stale: boolean, self: boolean, platform: 'web' | 'mobile' | null): L.DivIcon {
   const ring = self ? 'hsl(var(--brand))' : '#0ea5e9';
-  const glyph = self
-    ? '<circle cx="12" cy="12" r="3.5" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'
-    : '<circle cx="12" cy="8" r="4" fill="currentColor"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="currentColor"/>';
+  const glyph = platformGlyph(platform);
 
   // The halo is on live markers ONLY, and that is the whole point of it: the
   // map's job is to answer "is this where they are *now*", so the thing that
@@ -75,26 +91,51 @@ function markerIcon(stale: boolean, self: boolean): L.DivIcon {
  * broadcast would yank the map out from under somebody who had panned away
  * to look at something.
  */
-function FitToMembers({ locations, circleId }: { locations: LocationUpdate[]; circleId: string }) {
+function fitToLocations(map: L.Map, locations: LocationUpdate[]): void {
+  const bounds = L.latLngBounds(locations.map((l) => [l.lat, l.lng] as [number, number]));
+  if (locations.length === 1) {
+    map.setView(bounds.getCenter(), 15);
+  } else {
+    map.fitBounds(bounds, { padding: [56, 56], maxZoom: 16 });
+  }
+}
+
+function FitToMembers({
+  locations,
+  circleId,
+  selfUserId,
+}: {
+  locations: LocationUpdate[];
+  circleId: string | null;
+  selfUserId: string | null;
+}) {
   const map = useMap();
+  const hasSelfFix = (locs: LocationUpdate[]) => locs.some((l) => l.userId === selfUserId);
+  // Tracks "has *my own* marker been fit yet" rather than "did any location
+  // exist at mount" — an existing circle with other members' positions, or a
+  // previously-recorded self-location, must not permanently disable this:
+  // sharing your own location for the first time should still re-fit the
+  // view even when other markers were already on screen.
+  const hadSelfFixRef = useRef(hasSelfFix(locations));
 
   useEffect(() => {
     if (locations.length === 0) return;
-
-    const bounds = L.latLngBounds(locations.map((l) => [l.lat, l.lng] as [number, number]));
-    if (locations.length === 1) {
-      map.setView(bounds.getCenter(), 15);
-    } else {
-      map.fitBounds(bounds, { padding: [56, 56], maxZoom: 16 });
-    }
+    fitToLocations(map, locations);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [circleId, map]);
+
+  useEffect(() => {
+    const currentlyHasSelf = hasSelfFix(locations);
+    if (hadSelfFixRef.current || !currentlyHasSelf) return;
+    hadSelfFixRef.current = true;
+    fitToLocations(map, locations);
+  }, [locations, map, selfUserId]);
 
   return null;
 }
 
 export interface CircleMapProps {
-  circleId: string;
+  circleId: string | null;
   locations: LocationUpdate[];
   selfUserId: string | null;
 }
@@ -113,7 +154,7 @@ export default function CircleMap({ circleId, locations, selfUserId }: CircleMap
       className="h-full w-full rounded-lg"
     >
       <TileLayer url={MAP_TILE_URL} attribution={MAP_TILE_ATTRIBUTION} />
-      <FitToMembers locations={locations} circleId={circleId} />
+      <FitToMembers locations={locations} circleId={circleId} selfUserId={selfUserId} />
 
       {locations.map((location) => {
         const stale = isStale(location.recordedAt);
@@ -124,7 +165,7 @@ export default function CircleMap({ circleId, locations, selfUserId }: CircleMap
           <Marker
             key={location.userId}
             position={[location.lat, location.lng]}
-            icon={markerIcon(stale, self)}
+            icon={markerIcon(stale, self, location.platform)}
           >
             <Popup>
               <div className="space-y-1">

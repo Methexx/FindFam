@@ -1,6 +1,7 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import rateLimit from '@fastify/rate-limit';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 import { sql } from 'kysely';
 import { ZodError } from 'zod';
 import { env } from './config/env';
@@ -36,6 +37,10 @@ export function buildApp(): FastifyInstance {
 
   app.register(cors, { origin: env.ALLOWED_ORIGINS });
   app.register(rateLimit, { global: false });
+  // 5MB cap matches the avatar-upload size check in lib/supabase-storage.ts
+  // — enforced here too so an oversized upload is rejected before the file
+  // is even fully buffered, not after.
+  app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } });
   app.register(authPlugin);
   app.register(adminAuthPlugin);
   app.register(websocketPlugin);

@@ -42,6 +42,15 @@ const locationsRoutes: FastifyPluginAsync = async (fastify) => {
     },
   );
 
+  fastify.get(
+    '/locations/latest',
+    { preHandler: fastify.authenticate },
+    async (request, reply) => {
+      const result = await locationsService.getLatestLocationForSelf(request.user!.id);
+      return reply.send({ data: result, error: null });
+    },
+  );
+
   fastify.patch(
     '/locations/sharing-status',
     { preHandler: fastify.authenticate },

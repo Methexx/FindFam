@@ -6,6 +6,7 @@ export const postLocationBodySchema = z.object({
   speed: z.number().nullable().optional(),
   batteryLevel: z.number().int().min(0).max(100).nullable().optional(),
   recordedAt: z.string().datetime().optional(),
+  platform: z.enum(['web', 'mobile']).optional(),
 });
 export type PostLocationBody = z.infer<typeof postLocationBodySchema>;
 

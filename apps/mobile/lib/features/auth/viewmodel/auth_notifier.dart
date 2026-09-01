@@ -143,6 +143,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Re-fetches the current user after a profile edit (username, display
+  /// name, phone, avatar) so every screen reading authNotifierProvider —
+  /// not just the one that made the edit — shows the new value immediately,
+  /// instead of a stale one until the next full restoreSession.
+  Future<void> refreshUser() async {
+    if (state is! AuthAuthenticated) return;
+    try {
+      final user = await _repository.getMe();
+      state = AuthAuthenticated(user);
+    } catch (_) {
+      // Best-effort — the edit itself already succeeded server-side; a
+      // failed re-fetch just means this screen keeps showing the
+      // pre-edit user until the next natural refresh, not a real error.
+    }
+  }
+
   Future<void> logout() async {
     await _repository.logout();
     state = const AuthUnauthenticated();

@@ -7,13 +7,30 @@ export async function POST(request: Request) {
   const body = await request.json();
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:3000';
-  const backendRes = await fetch(`${apiBaseUrl}/api/v1/admin/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
 
-  const backendBody = await backendRes.json();
+  let backendRes: Response;
+  try {
+    backendRes = await fetch(`${apiBaseUrl}/api/v1/admin/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'Could not reach the server' },
+      { status: 502 },
+    );
+  }
+
+  let backendBody: { data?: { tokens?: { accessToken?: string } }; error?: string };
+  try {
+    backendBody = await backendRes.json();
+  } catch {
+    return NextResponse.json(
+      { success: false, error: 'The server sent an unreadable response' },
+      { status: 502 },
+    );
+  }
 
   if (!backendRes.ok) {
     return NextResponse.json(
@@ -22,7 +39,15 @@ export async function POST(request: Request) {
     );
   }
 
-  cookies().set('admin_token', backendBody.data.tokens.accessToken, {
+  const accessToken = backendBody.data?.tokens?.accessToken;
+  if (typeof accessToken !== 'string') {
+    return NextResponse.json(
+      { success: false, error: 'The server did not return a session' },
+      { status: 502 },
+    );
+  }
+
+  cookies().set('admin_token', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',

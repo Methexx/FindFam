@@ -10,6 +10,19 @@ const envSchema = z.object({
   JWT_SECRET: z.string(),
   ADMIN_JWT_SECRET: z.string(),
   FCM_SERVICE_ACCOUNT_JSON: z.string(),
+  // Avatar uploads (POST /auth/me/avatar) — a Supabase Storage bucket in
+  // the same project as DATABASE_URL. The service-role key is server-side
+  // only and must never reach a client; it's what lets the backend write
+  // to the bucket on the user's behalf without per-user Storage policies.
+  // Defaulted rather than required, same reasoning as SENTRY_DSN above:
+  // this env schema is parsed at module load, so a required-but-unset var
+  // would crash-loop the whole app before /health ever passed, over a
+  // feature (avatar upload) most of the app doesn't depend on. An unset
+  // value just means lib/supabase-storage.ts throws when that one route is
+  // actually hit, not that nothing starts.
+  SUPABASE_URL: z.string().default(''),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().default(''),
+  SUPABASE_AVATARS_BUCKET: z.string().default('avatars'),
   // Defaulted, not required: this schema is parsed at module load, and
   // render.yaml deliberately omits SENTRY_DSN. Requiring it meant the
   // process threw before Fastify ever started, so the container

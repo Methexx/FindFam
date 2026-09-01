@@ -19,16 +19,16 @@ async function registerUser(username: string) {
   return { userId: body.data.user.id, accessToken: body.data.tokens.accessToken };
 }
 
+beforeEach(async () => {
+  await truncateAll();
+});
+
+afterAll(async () => {
+  await app.close();
+  await db.destroy();
+});
+
 describe('locations routes — sharing status (integration)', () => {
-  beforeEach(async () => {
-    await truncateAll();
-  });
-
-  afterAll(async () => {
-    await app.close();
-    await db.destroy();
-  });
-
   it('persists the sharing toggle and reflects it on /auth/me', async () => {
     const alice = await registerUser('alice_share1');
 
@@ -62,5 +62,60 @@ describe('locations routes — sharing status (integration)', () => {
       payload: { isSharing: true },
     });
     expect(onRes.json().data.isSharing).toBe(true);
+  });
+});
+
+describe('GET /locations/latest — self, no circle required (integration)', () => {
+  it('returns null before any location has been submitted, then the latest fix after', async () => {
+    const alice = await registerUser('alice_selfloc1');
+
+    const beforeRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/locations/latest',
+      headers: { authorization: `Bearer ${alice.accessToken}` },
+    });
+    expect(beforeRes.statusCode).toBe(200);
+    expect(beforeRes.json().data).toBeNull();
+
+    const postRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/locations',
+      headers: { authorization: `Bearer ${alice.accessToken}` },
+      payload: { lat: 37.7749, lng: -122.4194 },
+    });
+    expect(postRes.statusCode).toBe(201);
+
+    const afterRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/locations/latest',
+      headers: { authorization: `Bearer ${alice.accessToken}` },
+    });
+    expect(afterRes.statusCode).toBe(200);
+    expect(afterRes.json().data).toMatchObject({
+      userId: alice.userId,
+      lat: 37.7749,
+      lng: -122.4194,
+      platform: null,
+    });
+  });
+
+  it('carries the platform tag through when the client sends one', async () => {
+    const bob = await registerUser('bob_selfloc1');
+
+    const postRes = await app.inject({
+      method: 'POST',
+      url: '/api/v1/locations',
+      headers: { authorization: `Bearer ${bob.accessToken}` },
+      payload: { lat: 51.5074, lng: -0.1278, platform: 'web' },
+    });
+    expect(postRes.statusCode).toBe(201);
+    expect(postRes.json().data.platform).toBe('web');
+
+    const afterRes = await app.inject({
+      method: 'GET',
+      url: '/api/v1/locations/latest',
+      headers: { authorization: `Bearer ${bob.accessToken}` },
+    });
+    expect(afterRes.json().data.platform).toBe('web');
   });
 });

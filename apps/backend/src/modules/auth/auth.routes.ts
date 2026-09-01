@@ -5,9 +5,11 @@ import {
   refreshBodySchema,
   patchMeBodySchema,
   fcmTokenBodySchema,
+  changePasswordBodySchema,
 } from './auth.schema';
 import * as authService from './auth.service';
 import { AuthError } from './auth.service';
+import { AvatarUploadError } from '../../lib/supabase-storage';
 import { rateLimitConfig } from '../../lib/rate-limit-config';
 
 const authRoutes: FastifyPluginAsync = async (fastify) => {
@@ -84,11 +86,75 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.patch(
     '/auth/me',
-    { preHandler: fastify.authenticate },
+    { preHandler: fastify.authenticate, config: rateLimitConfig(30, '1 minute') },
     async (request, reply) => {
       const body = patchMeBodySchema.parse(request.body);
-      const user = await authService.updateMe(request.user!.id, body);
-      return reply.send({ data: user, error: null });
+      try {
+        const user = await authService.updateMe(request.user!.id, body);
+        return reply.send({ data: user, error: null });
+      } catch (err) {
+        if (err instanceof AuthError) {
+          return reply.code(err.statusCode).send({ data: null, error: err.message });
+        }
+        throw err;
+      }
+    },
+  );
+
+  // Tighter budget than the other authenticated auth.routes.ts writes —
+  // this is a sensitive auth action, matching /auth/login's rate limit
+  // rather than the routine-profile-edit one above.
+  fastify.patch(
+    '/auth/me/password',
+    { preHandler: fastify.authenticate, config: rateLimitConfig(5, '1 minute') },
+    async (request, reply) => {
+      const body = changePasswordBodySchema.parse(request.body);
+      try {
+        await authService.changePassword(request.user!.id, body);
+        return reply.send({ data: { success: true }, error: null });
+      } catch (err) {
+        if (err instanceof AuthError) {
+          return reply.code(err.statusCode).send({ data: null, error: err.message });
+        }
+        throw err;
+      }
+    },
+  );
+
+  fastify.post(
+    '/auth/me/avatar',
+    { preHandler: fastify.authenticate, config: rateLimitConfig(30, '1 minute') },
+    async (request, reply) => {
+      const file = await request.file();
+      if (!file) {
+        return reply.code(400).send({ data: null, error: 'No file uploaded' });
+      }
+      // fastify/multipart already caps this at 5MB (app.ts) and would set
+      // file.file.truncated rather than throw — checked explicitly so an
+      // oversized upload gets a clear 413, not a silently truncated image.
+      if (file.file.truncated) {
+        return reply.code(413).send({ data: null, error: 'Image must be under 5MB' });
+      }
+
+      const buffer = await file.toBuffer();
+      try {
+        const user = await authService.updateAvatar(request.user!.id, file.mimetype, buffer);
+        return reply.send({ data: user, error: null });
+      } catch (err) {
+        if (err instanceof AvatarUploadError) {
+          return reply.code(err.statusCode).send({ data: null, error: err.message });
+        }
+        throw err;
+      }
+    },
+  );
+
+  fastify.post(
+    '/auth/me/deactivate',
+    { preHandler: fastify.authenticate, config: rateLimitConfig(5, '1 minute') },
+    async (request, reply) => {
+      await authService.deactivateAccount(request.user!.id);
+      return reply.send({ data: { success: true }, error: null });
     },
   );
 

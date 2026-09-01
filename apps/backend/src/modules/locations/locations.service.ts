@@ -50,6 +50,7 @@ function toPublicLocation(row: locationsRepository.LocationRow) {
     speed: row.speed,
     batteryLevel: row.battery_level,
     recordedAt: row.recorded_at.toISOString(),
+    platform: row.platform as 'web' | 'mobile' | null,
   };
 }
 
@@ -60,6 +61,7 @@ export interface SubmitLocationInput {
   speed?: number | null;
   batteryLevel?: number | null;
   recordedAt?: string;
+  platform?: 'web' | 'mobile';
 }
 
 /**
@@ -80,6 +82,7 @@ export async function submitLocation(input: SubmitLocationInput) {
     speed: input.speed ?? null,
     batteryLevel: input.batteryLevel ?? null,
     recordedAt: input.recordedAt ? new Date(input.recordedAt) : new Date(),
+    platform: input.platform ?? null,
   });
   lastUpdateAtByUser.set(input.userId, Date.now());
 
@@ -174,6 +177,11 @@ export async function getLatestLocationsForCircle(userId: string, circleId: stri
   }
   const rows = await locationsRepository.latestLocationsForCircle(circleId);
   return rows.map(toPublicLocation);
+}
+
+export async function getLatestLocationForSelf(userId: string) {
+  const row = await locationsRepository.latestLocationForUser(userId);
+  return row ? toPublicLocation(row) : null;
 }
 
 export async function updateSharingStatus(userId: string, isSharing: boolean) {

@@ -28,22 +28,31 @@ export function MapView({
   circles,
   initialCircleId,
   initialLocations,
+  initialSelfLocation,
   selfUserId,
 }: {
   circles: Circle[];
-  initialCircleId: string;
+  initialCircleId: string | null;
   initialLocations: LocationUpdate[];
+  initialSelfLocation: LocationUpdate | null;
   selfUserId: string | null;
 }) {
-  const [circleId, setCircleId] = useState(initialCircleId);
-  const [locationsByCircle, setLocationsByCircle] = useState<Record<string, LocationUpdate[]>>({
-    [initialCircleId]: initialLocations,
-  });
-
-  const locations = useMemo(
-    () => locationsByCircle[circleId] ?? [],
-    [locationsByCircle, circleId],
+  const [circleId, setCircleId] = useState<string | null>(initialCircleId);
+  const [locationsByCircle, setLocationsByCircle] = useState<Record<string, LocationUpdate[]>>(
+    initialCircleId ? { [initialCircleId]: initialLocations } : {},
   );
+  // Not scoped to any circle — a self-only fix (no circle joined yet, or a
+  // fresh browser GPS position that hasn't round-tripped through a circle
+  // broadcast) has no home in locationsByCircle.
+  const [selfLocation, setSelfLocation] = useState<LocationUpdate | null>(initialSelfLocation);
+
+  const locations = useMemo(() => {
+    const base = circleId ? (locationsByCircle[circleId] ?? []) : [];
+    if (!selfUserId || !selfLocation) return base;
+    // Replace, don't append: if the active circle's roster already carries
+    // an entry for us, the live/local fix is the freshest source of truth.
+    return [...base.filter((location) => location.userId !== selfUserId), selfLocation];
+  }, [locationsByCircle, circleId, selfLocation, selfUserId]);
 
   /** Re-reads the authoritative list for one circle from REST. */
   const loadCircle = useCallback(async (id: string) => {
@@ -83,7 +92,7 @@ export function MapView({
 
   // Switching to a circle whose positions have not been fetched yet.
   useEffect(() => {
-    if (locationsByCircle[circleId] === undefined) void loadCircle(circleId);
+    if (circleId && locationsByCircle[circleId] === undefined) void loadCircle(circleId);
   }, [circleId, locationsByCircle, loadCircle]);
 
   const activeCircle = circles.find((circle) => circle.id === circleId);
@@ -101,7 +110,7 @@ export function MapView({
       </div>
 
       {circles.length > 1 ? (
-        <Tabs value={circleId} onValueChange={setCircleId}>
+        <Tabs value={circleId ?? undefined} onValueChange={setCircleId}>
           <TabsList>
             {circles.map((circle) => (
               <TabsTrigger key={circle.id} value={circle.id}>
@@ -112,7 +121,24 @@ export function MapView({
         </Tabs>
       ) : null}
 
-      <ShareLocationToggle send={send} />
+      <ShareLocationToggle
+        send={send}
+        onPosition={
+          selfUserId
+            ? (fix) =>
+                setSelfLocation({
+                  userId: selfUserId,
+                  username: null,
+                  lat: fix.lat,
+                  lng: fix.lng,
+                  speed: fix.speed,
+                  batteryLevel: null,
+                  recordedAt: fix.recordedAt,
+                  platform: 'web',
+                })
+            : undefined
+        }
+      />
 
       <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[1fr_18rem]">
         <div className="min-h-[24rem] overflow-hidden rounded-lg border border-glass-border">
@@ -127,7 +153,11 @@ export function MapView({
             {locations.length === 0 ? (
               <InlineEmptyState
                 icon={MapPinOff}
-                body="Nobody in this circle has shared a position yet. Start sharing above, or open the phone app."
+                body={
+                  activeCircle
+                    ? 'Nobody in this circle has shared a position yet. Start sharing above, or open the phone app.'
+                    : 'Nobody has shared a position yet. Start sharing above, or open the phone app.'
+                }
               />
             ) : (
               <ul className="divide-y divide-border">

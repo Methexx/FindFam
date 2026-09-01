@@ -33,7 +33,20 @@ interface BatteryManager {
  * share after the tab closed. Both are the same defect as a sign-out that
  * keeps sharing, pointed in different directions. The phone owns that flag.
  */
-export function ShareLocationToggle({ send }: { send: (message: unknown) => boolean }) {
+export interface LocationFix {
+  lat: number;
+  lng: number;
+  speed: number | null;
+  recordedAt: string;
+}
+
+export function ShareLocationToggle({
+  send,
+  onPosition,
+}: {
+  send: (message: unknown) => boolean;
+  onPosition?: (fix: LocationFix) => void;
+}) {
   const [state, setState] = useState<Permission>('idle');
   const watchIdRef = useRef<number | null>(null);
   const lastSentAtRef = useRef(0);
@@ -86,7 +99,18 @@ export function ShareLocationToggle({ send }: { send: (message: unknown) => bool
             lng: position.coords.longitude,
             speed: position.coords.speed,
             batteryLevel: batteryRef.current,
+            platform: 'web',
           },
+        });
+
+        // Circle-less senders get no location:broadcast echo (the server
+        // only fans out per circle membership), so the map needs its own
+        // marker fed locally rather than waiting on a round trip.
+        onPosition?.({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+          speed: position.coords.speed,
+          recordedAt: new Date().toISOString(),
         });
       },
       (error) => {
@@ -95,7 +119,7 @@ export function ShareLocationToggle({ send }: { send: (message: unknown) => bool
       },
       { enableHighAccuracy: true, maximumAge: 0, timeout: 20_000 },
     );
-  }, [send]);
+  }, [send, onPosition]);
 
   // Closing the tab ends sharing whether we like it or not — clear the watch
   // so a client-side navigation does the same thing rather than leaving a

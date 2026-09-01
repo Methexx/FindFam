@@ -5,6 +5,7 @@ import { env } from './env';
 export interface UsersTable {
   id: Generated<string>;
   username: string;
+  display_name: string | null;
   email: string;
   phone: string | null;
   password_hash: string;
@@ -64,6 +65,7 @@ export interface LocationsTable {
   speed: number | null;
   battery_level: number | null;
   recorded_at: Date;
+  platform: string | null;
 }
 
 export interface MessagesTable {
