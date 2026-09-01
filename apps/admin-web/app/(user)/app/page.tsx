@@ -2,8 +2,10 @@ import Link from 'next/link';
 import { Check, Circle as CircleIcon, MapPin, Users, UserPlus, ArrowRight } from 'lucide-react';
 import type { Circle, CircleWithMembers, Follow, User } from '@findfam/shared-types';
 import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { buttonVariants } from '@/components/ui/button';
 import { userApiGet } from '@/lib/api-client';
+import { isProfileComplete } from '@/lib/profile-completion';
 import { cn } from '@/lib/utils';
 
 export const metadata = { title: 'FindFam' };
@@ -63,8 +65,27 @@ export default async function AppOverviewPage() {
 
   const allDone = steps.every((step) => step.done);
 
+  // Only reachable when the gate was skipped — the layout renders the setup
+  // screen instead of this page otherwise. Keeps the prompt visible without
+  // blocking, so skipping is not the same as dismissing forever.
+  const profileIncomplete = meResult.ok && !isProfileComplete(meResult.data);
+
   return (
     <div className="mx-auto max-w-3xl space-y-8">
+      {profileIncomplete ? (
+        <Alert>
+          <AlertDescription className="flex flex-wrap items-center justify-between gap-3">
+            <span>Add your name and phone number so your circles know who they are seeing.</span>
+            <Link
+              href="/app/profile"
+              className={buttonVariants({ variant: 'gradient', size: 'sm' })}
+            >
+              Finish profile
+            </Link>
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">
           {username ? `Welcome back, ${username}` : 'Welcome to FindFam'}

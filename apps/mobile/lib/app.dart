@@ -10,6 +10,8 @@ import 'features/auth/viewmodel/auth_notifier.dart';
 import 'features/map/data/location_cache.dart';
 import 'features/map/viewmodel/location_sharing_notifier.dart';
 import 'features/map/viewmodel/ws_connection_notifier.dart';
+import 'features/profile/ui/complete_profile_screen.dart';
+import 'features/profile/viewmodel/profile_completion.dart';
 
 class FindFamApp extends ConsumerStatefulWidget {
   const FindFamApp({super.key});
@@ -47,7 +49,15 @@ class _FindFamAppState extends ConsumerState<FindFamApp> {
       }
     });
 
+    // Mirrors the web gate in app/(user)/app/layout.tsx: a new account has
+    // to supply a display name and phone before reaching the app, with a
+    // skip that lasts only until the next launch.
+    final skippedSetup = ref.watch(profileSetupSkippedProvider);
+
     final Widget home = switch (authState) {
+      AuthAuthenticated(user: final user)
+          when shouldGateForSetup(user: user, skipped: skippedSetup) =>
+        CompleteProfileScreen(user: user),
       AuthAuthenticated(user: final user) => HomePlaceholderScreen(username: user.username),
       AuthUnauthenticated() => const LoginScreen(),
       AuthInitial() || AuthLoading() => const Scaffold(
