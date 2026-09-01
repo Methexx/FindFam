@@ -71,3 +71,28 @@ export function latestLocationsForCircle(circleId: string): Promise<LocationRow[
     .orderBy('locations.recorded_at', 'desc')
     .execute() as Promise<LocationRow[]>;
 }
+
+/**
+ * The caller's own most recent location, independent of circle membership —
+ * distinct from latestLocationsForCircle's "who in this circle has reported
+ * one", this is "did I ever report one at all".
+ */
+export function latestLocationForUser(userId: string): Promise<LocationRow | undefined> {
+  return db
+    .selectFrom('locations')
+    .innerJoin('users', 'users.id', 'locations.user_id')
+    .select([
+      'locations.id',
+      'locations.user_id',
+      sql<number>`ST_Y(locations.geom::geometry)`.as('lat'),
+      sql<number>`ST_X(locations.geom::geometry)`.as('lng'),
+      'locations.speed',
+      'locations.battery_level',
+      'locations.recorded_at',
+      'users.username',
+    ])
+    .where('locations.user_id', '=', userId)
+    .orderBy('locations.recorded_at', 'desc')
+    .limit(1)
+    .executeTakeFirst() as Promise<LocationRow | undefined>;
+}

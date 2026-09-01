@@ -60,6 +60,7 @@ It is rate-limited (10/min, the same `rateLimitConfig` the auth routes use) beca
 | Method | Path | Description |
 |---|---|---|
 | POST | `/locations` | Submit a location update (`{ lat, lng, speed, battery_level }`) — rate-limited |
+| GET | `/locations/latest` | Caller's own most recent location, no circle membership required — `null` if never reported |
 | GET | `/circles/:id/locations/latest` | Latest known location for every member of a circle |
 | GET | `/locations/history?from=&to=` | Own location history (Tier 2) |
 | PATCH | `/locations/sharing-status` | Toggle sharing on/off globally or per-circle (Tier 1) |

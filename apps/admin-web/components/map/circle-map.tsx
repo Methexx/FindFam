@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import L from 'leaflet';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import type { LocationUpdate } from '@findfam/shared-types';
@@ -75,26 +75,46 @@ function markerIcon(stale: boolean, self: boolean): L.DivIcon {
  * broadcast would yank the map out from under somebody who had panned away
  * to look at something.
  */
-function FitToMembers({ locations, circleId }: { locations: LocationUpdate[]; circleId: string }) {
+function fitToLocations(map: L.Map, locations: LocationUpdate[]): void {
+  const bounds = L.latLngBounds(locations.map((l) => [l.lat, l.lng] as [number, number]));
+  if (locations.length === 1) {
+    map.setView(bounds.getCenter(), 15);
+  } else {
+    map.fitBounds(bounds, { padding: [56, 56], maxZoom: 16 });
+  }
+}
+
+function FitToMembers({
+  locations,
+  circleId,
+}: {
+  locations: LocationUpdate[];
+  circleId: string | null;
+}) {
   const map = useMap();
+  // A page that starts with zero locations (no circle, no fix yet) and gets
+  // its first self-fix mid-session never sees circleId change, so the
+  // circle-switch effect below wouldn't fire — this tracks that transition
+  // separately, once per mount.
+  const hadLocationsRef = useRef(locations.length > 0);
 
   useEffect(() => {
     if (locations.length === 0) return;
-
-    const bounds = L.latLngBounds(locations.map((l) => [l.lat, l.lng] as [number, number]));
-    if (locations.length === 1) {
-      map.setView(bounds.getCenter(), 15);
-    } else {
-      map.fitBounds(bounds, { padding: [56, 56], maxZoom: 16 });
-    }
+    fitToLocations(map, locations);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [circleId, map]);
+
+  useEffect(() => {
+    if (hadLocationsRef.current || locations.length === 0) return;
+    hadLocationsRef.current = true;
+    fitToLocations(map, locations);
+  }, [locations, map]);
 
   return null;
 }
 
 export interface CircleMapProps {
-  circleId: string;
+  circleId: string | null;
   locations: LocationUpdate[];
   selfUserId: string | null;
 }

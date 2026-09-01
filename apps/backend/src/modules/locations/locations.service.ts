@@ -176,6 +176,11 @@ export async function getLatestLocationsForCircle(userId: string, circleId: stri
   return rows.map(toPublicLocation);
 }
 
+export async function getLatestLocationForSelf(userId: string) {
+  const row = await locationsRepository.latestLocationForUser(userId);
+  return row ? toPublicLocation(row) : null;
+}
+
 export async function updateSharingStatus(userId: string, isSharing: boolean) {
   const user = await authRepository.updateSharingStatus(userId, isSharing);
   return { userId: user.id, isSharing: user.is_sharing };
