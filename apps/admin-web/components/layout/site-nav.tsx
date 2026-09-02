@@ -90,10 +90,10 @@ export function SiteNav({
     <header className="sticky top-4 z-20 px-4">
       <div
         className={cn(
-          'mx-auto flex h-14 max-w-4xl items-center justify-between rounded-full px-5 transition-[background-color,border-color,box-shadow,backdrop-filter] duration-300',
+          'mx-auto flex h-14 max-w-4xl items-center justify-between rounded-full border border-glass-border px-5 transition-[background-color,box-shadow,backdrop-filter] duration-300',
           isScrolled
-            ? 'border border-glass-border bg-glass shadow-lg shadow-black/20 backdrop-blur-xl'
-            : 'border border-transparent bg-transparent',
+            ? 'bg-glass shadow-lg shadow-black/20 backdrop-blur-xl'
+            : 'bg-transparent',
         )}
       >
         <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">

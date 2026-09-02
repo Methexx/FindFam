@@ -18,7 +18,8 @@ import {
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HorizonGlow } from '@/components/ui/horizon-glow';
+import { HeroRing } from '@/components/ui/hero-ring';
+import LightRays from '@/components/ui/light-rays';
 import { Reveal } from '@/components/motion/reveal';
 import { AppPreview } from '@/components/landing/app-preview';
 import { Faq } from '@/components/landing/faq';
@@ -194,6 +195,30 @@ export default function HomePage() {
 
   return (
     <div id="top" className="relative isolate min-h-screen bg-background">
+      {/* Decorative light rays behind the nav and hero. `z-0` keeps it under
+          the sticky nav (z-20) and the normal-flow content; the component's
+          own `pointer-events-none` is what stops the canvas swallowing nav
+          clicks. raysColor must be a hex string — an hsl(var(--brand)) token
+          would silently render white. #8b5cf6 is the --brand violet. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-screen"
+      >
+        <LightRays
+          raysOrigin="top-center"
+          raysColor="#8b5cf6"
+          raysSpeed={0.9}
+          lightSpread={1.1}
+          rayLength={2.2}
+          fadeDistance={1.1}
+          saturation={0.9}
+          followMouse
+          mouseInfluence={0.08}
+          noiseAmount={0.06}
+          distortion={0.03}
+        />
+      </div>
+
       <SiteNav
         hasUserSession={hasUserSession}
         hasAdminSession={hasAdminSession}
@@ -230,7 +255,7 @@ export default function HomePage() {
             </Link>
           </Reveal>
 
-          <HorizonGlow className="mt-8" />
+          <HeroRing className="mt-8" />
 
           <Reveal delay={0.24} className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
             {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
