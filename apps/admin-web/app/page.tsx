@@ -223,13 +223,12 @@ export default function HomePage() {
         Alternative hero background: ParticleMorph instead of LightRays.
         Staged but inactive — only one full-bleed hero background should
         render at a time. To try it: comment out the LightRays block above
-        and uncomment this one; both read the same brand palette so the
-        swap is purely visual.
+        and uncomment this one.
 
         import { ParticleMorph } from '@/components/three/particle-morph';
         ...
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 z-0 h-screen">
-          <ParticleMorph className="h-full w-full" particleCount={2500} interactive={false} bloom />
+          <ParticleMorph className="h-full w-full" particleCount={2500} interactive={false} />
         </div>
       */}
 

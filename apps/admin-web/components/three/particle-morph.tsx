@@ -2,22 +2,16 @@
 
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import anime from 'animejs';
 import { createNoise3D, createNoise4D, type NoiseFunction3D, type NoiseFunction4D } from 'simplex-noise';
 import { useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
-// Keep in sync with --brand/--brand-strong/--brand-soft in app/globals.css.
-// WebGL needs literal hex; CSS custom properties are not readable inside a
-// three.js Color the way they are in the SVG components (hero-ring.tsx).
+// White/ash palette (not the site's violet brand tokens) — a deliberate
+// departure requested for this visual.
 const PARTICLE_COLORS = {
-  brand: 0x8b5cf6, // --brand
-  brandStrong: 0x7c3aed, // --brand-strong
-  brandSoft: 0xc4b5fd, // --brand-soft
+  outer: 0xe4e4e7, // ash/zinc-200
+  inner: 0xffffff, // white
 } as const;
 
 export interface ParticleMorphProps {
@@ -28,7 +22,6 @@ export interface ParticleMorphProps {
   autoRotate?: boolean;
   /** Click-canvas-to-morph. */
   interactive?: boolean;
-  bloom?: boolean;
   onReady?: (controls: { nextShape: () => void }) => void;
 }
 
@@ -42,6 +35,33 @@ const NOISE_TIME_SCALE = 0.06;
 const NOISE_MAX_STRENGTH = 0.7;
 const SWARM_DISTANCE_FACTOR = 0.9;
 const IDLE_ROTATION_SPEED = 0.06;
+
+/**
+ * A soft radial-gradient dot, used as the particle sprite. This is what
+ * gives each point its glow — not screen-space bloom (UnrealBloomPass),
+ * which was dropped: EffectComposer's render target has no usable alpha
+ * channel through the bloom composite, so it always renders onto an opaque
+ * backdrop — visible as a hard rectangle behind the particles instead of
+ * them sitting transparently over the page background. A glowing sprite
+ * texture achieves a similar look and stays genuinely transparent.
+ */
+function createGlowTexture(): THREE.Texture {
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  gradient.addColorStop(0, 'rgba(255,255,255,1)');
+  gradient.addColorStop(0.2, 'rgba(255,255,255,0.85)');
+  gradient.addColorStop(0.5, 'rgba(255,255,255,0.3)');
+  gradient.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, size, size);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.needsUpdate = true;
+  return texture;
+}
 
 function generateSphere(count: number, size: number): Float32Array {
   const points = new Float32Array(count * 3);
@@ -205,8 +225,8 @@ const SHAPE_GENERATORS: ShapeGenerator[] = [
 ];
 
 function paintColors(colors: Float32Array, positions: Float32Array, count: number, size: number) {
-  const soft = new THREE.Color(PARTICLE_COLORS.brandSoft);
-  const brand = new THREE.Color(PARTICLE_COLORS.brand);
+  const inner = new THREE.Color(PARTICLE_COLORS.inner);
+  const outer = new THREE.Color(PARTICLE_COLORS.outer);
   const maxRadius = size * 1.15;
   const tmp = new THREE.Color();
   for (let i = 0; i < count; i++) {
@@ -216,7 +236,7 @@ function paintColors(colors: Float32Array, positions: Float32Array, count: numbe
     const z = positions[i3 + 2]!;
     const dist = Math.sqrt(x * x + y * y + z * z);
     const t = THREE.MathUtils.clamp(dist / maxRadius, 0, 1);
-    tmp.copy(soft).lerp(brand, t);
+    tmp.copy(inner).lerp(outer, t);
     tmp.toArray(colors, i3);
   }
 }
@@ -245,7 +265,6 @@ export function ParticleMorph({
   particleCount = 4500,
   autoRotate = true,
   interactive = true,
-  bloom = true,
   onReady,
 }: ParticleMorphProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -296,15 +315,6 @@ export function ParticleMorph({
     renderer.setClearColor(0x000000, 0);
     container.appendChild(renderer.domElement);
 
-    const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
-    let bloomPass: UnrealBloomPass | null = null;
-    if (bloom) {
-      bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 1.1, 0.55, 0.15);
-      composer.addPass(bloomPass);
-      composer.addPass(new OutputPass());
-    }
-
     const noise3D: NoiseFunction3D = createNoise3D();
     const noise4D: NoiseFunction4D = createNoise4D();
 
@@ -319,8 +329,11 @@ export function ParticleMorph({
     geometry.setAttribute('position', new THREE.BufferAttribute(currentPositions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
 
+    const glowTexture = createGlowTexture();
     const material = new THREE.PointsMaterial({
-      size: 0.045,
+      size: 0.11,
+      map: glowTexture,
+      alphaMap: glowTexture,
       vertexColors: true,
       transparent: true,
       opacity: 0.9,
@@ -466,8 +479,6 @@ export function ParticleMorph({
       const pixelRatio = Math.min(window.devicePixelRatio, 2);
       renderer.setPixelRatio(pixelRatio);
       renderer.setSize(clientWidth, clientHeight, false);
-      composer.setSize(clientWidth, clientHeight);
-      bloomPass?.setSize(clientWidth, clientHeight);
     };
 
     resizeObserver = new ResizeObserver(updateSize);
@@ -483,7 +494,7 @@ export function ParticleMorph({
         points.rotation.y += IDLE_ROTATION_SPEED * 0.016;
       }
 
-      composer.render();
+      renderer.render(scene, camera);
 
       if (!isReady) setIsReady(true);
     };
@@ -496,7 +507,7 @@ export function ParticleMorph({
       frameRunning = false;
       if (rafId) cancelAnimationFrame(rafId);
       updateSize();
-      composer.render();
+      renderer.render(scene, camera);
       setIsReady(true);
     }
 
@@ -527,23 +538,22 @@ export function ParticleMorph({
 
       geometry.dispose();
       material.dispose();
-      bloomPass?.dispose();
-      composer.dispose();
+      glowTexture.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
       if (renderer.domElement.parentNode) {
         renderer.domElement.parentNode.removeChild(renderer.domElement);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- particleCount/bloom intentionally re-run full setup; onReady/autoRotate/interactive/prefersReducedMotion are read via refs to avoid tearing down the scene every render.
-  }, [isVisible, particleCount, bloom]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- particleCount intentionally re-runs full setup; onReady/autoRotate/interactive/prefersReducedMotion are read via refs to avoid tearing down the scene every render.
+  }, [isVisible, particleCount]);
 
   return (
     <div ref={containerRef} className={cn('relative h-full w-full', className)}>
       <div
         aria-hidden="true"
         className={cn(
-          'pointer-events-none absolute inset-0 rounded-xl bg-brand/5 transition-opacity duration-500',
+          'pointer-events-none absolute inset-0 bg-white/5 transition-opacity duration-500',
           isReady ? 'opacity-0' : 'animate-pulse opacity-100',
         )}
       />
