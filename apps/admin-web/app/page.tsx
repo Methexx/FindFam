@@ -18,8 +18,8 @@ import {
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HeroRing } from '@/components/ui/hero-ring';
 import LightRays from '@/components/ui/light-rays';
+import { ParticleMorphHeroPanel } from '@/components/three/particle-morph-hero-panel';
 import { Reveal } from '@/components/motion/reveal';
 import { AppPreview } from '@/components/landing/app-preview';
 import { Faq } from '@/components/landing/faq';
@@ -219,6 +219,20 @@ export default function HomePage() {
         />
       </div>
 
+      {/*
+        Alternative hero background: ParticleMorph instead of LightRays.
+        Staged but inactive — only one full-bleed hero background should
+        render at a time. To try it: comment out the LightRays block above
+        and uncomment this one; both read the same brand palette so the
+        swap is purely visual.
+
+        import { ParticleMorph } from '@/components/three/particle-morph';
+        ...
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 z-0 h-screen">
+          <ParticleMorph className="h-full w-full" particleCount={2500} interactive={false} bloom />
+        </div>
+      */}
+
       <SiteNav
         hasUserSession={hasUserSession}
         hasAdminSession={hasAdminSession}
@@ -229,42 +243,50 @@ export default function HomePage() {
       <main className="mx-auto max-w-6xl px-6">
         {/* Hero */}
         <section className="relative pt-16 sm:pt-20">
-          {/* Staggered so the hero resolves top-down in one movement. Reveal
-              uses whileInView, which fires immediately for content already on
-              screen, so this doubles as the above-the-fold entrance. */}
-          <Reveal>
-            <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-              Know your family is safe — without watching them.
-            </h1>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              FindFam lets a family see where each other are, message in a group, and raise an SOS
-              that reaches their emergency contacts. Nobody joins your circle without choosing to,
-              and you can always see who can see you.
-            </p>
-          </Reveal>
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            {/* Staggered so the hero resolves top-down in one movement. Reveal
+                uses whileInView, which fires immediately for content already on
+                screen, so this doubles as the above-the-fold entrance. */}
+            <div>
+              <Reveal>
+                <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
+                  Know your family is safe — without watching them.
+                </h1>
+              </Reveal>
+              <Reveal delay={0.08}>
+                <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+                  FindFam lets a family see where each other are, message in a group, and raise an
+                  SOS that reaches their emergency contacts. Nobody joins your circle without
+                  choosing to, and you can always see who can see you.
+                </p>
+              </Reveal>
 
-          <Reveal delay={0.16} className="mt-8 flex flex-wrap items-center gap-3">
-            <Link href={primaryHref} className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
-              {primaryLabel}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
-              How it works
-            </Link>
-          </Reveal>
+              <Reveal delay={0.16} className="mt-8 flex flex-wrap items-center gap-3">
+                <Link href={primaryHref} className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
+                  {primaryLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+                  How it works
+                </Link>
+              </Reveal>
 
-          <HeroRing className="mt-8" />
+              <Reveal delay={0.24} className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+                {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
+                  <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Icon className="h-3.5 w-3.5 text-brand" />
+                    {label}
+                  </span>
+                ))}
+              </Reveal>
+            </div>
 
-          <Reveal delay={0.24} className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
-            {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
-              <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Icon className="h-3.5 w-3.5 text-brand" />
-                {label}
-              </span>
-            ))}
-          </Reveal>
+            {/* Right: particle morph visual. Hidden below lg to avoid paying
+                any WebGL cost on mobile/tablet. */}
+            <Reveal delay={0.16} className="hidden lg:block">
+              <ParticleMorphHeroPanel />
+            </Reveal>
+          </div>
         </section>
 
         {/* The product, immediately */}
