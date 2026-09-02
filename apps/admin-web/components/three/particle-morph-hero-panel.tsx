@@ -17,7 +17,7 @@ const ParticleMorph = dynamic(() => import('./particle-morph').then((m) => m.Par
  */
 export function ParticleMorphHeroPanel({ className }: { className?: string }) {
   return (
-    <div className={cn('aspect-square w-full max-w-md', className)}>
+    <div className={cn('aspect-square w-full max-w-xs', className)}>
       <ParticleMorph />
     </div>
   );

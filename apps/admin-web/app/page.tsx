@@ -282,14 +282,14 @@ export default function HomePage() {
 
             {/* Right: particle morph visual. Hidden below lg to avoid paying
                 any WebGL cost on mobile/tablet. */}
-            <Reveal delay={0.16} className="hidden lg:block">
+            <Reveal delay={0.16} className="hidden lg:flex lg:justify-center">
               <ParticleMorphHeroPanel />
             </Reveal>
           </div>
         </section>
 
         {/* The product, immediately */}
-        <section className="pb-16 pt-10">
+        <section className="pb-16 pt-20 sm:pt-28">
           <Reveal>
             <AppPreview />
           </Reveal>
