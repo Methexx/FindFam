@@ -18,7 +18,8 @@ import {
 } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { HorizonGlow } from '@/components/ui/horizon-glow';
+import LightRays from '@/components/ui/light-rays';
+import { ParticleMorphHeroPanel } from '@/components/three/particle-morph-hero-panel';
 import { Reveal } from '@/components/motion/reveal';
 import { AppPreview } from '@/components/landing/app-preview';
 import { Faq } from '@/components/landing/faq';
@@ -194,6 +195,43 @@ export default function HomePage() {
 
   return (
     <div id="top" className="relative isolate min-h-screen bg-background">
+      {/* Decorative light rays behind the nav and hero. `z-0` keeps it under
+          the sticky nav (z-20) and the normal-flow content; the component's
+          own `pointer-events-none` is what stops the canvas swallowing nav
+          clicks. raysColor must be a hex string — an hsl(var(--brand)) token
+          would silently render white. #8b5cf6 is the --brand violet. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 z-0 h-screen"
+      >
+        <LightRays
+          raysOrigin="top-center"
+          raysColor="#8b5cf6"
+          raysSpeed={0.9}
+          lightSpread={1.1}
+          rayLength={2.2}
+          fadeDistance={1.1}
+          saturation={0.9}
+          followMouse
+          mouseInfluence={0.08}
+          noiseAmount={0.06}
+          distortion={0.03}
+        />
+      </div>
+
+      {/*
+        Alternative hero background: ParticleMorph instead of LightRays.
+        Staged but inactive — only one full-bleed hero background should
+        render at a time. To try it: comment out the LightRays block above
+        and uncomment this one.
+
+        import { ParticleMorph } from '@/components/three/particle-morph';
+        ...
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-0 z-0 h-screen">
+          <ParticleMorph className="h-full w-full" particleCount={2500} interactive={false} />
+        </div>
+      */}
+
       <SiteNav
         hasUserSession={hasUserSession}
         hasAdminSession={hasAdminSession}
@@ -204,46 +242,55 @@ export default function HomePage() {
       <main className="mx-auto max-w-6xl px-6">
         {/* Hero */}
         <section className="relative pt-16 sm:pt-20">
-          {/* Staggered so the hero resolves top-down in one movement. Reveal
-              uses whileInView, which fires immediately for content already on
-              screen, so this doubles as the above-the-fold entrance. */}
-          <Reveal>
-            <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
-              Know your family is safe — without watching them.
-            </h1>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
-              FindFam lets a family see where each other are, message in a group, and raise an SOS
-              that reaches their emergency contacts. Nobody joins your circle without choosing to,
-              and you can always see who can see you.
-            </p>
-          </Reveal>
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            {/* Staggered so the hero resolves top-down in one movement. Reveal
+                uses whileInView, which fires immediately for content already on
+                screen, so this doubles as the above-the-fold entrance. */}
+            <div>
+              <Reveal>
+                <h1 className="max-w-2xl text-4xl font-semibold tracking-tight sm:text-5xl">
+                  Know your family is safe — without watching them.
+                </h1>
+              </Reveal>
+              <Reveal delay={0.08}>
+                <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+                  FindFam lets a family see where each other are, message in a group, and raise an
+                  SOS that reaches their emergency contacts. Nobody joins your circle without
+                  choosing to, and you can always see who can see you.
+                </p>
+              </Reveal>
 
-          <Reveal delay={0.16} className="mt-8 flex flex-wrap items-center gap-3">
-            <Link href={primaryHref} className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
-              {primaryLabel}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
-              How it works
-            </Link>
-          </Reveal>
+              <Reveal delay={0.16} className="mt-8 flex flex-wrap items-center gap-3">
+                <Link href={primaryHref} className={buttonVariants({ variant: 'gradient', size: 'lg' })}>
+                  {primaryLabel}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href="#how-it-works" className={buttonVariants({ variant: 'outline', size: 'lg' })}>
+                  How it works
+                </Link>
+              </Reveal>
 
-          <HorizonGlow className="mt-8" />
+              <Reveal delay={0.24} className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
+                {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
+                  <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Icon className="h-3.5 w-3.5 text-brand" />
+                    {label}
+                  </span>
+                ))}
+              </Reveal>
+            </div>
 
-          <Reveal delay={0.24} className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2">
-            {TRUST_SIGNALS.map(({ icon: Icon, label }) => (
-              <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Icon className="h-3.5 w-3.5 text-brand" />
-                {label}
-              </span>
-            ))}
-          </Reveal>
+            {/* Right: particle morph visual. Hidden below lg to avoid paying
+                any WebGL cost on mobile/tablet. Nudged up relative to the
+                (vertically centered) text column so it sits higher. */}
+            <Reveal delay={0.16} className="hidden lg:flex lg:-translate-y-12 lg:justify-center">
+              <ParticleMorphHeroPanel />
+            </Reveal>
+          </div>
         </section>
 
         {/* The product, immediately */}
-        <section className="pb-16 pt-10">
+        <section className="pb-16 pt-20 sm:pt-28">
           <Reveal>
             <AppPreview />
           </Reveal>

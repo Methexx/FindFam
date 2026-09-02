@@ -114,6 +114,9 @@ export function middleware(request: NextRequest): NextResponse | Promise<NextRes
   return handleUserRoute(request);
 }
 
+// /setup is the profile-completion gate. It sits outside /app (so the app
+// layout can redirect to it without looping) but is just as
+// authentication-gated, so it needs the same token-refresh treatment.
 export const config = {
-  matcher: ['/app/:path*', '/dashboard/:path*'],
+  matcher: ['/app/:path*', '/setup', '/dashboard/:path*'],
 };
