@@ -281,8 +281,9 @@ export default function HomePage() {
             </div>
 
             {/* Right: particle morph visual. Hidden below lg to avoid paying
-                any WebGL cost on mobile/tablet. */}
-            <Reveal delay={0.16} className="hidden lg:flex lg:justify-center">
+                any WebGL cost on mobile/tablet. Nudged up relative to the
+                (vertically centered) text column so it sits higher. */}
+            <Reveal delay={0.16} className="hidden lg:flex lg:-translate-y-12 lg:justify-center">
               <ParticleMorphHeroPanel />
             </Reveal>
           </div>
